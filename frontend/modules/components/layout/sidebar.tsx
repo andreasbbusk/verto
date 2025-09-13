@@ -7,8 +7,8 @@ import { Button } from '@/modules/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/components/ui/card';
 import { Badge } from '@/modules/components/ui/badge';
 import { cn } from '@/modules/lib/utils';
-import { getSets } from '@/modules/lib/api';
-import type { FlashcardSet } from '@/modules/lib/api';
+import { getSets } from '@/modules/api';
+import type { FlashcardSet } from '@/modules/types';
 import { 
   BookOpen, 
   Library, 
