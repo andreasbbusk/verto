@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { setRepository, initializeData } from "@/modules/server/database";
 import { authenticateRequest } from "@/modules/server/auth";
 
-// GET /api/sets - Get all sets
+// GET /api/sets - Get user's sets
 export async function GET(request: NextRequest) {
   try {
     // Authenticate the request
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     await initializeData();
-    const sets = await setRepository.getAll();
+    const sets = await setRepository.getByUserId(authResult.user.id);
 
     return NextResponse.json({
       success: true,
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       const newSet = await setRepository.create({
         name,
         description: description || "",
+        userId: authResult.user.id,
       });
 
       return NextResponse.json(
