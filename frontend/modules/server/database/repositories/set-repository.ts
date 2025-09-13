@@ -17,6 +17,7 @@ export class SetRepository {
           id: setMap.size + 1,
           name: card.set,
           description: "",
+          difficulty: 3, // Default difficulty
           userId: card.userId,
           createdAt: card.createdAt,
           cardCount: 1,
@@ -47,6 +48,7 @@ export class SetRepository {
           id: setMap.size + 1,
           name: card.set,
           description: "",
+          difficulty: 3, // Default difficulty
           userId: card.userId,
           createdAt: card.createdAt,
           cardCount: 1,
@@ -90,6 +92,7 @@ export class SetRepository {
       id: await generateId("set"),
       name: data.name.trim(),
       description: data.description?.trim() || "",
+      difficulty: data.difficulty || 3,
       userId: data.userId,
       createdAt: new Date().toISOString(),
       cardCount: 1,

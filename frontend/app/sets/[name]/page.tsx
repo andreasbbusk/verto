@@ -1,11 +1,11 @@
 import { SetDetailView } from "@/modules/components/sets/set-detail-view";
 
 interface SetDetailPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ name: string }>;
 }
 
 export default async function SetDetailPage({ params }: SetDetailPageProps) {
-  const { id } = await params;
+  const { name } = await params;
   
-  return <SetDetailView id={id} />;
+  return <SetDetailView name={decodeURIComponent(name)} />;
 }

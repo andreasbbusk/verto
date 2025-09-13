@@ -1,47 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/modules/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/modules/components/ui/card";
-import { Badge } from "@/modules/components/ui/badge";
-import { FlashcardList } from "@/modules/components/flashcards/flashcard-list";
-import { FlashcardForm } from "@/modules/components/flashcards/flashcard-form";
-import { SetForm } from "./set-form";
-import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
-import { 
-  getSets, 
-  getFlashcardsBySet, 
+import {
   createFlashcard,
-  updateFlashcard,
-  deleteFlashcard
+  deleteFlashcard,
+  getFlashcardsBySet,
+  getSets,
+  updateFlashcard
 } from "@/modules/api";
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  Loader2, 
-  Play,
-  PlusCircle,
+import { FlashcardForm } from "@/modules/components/flashcards/flashcard-form";
+import { FlashcardList } from "@/modules/components/flashcards/flashcard-list";
+import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
+import { Badge } from "@/modules/components/ui/badge";
+import { Button } from "@/modules/components/ui/button";
+import { Card, CardContent } from "@/modules/components/ui/card";
+import type {
+  CreateFlashcardData,
+  CreateSetData,
+  Flashcard,
+  FlashcardSet,
+  UpdateFlashcardData
+} from "@/modules/types";
+import {
+  ArrowLeft,
+  BarChart3,
   BookOpen,
   Calendar,
-  BarChart3
+  Loader2,
+  Play,
+  PlusCircle
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { 
-  FlashcardSet, 
-  Flashcard, 
-  CreateFlashcardData, 
-  UpdateFlashcardData,
-  CreateSetData 
-} from "@/modules/types";
+import { SetForm } from "./set-form";
 
 interface SetDetailViewProps {
-  id: string;
+  name: string;
 }
 
-export function SetDetailView({ id }: SetDetailViewProps) {
+export function SetDetailView({ name }: SetDetailViewProps) {
   const [set, setSet] = useState<FlashcardSet | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,8 +59,7 @@ export function SetDetailView({ id }: SetDetailViewProps) {
         
         // Get all sets and find the one with matching name
         const allSets = await getSets();
-        const decodedId = decodeURIComponent(id);
-        const foundSet = allSets.find(s => s.name === decodedId);
+        const foundSet = allSets.find(s => s.name === name);
         
         if (!foundSet) {
           setError("Set ikke fundet");
@@ -82,7 +79,7 @@ export function SetDetailView({ id }: SetDetailViewProps) {
     };
 
     fetchSetData();
-  }, [id]);
+  }, [name]);
 
   const handleUpdateSet = async (data: CreateSetData) => {
     if (!set) return;

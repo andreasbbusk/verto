@@ -61,7 +61,7 @@ export function DashboardView() {
               </p>
             </div>
             <div className="flex space-x-3">
-              <Link href="/sets/new">
+              <Link href="/sets">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Set

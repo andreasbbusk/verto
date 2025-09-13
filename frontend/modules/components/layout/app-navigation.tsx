@@ -55,7 +55,7 @@ const navigationItems = [
 const quickActions = [
   {
     name: "Nyt Set",
-    href: "/sets/new",
+    href: "/sets",
     icon: Plus,
     variant: "default" as const,
   },

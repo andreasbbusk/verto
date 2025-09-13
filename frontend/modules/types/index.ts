@@ -8,12 +8,25 @@ export interface Flashcard {
     createdAt: string;
     reviewCount: number;
     updatedAt?: string;
+    performance?: CardPerformance;
+  }
+
+export interface CardPerformance {
+    easeFactor: number;
+    interval: number;
+    repetitions: number;
+    nextReview: Date;
+    lastReviewed: Date;
+    difficulty?: number;
+    correctStreak?: number;
+    totalReviews?: number;
   }
   
   export interface FlashcardSet {
     id: number;
     name: string;
     description?: string;
+    difficulty: number; // 1-5 scale (1=very easy, 5=very hard)
     userId: number;
     createdAt: string;
     cardCount: number;
@@ -65,6 +78,7 @@ export interface Flashcard {
   export interface CreateSetData {
     name: string;
     description?: string;
+    difficulty?: number; // 1-5 scale, defaults to 3 (medium)
   }
 
   // Internal data type for server operations

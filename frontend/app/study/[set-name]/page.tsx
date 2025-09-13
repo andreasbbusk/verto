@@ -1,18 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { StudyInterface } from "@/modules/components/study/study-interface";
+import { StudyModeSelector, type StudyMode } from "@/modules/components/study/study-mode-selector";
 import { useFlashcardsBySet } from "@/modules/hooks/use-flashcards";
+import { useSets } from "@/modules/hooks/use-sets";
 import { Card, CardContent } from "@/modules/components/ui/card";
+import { getStudyStats, getDueCards, sortCardsByPriority } from "@/modules/lib/spaced-repetition";
+import type { Flashcard } from "@/modules/types";
 import Link from "next/link";
 
 export default function StudyPage() {
   const params = useParams();
   const setName = decodeURIComponent(params['set-name'] as string);
+  const [selectedMode, setSelectedMode] = useState<StudyMode | null>(null);
+  const [studyCards, setStudyCards] = useState<Flashcard[]>([]);
 
   const { flashcards, loading, error } = useFlashcardsBySet(setName);
+  const { sets, loading: setsLoading } = useSets();
 
-  if (loading) {
+  if (loading || setsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -67,5 +75,56 @@ export default function StudyPage() {
     );
   }
 
-  return <StudyInterface flashcards={flashcards} setName={setName} />;
+  const currentSet = sets.find(set => set.name === setName);
+  const setDifficulty = currentSet?.difficulty || 3;
+  const studyStats = getStudyStats(flashcards);
+
+  const handleModeSelection = (mode: StudyMode) => {
+    let filteredCards: Flashcard[] = [];
+
+    switch (mode) {
+      case 'new':
+        filteredCards = flashcards.filter(card => !card.performance);
+        break;
+      case 'review':
+        filteredCards = flashcards.filter(card => card.performance);
+        break;
+      case 'due-only':
+        filteredCards = getDueCards(flashcards);
+        break;
+      case 'mixed':
+      default:
+        filteredCards = flashcards;
+        break;
+    }
+
+    // Sort cards by priority for better learning experience
+    const sortedCards = sortCardsByPriority(filteredCards);
+    setStudyCards(sortedCards);
+    setSelectedMode(mode);
+  };
+
+  // Show mode selector if no mode is selected
+  if (!selectedMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="max-w-4xl mx-auto">
+          <StudyModeSelector
+            studyStats={studyStats}
+            onSelectMode={handleModeSelection}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <StudyInterface 
+      flashcards={studyCards} 
+      setName={setName}
+      setDifficulty={setDifficulty}
+      studyMode={selectedMode}
+      onModeChange={() => setSelectedMode(null)}
+    />
+  );
 }

@@ -26,6 +26,7 @@ interface StudyControlsProps {
   onExit: () => void;
   onShuffle?: () => void;
   onSettings?: () => void;
+  onModeChange?: () => void;
   autoPlayEnabled?: boolean;
   onToggleAutoPlay?: () => void;
   className?: string;
@@ -42,6 +43,7 @@ export function StudyControls({
   onExit,
   onShuffle,
   onSettings,
+  onModeChange,
   autoPlayEnabled = false,
   onToggleAutoPlay,
   className
@@ -104,6 +106,18 @@ export function StudyControls({
                 <Home className="h-4 w-4 mr-1" />
                 Afslut
               </Button>
+              
+              {onModeChange && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onModeChange}
+                  title="Skift studiemodus"
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  Skift modus
+                </Button>
+              )}
               
               <Button
                 variant="ghost"

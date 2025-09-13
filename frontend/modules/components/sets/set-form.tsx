@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/modules/components/ui/card";
 import { toast } from "sonner";
+import { DifficultySelector } from "./difficulty-selector";
 import type { FlashcardSet, CreateSetData } from "@/modules/types";
 
 interface SetFormProps {
@@ -30,6 +31,7 @@ export function SetForm({
   const [formData, setFormData] = useState({
     name: set?.name || "",
     description: set?.description || "",
+    difficulty: set?.difficulty || 3,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -60,6 +62,7 @@ export function SetForm({
       await onSubmit({
         name: formData.name.trim(),
         description: formData.description.trim(),
+        difficulty: formData.difficulty,
       });
     } catch (error) {
       toast.error(
@@ -77,6 +80,10 @@ export function SetForm({
         setErrors((prev) => ({ ...prev, [field]: "" }));
       }
     };
+
+  const handleDifficultyChange = (difficulty: number) => {
+    setFormData((prev) => ({ ...prev, difficulty }));
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -122,6 +129,12 @@ export function SetForm({
               {formData.description.length}/200 tegn
             </p>
           </div>
+
+          <DifficultySelector
+            value={formData.difficulty}
+            onChange={handleDifficultyChange}
+            label="Set Sværhedsgrad"
+          />
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-medium text-blue-900 mb-2">

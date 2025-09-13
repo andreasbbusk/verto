@@ -1,25 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  ActionButton,
-  AnimatedSection,
-} from "@/modules/components/layout/client-wrapper";
+import { useState } from "react";
+import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
-import { getSets } from "@/modules/api";
-import type { FlashcardSet } from "@/modules/types";
-import { ArrowLeft, BookOpen, PlusCircle, Loader2 } from "lucide-react";
+import { SetForm } from "./set-form";
+import { useSets } from "@/modules/hooks/use-sets";
+import type { FlashcardSet, CreateSetData, UpdateSetData } from "@/modules/types";
+import { ArrowLeft, BookOpen, PlusCircle, Loader2, Play } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface SetsTableProps {
   sets: FlashcardSet[];
+  onEdit: (set: FlashcardSet) => void;
+  onDelete: (set: FlashcardSet) => void;
 }
 
-function SetsTable({ sets }: SetsTableProps) {
+function SetsTable({ sets, onEdit, onDelete }: SetsTableProps) {
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
+    <Card>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -43,7 +45,7 @@ function SetsTable({ sets }: SetsTableProps) {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div>
                     <Link
-                      href={`/study/${encodeURIComponent(set.name)}`}
+                      href={`/sets/${encodeURIComponent(set.name)}`}
                       className="text-sm font-medium text-gray-900 hover:text-blue-600"
                     >
                       {set.name}
@@ -63,62 +65,114 @@ function SetsTable({ sets }: SetsTableProps) {
                   {new Date(set.createdAt).toLocaleDateString("da-DK")}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  <ActionButton
-                    item={{ id: set.id.toString(), name: set.name }}
-                    action="Edit"
-                  />
-                  <ActionButton
-                    item={{ id: set.id.toString(), name: set.name }}
-                    action="Delete"
+                  <Link href={`/study/${encodeURIComponent(set.name)}`}>
+                    <Button
+                      variant="default"
+                      size="sm"
+                    >
+                      <Play className="h-4 w-4 mr-1" />
+                      Studér
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(set)}
+                  >
+                    Rediger
+                  </Button>
+                  <Button
                     variant="destructive"
-                  />
+                    size="sm"
+                    onClick={() => onDelete(set)}
+                  >
+                    Slet
+                  </Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 export function SetsView() {
-  const [sets, setSets] = useState<FlashcardSet[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { sets, loading, error, create, update, remove } = useSets();
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const fetchSets = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const fetchedSets = await getSets();
-        setSets(fetchedSets);
-      } catch (err) {
-        setError("Kunne ikke hente sets");
-        console.error("Error fetching sets:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleCreate = async (data: CreateSetData) => {
+    try {
+      setIsSubmitting(true);
+      await create(data);
+      setIsCreating(false);
+      toast.success("Set oprettet!");
+    } catch (error) {
+      toast.error("Kunne ikke oprette set");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    fetchSets();
-  }, []);
+  const handleUpdate = async (data: UpdateSetData) => {
+    if (!editingSet) return;
+    
+    try {
+      setIsSubmitting(true);
+      await update(editingSet.id.toString(), data);
+      setEditingSet(null);
+      toast.success("Set opdateret!");
+    } catch (error) {
+      toast.error("Kunne ikke opdatere set");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFormSubmit = async (data: CreateSetData | UpdateSetData) => {
+    if (editingSet) {
+      await handleUpdate(data as UpdateSetData);
+    } else {
+      await handleCreate(data as CreateSetData);
+    }
+  };
+
+  const handleEdit = (set: FlashcardSet) => {
+    setEditingSet(set);
+    setIsCreating(false);
+  };
+
+  const handleDelete = async (set: FlashcardSet) => {
+    try {
+      await remove(set.id.toString());
+      toast.success("Set slettet!");
+    } catch (error) {
+      toast.error("Kunne ikke slette set");
+    }
+  };
+
+  const handleCancel = () => {
+    setIsCreating(false);
+    setEditingSet(null);
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading sets...</p>
+          <p className="text-muted-foreground">Indlæser sets...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <AnimatedSection>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -138,17 +192,29 @@ export function SetsView() {
                 </p>
               </div>
             </div>
-            <Link href="/sets/new">
-              <Button>
+            {!isCreating && !editingSet && (
+              <Button onClick={() => setIsCreating(true)}>
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Opret nyt set
               </Button>
-            </Link>
+            )}
           </div>
         </AnimatedSection>
 
+        {/* Form */}
+        {(isCreating || editingSet) && (
+          <AnimatedSection delay={0.2}>
+            <SetForm
+              set={editingSet || undefined}
+              onSubmit={handleFormSubmit}
+              onCancel={handleCancel}
+              isLoading={isSubmitting}
+            />
+          </AnimatedSection>
+        )}
+
         {/* Content */}
-        <AnimatedSection delay={0.2}>
+        <AnimatedSection delay={0.3}>
           {error ? (
             <Card>
               <CardContent className="flex items-center justify-center p-8">
@@ -171,20 +237,17 @@ export function SetsView() {
                       Start med at oprette dit første flashcard set
                     </p>
                   </div>
-                  <Link href="/sets/new">
-                    <Button>
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      Opret dit første set
-                    </Button>
-                  </Link>
+                  <Button onClick={() => setIsCreating(true)}>
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Opret dit første set
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ) : (
-            <SetsTable sets={sets} />
+            <SetsTable sets={sets} onEdit={handleEdit} onDelete={handleDelete} />
           )}
         </AnimatedSection>
-      </div>
     </div>
   );
 }

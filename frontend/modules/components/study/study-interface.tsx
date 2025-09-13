@@ -1,26 +1,104 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import FlashcardComponent from '@/modules/components/flashcards/flashcard';
 import { ProgressBar } from './progress-bar';
 import { StudyControls } from './study-controls';
+import { StudyResults } from './study-results';
 import { Card, CardContent } from '@/modules/components/ui/card';
+import { useStudySessionStore } from '@/modules/stores/study-session-store';
 import type { Flashcard } from '@/modules/types';
 
 interface StudyInterfaceProps {
   flashcards: Flashcard[];
   setName: string;
+  setDifficulty?: number; // Set-level difficulty (1-5)
+  studyMode?: 'new' | 'review' | 'mixed' | 'due-only';
+  onModeChange?: () => void;
   onFlashcardUpdate?: (flashcard: Flashcard) => void;
 }
 
-export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: StudyInterfaceProps) {
+export function StudyInterface({ flashcards, setName, setDifficulty = 3, studyMode, onModeChange, onFlashcardUpdate }: StudyInterfaceProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
   const [studyCards, setStudyCards] = useState(flashcards);
+  const [showResults, setShowResults] = useState(false);
+  const [cardStartTime, setCardStartTime] = useState<Date>(new Date());
+  
+  const { startSession, endSession, recordCardReview, getSessionStats, clearSession } = useStudySessionStore();
+  const hasStartedSession = useRef(false);
 
+  // Initialize study session
+  useEffect(() => {
+    if (!hasStartedSession.current && studyCards.length > 0) {
+      startSession(setName, studyCards.length, 'mixed');
+      hasStartedSession.current = true;
+      setCardStartTime(new Date());
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (hasStartedSession.current) {
+        clearSession();
+      }
+    };
+  }, [setName, studyCards.length, startSession, clearSession]);
+  
+  const goToNext = useCallback(() => {
+    if (studyCards.length > 0) {
+      // Record that the current card was viewed if it was flipped
+      if (isFlipped) {
+        const currentCard = studyCards[currentIndex];
+        const responseTime = new Date().getTime() - cardStartTime.getTime();
+        
+        // Record the view in the session (assume they viewed it correctly since they moved on)
+        recordCardReview(currentCard.id, true, setDifficulty, responseTime);
+        
+        // Simple spaced repetition - just increment review count and use set difficulty
+        const updatedCard = {
+          ...currentCard,
+          reviewCount: currentCard.reviewCount + 1,
+          performance: {
+            ...currentCard.performance,
+            lastReviewed: new Date(),
+            nextReview: new Date(Date.now() + (setDifficulty * 24 * 60 * 60 * 1000)), // Next review in [difficulty] days
+            repetitions: (currentCard.performance?.repetitions || 0) + 1,
+            easeFactor: currentCard.performance?.easeFactor || 2.5,
+            interval: setDifficulty
+          }
+        };
+        
+        // Update the cards array with the new data
+        setStudyCards(prev => prev.map((card, idx) => 
+          idx === currentIndex ? updatedCard : card
+        ));
+        
+        // Call the optional update handler
+        if (onFlashcardUpdate) {
+          onFlashcardUpdate(updatedCard);
+        }
+      }
+      
+      const nextIndex = (currentIndex + 1) % studyCards.length;
+      
+      // If we've completed all cards, show results
+      if (nextIndex === 0 && currentIndex === studyCards.length - 1) {
+        const sessionData = endSession();
+        if (sessionData) {
+          setShowResults(true);
+          return;
+        }
+      }
+      
+      setCurrentIndex(nextIndex);
+      setIsFlipped(false);
+      setCardStartTime(new Date());
+    }
+  }, [studyCards, currentIndex, endSession, isFlipped, cardStartTime, recordCardReview, setDifficulty, onFlashcardUpdate]);
+  
   // Auto-play functionality
   useEffect(() => {
     if (!autoPlayEnabled || studyCards.length <= 1) return;
@@ -36,19 +114,13 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
     }, 3000); // 3 seconds per side
 
     return () => clearInterval(interval);
-  }, [autoPlayEnabled, isFlipped, currentIndex, studyCards.length]);
-
-  const goToNext = useCallback(() => {
-    if (studyCards.length > 0) {
-      setCurrentIndex((prev) => (prev + 1) % studyCards.length);
-      setIsFlipped(false);
-    }
-  }, [studyCards.length]);
+  }, [autoPlayEnabled, isFlipped, currentIndex, studyCards.length, goToNext]);
 
   const goToPrevious = useCallback(() => {
     if (studyCards.length > 0) {
       setCurrentIndex((prev) => (prev - 1 + studyCards.length) % studyCards.length);
       setIsFlipped(false);
+      setCardStartTime(new Date());
     }
   }, [studyCards.length]);
 
@@ -56,6 +128,7 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
     if (index >= 0 && index < studyCards.length) {
       setCurrentIndex(index);
       setIsFlipped(false);
+      setCardStartTime(new Date());
     }
   }, [studyCards.length]);
 
@@ -64,6 +137,7 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
     setStudyCards(shuffled);
     setCurrentIndex(0);
     setIsFlipped(false);
+    setCardStartTime(new Date());
   }, [studyCards]);
 
   const resetStudy = useCallback(() => {
@@ -71,15 +145,29 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
     setCurrentIndex(0);
     setIsFlipped(false);
     setAutoPlayEnabled(false);
-  }, [flashcards]);
+    setShowResults(false);
+    setCardStartTime(new Date());
+    // Restart session
+    clearSession();
+    startSession(setName, flashcards.length, 'mixed');
+  }, [flashcards, clearSession, startSession, setName]);
 
   const exitStudy = useCallback(() => {
+    endSession();
+    clearSession();
     router.push('/sets');
-  }, [router]);
+  }, [router, endSession, clearSession]);
+  
+  const handleFlipCard = useCallback(() => {
+    setIsFlipped(prev => !prev);
+  }, []);
+
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (showResults) return;
+      
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
         goToPrevious();
@@ -88,7 +176,7 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
         goToNext();
       } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === ' ') {
         event.preventDefault();
-        setIsFlipped(prev => !prev);
+        handleFlipCard();
       } else if (event.key === 'Escape') {
         event.preventDefault();
         exitStudy();
@@ -103,7 +191,7 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToNext, goToPrevious, exitStudy, resetStudy, shuffleCards]);
+  }, [goToNext, goToPrevious, exitStudy, resetStudy, shuffleCards, showResults, handleFlipCard]);
 
   if (studyCards.length === 0) {
     return (
@@ -126,6 +214,25 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
   }
 
   const currentCard = studyCards[currentIndex];
+  const sessionStats = getSessionStats();
+
+  // Show results screen if study is complete
+  if (showResults && sessionStats) {
+    return (
+      <StudyResults
+        sessionStats={sessionStats}
+        setName={setName}
+        onStudyAgain={() => {
+          setShowResults(false);
+          resetStudy();
+        }}
+        onBackToDashboard={() => {
+          clearSession();
+          router.push('/dashboard');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -145,10 +252,11 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
           <FlashcardComponent
             flashcard={currentCard}
             isFlipped={isFlipped}
-            onFlip={setIsFlipped}
+            onFlip={handleFlipCard}
             className="w-full max-w-md"
           />
         </div>
+
 
         {/* Controls */}
         <StudyControls
@@ -157,10 +265,11 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
           isFlipped={isFlipped}
           onPrevious={goToPrevious}
           onNext={goToNext}
-          onFlip={() => setIsFlipped(prev => !prev)}
+          onFlip={handleFlipCard}
           onReset={resetStudy}
           onExit={exitStudy}
           onShuffle={shuffleCards}
+          onModeChange={onModeChange}
           autoPlayEnabled={autoPlayEnabled}
           onToggleAutoPlay={() => setAutoPlayEnabled(prev => !prev)}
         />
@@ -168,17 +277,28 @@ export function StudyInterface({ flashcards, setName, onFlashcardUpdate }: Study
         {/* Study Stats */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <div className="flex items-center gap-4">
-                <span>Fremskridt: {Math.round(((currentIndex + 1) / studyCards.length) * 100)}%</span>
-                <span>Kort tilbage: {studyCards.length - currentIndex - 1}</span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="flex items-center gap-4">
+                  <span>Fremskridt: {Math.round(((currentIndex + 1) / studyCards.length) * 100)}%</span>
+                  <span>Kort tilbage: {studyCards.length - currentIndex - 1}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  {autoPlayEnabled && (
+                    <span className="text-blue-600 font-medium">🔄 Auto-afspilning aktiv</span>
+                  )}
+                  <span>Total: {studyCards.length} kort</span>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                {autoPlayEnabled && (
-                  <span className="text-blue-600 font-medium">🔄 Auto-afspilning aktiv</span>
-                )}
-                <span>Total: {studyCards.length} kort</span>
-              </div>
+              
+              {/* Session Stats */}
+              {sessionStats && sessionStats.totalReviewed > 0 && (
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
+                  <span>Gennemgået: {sessionStats.totalReviewed}</span>
+                  <span>Præcision: {Math.round(sessionStats.accuracy)}%</span>
+                  <span>Tid: {Math.round(sessionStats.timeSpent)}min</span>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
