@@ -61,7 +61,7 @@ const quickActions = [
   },
   {
     name: "Nyt Kort",
-    href: "/cards/new",
+    href: "/cards",
     icon: BookOpen,
     variant: "outline" as const,
   },
