@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { flashcardRepository, initializeData } from "@/modules/server/database";
 import { authenticateRequest } from "@/modules/server/auth";
 
-// GET /api/flashcards - Get all flashcards
+// GET /api/flashcards - Get user's flashcards
 export async function GET(request: NextRequest) {
   try {
     // Authenticate the request
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     await initializeData();
-    const flashcards = await flashcardRepository.getAll();
+    const flashcards = await flashcardRepository.getByUserId(authResult.user.id);
 
     return NextResponse.json({
       success: true,
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       front,
       back,
       set: set || "General",
+      userId: authResult.user.id,
     });
 
     return NextResponse.json(

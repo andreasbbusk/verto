@@ -138,9 +138,8 @@ export function ActionButton({
   };
 
   if (action === "Edit") {
-    const editPath = item.front
-      ? `/cards/${item.id}/edit` // It's a flashcard
-      : `/sets/${item.id}/edit`; // It's a set
+    // ActionButton is only used for sets - flashcards use inline editing
+    const editPath = `/sets/${item.id}/edit`; 
 
     return (
       <Link href={editPath}>

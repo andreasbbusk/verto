@@ -4,6 +4,7 @@ export interface Flashcard {
     front: string;
     back: string;
     set: string;
+    userId: number;
     createdAt: string;
     reviewCount: number;
     updatedAt?: string;
@@ -13,6 +14,7 @@ export interface Flashcard {
     id: number;
     name: string;
     description?: string;
+    userId: number;
     createdAt: string;
     cardCount: number;
   }
@@ -48,6 +50,11 @@ export interface Flashcard {
     back: string;
     set?: string;
   }
+
+  // Internal data type for server operations
+  export interface CreateFlashcardDataInternal extends CreateFlashcardData {
+    userId: number;
+  }
   
   export interface UpdateFlashcardData {
     front?: string;
@@ -58,6 +65,11 @@ export interface Flashcard {
   export interface CreateSetData {
     name: string;
     description?: string;
+  }
+
+  // Internal data type for server operations
+  export interface CreateSetDataInternal extends CreateSetData {
+    userId: number;
   }
   
   export interface UpdateSetData extends Partial<CreateSetData> {}

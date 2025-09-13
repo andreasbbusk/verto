@@ -1,7 +1,7 @@
 import { storage, generateId, STORAGE_KEYS } from "../storage";
 import type { 
   Flashcard, 
-  CreateFlashcardData, 
+  CreateFlashcardDataInternal, 
   UpdateFlashcardData 
 } from "@/modules/types";
 
@@ -22,13 +22,26 @@ export class FlashcardRepository {
     );
   }
 
-  async create(data: CreateFlashcardData): Promise<Flashcard> {
+  async getByUserId(userId: number): Promise<Flashcard[]> {
+    const flashcards = await this.getAll();
+    return flashcards.filter((card) => card.userId === userId);
+  }
+
+  async getByUserIdAndSet(userId: number, setName: string): Promise<Flashcard[]> {
+    const flashcards = await this.getByUserId(userId);
+    return flashcards.filter(
+      (card) => card.set.toLowerCase() === setName.toLowerCase()
+    );
+  }
+
+  async create(data: CreateFlashcardDataInternal): Promise<Flashcard> {
     const flashcards = await this.getAll();
     const newFlashcard: Flashcard = {
       id: await generateId("flashcard"),
       front: data.front.trim(),
       back: data.back.trim(),
       set: data.set || "General",
+      userId: data.userId,
       createdAt: new Date().toISOString(),
       reviewCount: 0,
     };

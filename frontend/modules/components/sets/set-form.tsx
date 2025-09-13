@@ -29,6 +29,7 @@ export function SetForm({
 }: SetFormProps) {
   const [formData, setFormData] = useState({
     name: set?.name || "",
+    description: set?.description || "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -58,6 +59,7 @@ export function SetForm({
     try {
       await onSubmit({
         name: formData.name.trim(),
+        description: formData.description.trim(),
       });
     } catch (error) {
       toast.error(
@@ -106,6 +108,8 @@ export function SetForm({
             <Label htmlFor="description">Beskrivelse (valgfri)</Label>
             <Textarea
               id="description"
+              value={formData.description}
+              onChange={handleInputChange("description")}
               placeholder="Tilføj en beskrivelse af hvad dette set indeholder"
               rows={3}
               className={errors.description ? "border-red-500" : ""}
@@ -115,7 +119,7 @@ export function SetForm({
               <p className="text-sm text-red-600">{errors.description}</p>
             )}
             <p className="text-xs text-gray-500">
-              {formData.name.length}/200 tegn
+              {formData.description.length}/200 tegn
             </p>
           </div>
 

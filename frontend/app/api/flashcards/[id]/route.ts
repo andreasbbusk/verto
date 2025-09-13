@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { flashcardRepository, initializeData } from "@/modules/server/database";
+import { authenticateRequest } from "@/modules/server/auth";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -8,6 +9,12 @@ interface RouteParams {
 // GET /api/flashcards/:id - Get flashcard by ID
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    // Authenticate the request
+    const authResult = await authenticateRequest(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 });
+    }
+
     await initializeData();
     const resolvedParams = await params;
     const id = parseInt(resolvedParams.id);
@@ -25,6 +32,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const flashcard = await flashcardRepository.getById(id);
 
     if (!flashcard) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Flashcard not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    // Check if the flashcard belongs to the authenticated user
+    if (flashcard.userId !== authResult.user.id) {
       return NextResponse.json(
         {
           success: false,
@@ -53,6 +71,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PUT /api/flashcards/:id - Update flashcard by ID
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    // Authenticate the request
+    const authResult = await authenticateRequest(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 });
+    }
+
     const resolvedParams = await params;
     const id = parseInt(resolvedParams.id);
 
@@ -80,6 +104,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     await initializeData();
+
+    // Check if the flashcard exists and belongs to the user
+    const existingFlashcard = await flashcardRepository.getById(id);
+    if (!existingFlashcard || existingFlashcard.userId !== authResult.user.id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Flashcard not found",
+        },
+        { status: 404 }
+      );
+    }
 
     try {
       const updatedFlashcard = await flashcardRepository.update(id, {
@@ -120,6 +156,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/flashcards/:id - Delete flashcard by ID
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    // Authenticate the request
+    const authResult = await authenticateRequest(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 });
+    }
+
     const resolvedParams = await params;
     const id = parseInt(resolvedParams.id);
 
@@ -134,6 +176,18 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     await initializeData();
+
+    // Check if the flashcard exists and belongs to the user
+    const existingFlashcard = await flashcardRepository.getById(id);
+    if (!existingFlashcard || existingFlashcard.userId !== authResult.user.id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Flashcard not found",
+        },
+        { status: 404 }
+      );
+    }
 
     try {
       const deletedFlashcard = await flashcardRepository.delete(id);
