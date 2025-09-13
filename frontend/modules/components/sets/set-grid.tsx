@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { SetCard } from './set-card';
-import { SearchFilter } from '@/modules/components/layout/client-wrapper';
-import { Card, CardContent } from '@/modules/components/ui/card';
-import { Button } from '@/modules/components/ui/button';
-import { Badge } from '@/modules/components/ui/badge';
-import type { FlashcardSet } from '@/modules/types';
-import { Grid, List, SortAsc, SortDesc, Calendar, Hash } from 'lucide-react';
+import { useState } from "react";
+import { SetCard } from "./set-card";
+import { SearchFilter } from "@/modules/components/layout/client-wrapper";
+import { Card, CardContent } from "@/modules/components/ui/card";
+import { Button } from "@/modules/components/ui/button";
+import { Badge } from "@/modules/components/ui/badge";
+import type { FlashcardSet } from "@/modules/types";
+import { Grid, List, SortAsc, SortDesc, Calendar, Hash } from "lucide-react";
 
 interface SetGridProps {
   sets: FlashcardSet[];
@@ -16,46 +16,56 @@ interface SetGridProps {
   showActions?: boolean;
 }
 
-type SortOption = 'name' | 'created' | 'cardCount';
-type SortDirection = 'asc' | 'desc';
+type SortOption = "name" | "created" | "cardCount";
+type SortDirection = "asc" | "desc";
 
-export function SetGrid({ sets, onEdit, onDelete, showActions = true }: SetGridProps) {
+export function SetGrid({
+  sets,
+  onEdit,
+  onDelete,
+  showActions = true,
+}: SetGridProps) {
   const [filteredSets, setFilteredSets] = useState<FlashcardSet[]>(sets);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<SortOption>('created');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState<SortOption>("created");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   // Sort filtered sets
   const sortedSets = [...filteredSets].sort((a, b) => {
     let comparison = 0;
-    
+
     switch (sortBy) {
-      case 'name':
-        comparison = a.name.localeCompare(b.name, 'da-DK');
+      case "name":
+        comparison = a.name.localeCompare(b.name, "da-DK");
         break;
-      case 'created':
-        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case "created":
+        comparison =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         break;
-      case 'cardCount':
+      case "cardCount":
         comparison = a.cardCount - b.cardCount;
         break;
     }
-    
-    return sortDirection === 'asc' ? comparison : -comparison;
+
+    return sortDirection === "asc" ? comparison : -comparison;
   });
 
   const handleSort = (option: SortOption) => {
     if (sortBy === option) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortBy(option);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
   const getSortIcon = (option: SortOption) => {
     if (sortBy !== option) return null;
-    return sortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />;
+    return sortDirection === "asc" ? (
+      <SortAsc className="h-4 w-4" />
+    ) : (
+      <SortDesc className="h-4 w-4" />
+    );
   };
 
   if (sets.length === 0) {
@@ -88,51 +98,51 @@ export function SetGrid({ sets, onEdit, onDelete, showActions = true }: SetGridP
             placeholder="Søg i sets..."
           />
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3">
           {/* Sort options */}
           <div className="flex items-center gap-1">
             <Button
-              variant={sortBy === 'name' ? 'default' : 'outline'}
+              variant={sortBy === "name" ? "default" : "outline"}
               size="sm"
-              onClick={() => handleSort('name')}
+              onClick={() => handleSort("name")}
               className="text-xs"
             >
-              Navn {getSortIcon('name')}
+              Navn {getSortIcon("name")}
             </Button>
             <Button
-              variant={sortBy === 'created' ? 'default' : 'outline'}
+              variant={sortBy === "created" ? "default" : "outline"}
               size="sm"
-              onClick={() => handleSort('created')}
+              onClick={() => handleSort("created")}
               className="text-xs"
             >
               <Calendar className="h-3 w-3 mr-1" />
-              Dato {getSortIcon('created')}
+              Dato {getSortIcon("created")}
             </Button>
             <Button
-              variant={sortBy === 'cardCount' ? 'default' : 'outline'}
+              variant={sortBy === "cardCount" ? "default" : "outline"}
               size="sm"
-              onClick={() => handleSort('cardCount')}
+              onClick={() => handleSort("cardCount")}
               className="text-xs"
             >
               <Hash className="h-3 w-3 mr-1" />
-              Kort {getSortIcon('cardCount')}
+              Kort {getSortIcon("cardCount")}
             </Button>
           </div>
 
           {/* View mode */}
           <div className="flex items-center gap-1 border-l pl-3">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              variant={viewMode === "grid" ? "default" : "outline"}
               size="sm"
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
             >
               <Grid className="h-4 w-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
+              variant={viewMode === "list" ? "default" : "outline"}
               size="sm"
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
             >
               <List className="h-4 w-4" />
             </Button>
@@ -142,14 +152,16 @@ export function SetGrid({ sets, onEdit, onDelete, showActions = true }: SetGridP
 
       {/* Stats */}
       <div className="flex items-center gap-4 text-sm text-gray-600">
-        <span>Viser {sortedSets.length} af {sets.length} sets</span>
+        <span>
+          Viser {sortedSets.length} af {sets.length} sets
+        </span>
         <Badge variant="outline">
           {sets.reduce((total, set) => total + set.cardCount, 0)} kort i alt
         </Badge>
       </div>
 
       {/* Content */}
-      {viewMode === 'grid' ? (
+      {viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedSets.map((set) => (
             <SetCard
@@ -173,10 +185,11 @@ export function SetGrid({ sets, onEdit, onDelete, showActions = true }: SetGridP
                       <Badge variant="secondary">{set.cardCount} kort</Badge>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Oprettet {new Date(set.createdAt).toLocaleDateString('da-DK')}
+                      Oprettet{" "}
+                      {new Date(set.createdAt).toLocaleDateString("da-DK")}
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <SetCard
                       set={set}
@@ -196,9 +209,7 @@ export function SetGrid({ sets, onEdit, onDelete, showActions = true }: SetGridP
         <Card>
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center">
-              <p className="text-gray-500">
-                Ingen sets matcher din søgning
-              </p>
+              <p className="text-gray-500">Ingen sets matcher din søgning</p>
             </div>
           </CardContent>
         </Card>
