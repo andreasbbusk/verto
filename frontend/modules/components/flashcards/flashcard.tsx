@@ -95,7 +95,7 @@ const FlashcardComponent = ({
         {/* Front Side */}
         <motion.div
           className={cn(
-            "absolute inset-0 w-full h-full backface-hidden rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-xl border border-blue-200 p-6 flex flex-col justify-between",
+            "absolute inset-0 w-full h-full backface-hidden rounded-2xl bg-brand-purple shadow-modern-lg p-8 flex flex-col justify-between",
             flipped ? "rotate-x-180" : "rotate-x-0"
           )}
           initial={{ opacity: 0 }}
@@ -172,7 +172,7 @@ const FlashcardComponent = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <p className="text-white text-lg font-semibold text-center leading-relaxed drop-shadow-sm">
+            <p className="text-white text-xl font-bold text-center leading-relaxed">
               {flashcard.front}
             </p>
           </motion.div>
@@ -192,7 +192,7 @@ const FlashcardComponent = ({
         {/* Back Side */}
         <motion.div
           className={cn(
-            "absolute inset-0 w-full h-full backface-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-xl border border-emerald-200 p-6 flex flex-col justify-between rotate-x-180"
+            "absolute inset-0 w-full h-full backface-hidden rounded-2xl bg-brand-teal shadow-modern-lg p-8 flex flex-col justify-between rotate-x-180"
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -268,7 +268,7 @@ const FlashcardComponent = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <p className="text-white text-lg font-semibold text-center leading-relaxed drop-shadow-sm">
+            <p className="text-white text-xl font-bold text-center leading-relaxed">
               {flashcard.back}
             </p>
           </motion.div>

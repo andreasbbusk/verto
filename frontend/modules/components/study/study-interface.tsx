@@ -14,12 +14,10 @@ interface StudyInterfaceProps {
   flashcards: Flashcard[];
   setName: string;
   setDifficulty?: number; // Set-level difficulty (1-5)
-  studyMode?: 'new' | 'review' | 'mixed' | 'due-only';
-  onModeChange?: () => void;
   onFlashcardUpdate?: (flashcard: Flashcard) => void;
 }
 
-export function StudyInterface({ flashcards, setName, setDifficulty = 3, studyMode, onModeChange, onFlashcardUpdate }: StudyInterfaceProps) {
+export function StudyInterface({ flashcards, setName, setDifficulty = 3, onFlashcardUpdate }: StudyInterfaceProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -235,11 +233,11 @@ export function StudyInterface({ flashcards, setName, setDifficulty = 3, studyMo
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-soft">
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">{setName}</h1>
+        <div className="text-center bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-modern">
+          <h1 className="text-3xl font-bold text-foreground mb-4 tracking-tight">{setName}</h1>
           <ProgressBar
             current={currentIndex}
             total={studyCards.length}
@@ -253,10 +251,9 @@ export function StudyInterface({ flashcards, setName, setDifficulty = 3, studyMo
             flashcard={currentCard}
             isFlipped={isFlipped}
             onFlip={handleFlipCard}
-            className="w-full max-w-md"
+            className="w-full max-w-lg"
           />
         </div>
-
 
         {/* Controls */}
         <StudyControls
@@ -269,34 +266,44 @@ export function StudyInterface({ flashcards, setName, setDifficulty = 3, studyMo
           onReset={resetStudy}
           onExit={exitStudy}
           onShuffle={shuffleCards}
-          onModeChange={onModeChange}
           autoPlayEnabled={autoPlayEnabled}
           onToggleAutoPlay={() => setAutoPlayEnabled(prev => !prev)}
         />
 
         {/* Study Stats */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <div className="flex items-center gap-4">
-                  <span>Fremskridt: {Math.round(((currentIndex + 1) / studyCards.length) * 100)}%</span>
-                  <span>Kort tilbage: {studyCards.length - currentIndex - 1}</span>
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-modern">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-base text-muted-foreground">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-brand-purple rounded-full" />
+                    <span className="font-medium">Progress: {Math.round(((currentIndex + 1) / studyCards.length) * 100)}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-brand-yellow rounded-full" />
+                    <span>Remaining: {studyCards.length - currentIndex - 1}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                   {autoPlayEnabled && (
-                    <span className="text-blue-600 font-medium">🔄 Auto-afspilning aktiv</span>
+                    <div className="flex items-center gap-2 text-brand-purple">
+                      <div className="w-2 h-2 bg-brand-purple rounded-full animate-pulse" />
+                      <span className="font-medium">Auto-play active</span>
+                    </div>
                   )}
-                  <span>Total: {studyCards.length} kort</span>
+                  <span className="font-medium">Total: {studyCards.length} cards</span>
                 </div>
               </div>
               
               {/* Session Stats */}
               {sessionStats && sessionStats.totalReviewed > 0 && (
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
-                  <span>Gennemgået: {sessionStats.totalReviewed}</span>
-                  <span>Præcision: {Math.round(sessionStats.accuracy)}%</span>
-                  <span>Tid: {Math.round(sessionStats.timeSpent)}min</span>
+                <div className="flex items-center justify-between text-sm text-muted-foreground pt-4 border-t border-border/50">
+                  <div className="flex items-center gap-6">
+                    <span>Reviewed: {sessionStats.totalReviewed}</span>
+                    <span>Accuracy: {Math.round(sessionStats.accuracy)}%</span>
+                    <span>Time: {Math.round(sessionStats.timeSpent)}min</span>
+                  </div>
                 </div>
               )}
             </div>

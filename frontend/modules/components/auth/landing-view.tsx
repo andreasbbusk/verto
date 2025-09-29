@@ -133,53 +133,62 @@ export function LandingView() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-soft">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <BookOpen className="h-4 w-4 text-primary-foreground" />
+      <header className="border-b border-border/50 bg-white/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-brand-purple rounded-2xl flex items-center justify-center shadow-modern">
+                <BookOpen className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold">Flashcards</span>
+              <span className="text-2xl font-bold tracking-tight">Flashcards</span>
             </div>
-            <div className="space-x-2">
-              <Button variant="ghost" onClick={() => setAuthMode("signin")}>
+            <div className="space-x-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setAuthMode("signin")}
+                className="hover:bg-brand-purple/10 hover:text-brand-purple"
+              >
                 Sign In
               </Button>
-              <Button onClick={() => setAuthMode("signup")}>Get Started</Button>
+              <Button 
+                onClick={() => setAuthMode("signup")}
+                className="bg-brand-purple hover:bg-brand-purple/90 shadow-modern"
+              >
+                Get Started
+              </Button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+      <section className="py-24 px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto text-center">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-8 tracking-tight">
             Master Any Subject with
-            <span className="text-primary block mt-2">Smart Flashcards</span>
+            <span className="text-brand-purple block mt-3">Smart Flashcards</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-xl sm:text-2xl text-muted-foreground max-w-4xl mx-auto mb-12 leading-relaxed">
             Create, study, and track your progress with our intelligent
             flashcard system. Perfect for students, professionals, and lifelong
             learners.
           </p>
-          <div className="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
+          <div className="space-y-4 sm:space-y-0 sm:space-x-6 sm:flex sm:justify-center">
             <Button
               size="lg"
               onClick={() => setAuthMode("signup")}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-brand-purple hover:bg-brand-purple/90 shadow-modern-lg text-lg px-8 py-4 h-auto"
             >
               Start Learning Free
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-3 h-5 w-5" />
             </Button>
             <Button
               size="lg"
               variant="outline"
               onClick={() => setAuthMode("signin")}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto shadow-modern text-lg px-8 py-4 h-auto hover:bg-brand-purple/5 hover:text-brand-purple hover:border-brand-purple"
             >
               Sign In
             </Button>
@@ -188,32 +197,34 @@ export function LandingView() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-24 px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6 tracking-tight">
               Everything You Need to Learn Effectively
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Our platform combines proven learning techniques with modern
               technology
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="text-center">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <feature.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
+            {features.map((feature, index) => {
+              const colors = ['bg-brand-purple', 'bg-brand-yellow', 'bg-brand-teal', 'bg-brand-gray'];
+              const lightColors = ['bg-brand-purple-light', 'bg-brand-yellow-light', 'bg-brand-teal-light', 'bg-brand-gray-light'];
+              return (
+                <Card key={index} className={`text-center ${lightColors[index]} border-0 shadow-modern transition-all duration-300 hover:shadow-modern-lg hover:-translate-y-1`}>
+                  <CardContent className="p-8">
+                    <div className={`w-16 h-16 ${colors[index]} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-modern`}>
+                      <feature.icon className="h-8 w-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl font-bold text-foreground mb-4">{feature.title}</CardTitle>
+                    <CardDescription className="text-muted-foreground leading-relaxed">{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>

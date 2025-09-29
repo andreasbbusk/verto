@@ -40,5 +40,5 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   // For unauthenticated pages (like landing page), show children without navigation
-  return <div className="min-h-screen bg-gray-50">{children}</div>;
+  return <div className="min-h-screen">{children}</div>;
 }
