@@ -3,27 +3,24 @@ import type { User, CreateUserData, UpdateUserData } from "@/modules/types";
 
 export class UserRepository {
   async getAll(): Promise<User[]> {
-    return await storage.get<User[]>(STORAGE_KEYS.USERS);
+    return await storage.find<User>(STORAGE_KEYS.USERS);
   }
 
   async getById(id: number): Promise<User | undefined> {
-    const users = await this.getAll();
-    return users.find((user) => user.id === id);
+    const user = await storage.findOne<User>(STORAGE_KEYS.USERS, { id });
+    return user || undefined;
   }
 
   async getByEmail(email: string): Promise<User | undefined> {
-    const users = await this.getAll();
-    return users.find((user) => user.email.toLowerCase() === email.toLowerCase());
+    const user = await storage.findOne<User>(STORAGE_KEYS.USERS, { 
+      email: email.toLowerCase() 
+    });
+    return user || undefined;
   }
 
   async create(data: CreateUserData): Promise<User> {
-    const users = await this.getAll();
-
     // Check if user already exists
-    const existingUser = users.find(
-      (user) => user.email.toLowerCase() === data.email.toLowerCase()
-    );
-
+    const existingUser = await this.getByEmail(data.email);
     if (existingUser) {
       throw new Error("User already exists with this email");
     }
@@ -48,40 +45,41 @@ export class UserRepository {
       },
     };
 
-    users.push(newUser);
-    await storage.set(STORAGE_KEYS.USERS, users);
+    await storage.insertOne(STORAGE_KEYS.USERS, newUser);
     return newUser;
   }
 
   async update(id: number, data: UpdateUserData): Promise<User> {
-    const users = await this.getAll();
-    const userIndex = users.findIndex((user) => user.id === id);
+    const updateData: any = { ...data, updatedAt: new Date() };
+    
+    // Handle nested preference updates
+    if (data.preferences) {
+      updateData.$set = updateData.$set || {};
+      Object.keys(data.preferences).forEach(key => {
+        updateData.$set[`preferences.${key}`] = data.preferences![key as keyof typeof data.preferences];
+      });
+      delete updateData.preferences;
+    }
+    
+    // Handle nested stats updates
+    if (data.stats) {
+      updateData.$set = updateData.$set || {};
+      Object.keys(data.stats).forEach(key => {
+        updateData.$set[`stats.${key}`] = data.stats![key as keyof typeof data.stats];
+      });
+      delete updateData.stats;
+    }
 
-    if (userIndex === -1) {
+    const updatedUser = await storage.updateOne<User>(
+      STORAGE_KEYS.USERS, 
+      { id }, 
+      updateData.$set ? { $set: updateData.$set, ...updateData } : { $set: updateData }
+    );
+
+    if (!updatedUser) {
       throw new Error("User not found");
     }
 
-    const updatedUser: User = {
-      ...users[userIndex],
-      ...data,
-      id: users[userIndex].id, // Ensure ID doesn't change
-      email: users[userIndex].email, // Ensure email doesn't change
-      preferences: {
-        studyGoal: data.preferences?.studyGoal || users[userIndex].preferences.studyGoal,
-        theme: data.preferences?.theme || users[userIndex].preferences.theme,
-        notifications: data.preferences?.notifications !== undefined ? data.preferences.notifications : users[userIndex].preferences.notifications,
-      },
-      stats: {
-        totalStudySessions: data.stats?.totalStudySessions || users[userIndex].stats.totalStudySessions,
-        currentStreak: data.stats?.currentStreak || users[userIndex].stats.currentStreak,
-        longestStreak: data.stats?.longestStreak || users[userIndex].stats.longestStreak,
-        totalCardsStudied: data.stats?.totalCardsStudied || users[userIndex].stats.totalCardsStudied,
-      },
-      updatedAt: new Date(),
-    };
-
-    users[userIndex] = updatedUser;
-    await storage.set(STORAGE_KEYS.USERS, users);
     return updatedUser;
   }
 
@@ -90,15 +88,12 @@ export class UserRepository {
   }
 
   async delete(id: number): Promise<User> {
-    const users = await this.getAll();
-    const userIndex = users.findIndex((user) => user.id === id);
-
-    if (userIndex === -1) {
+    const userToDelete = await this.getById(id);
+    if (!userToDelete) {
       throw new Error("User not found");
     }
 
-    const deletedUser = users.splice(userIndex, 1)[0];
-    await storage.set(STORAGE_KEYS.USERS, users);
-    return deletedUser;
+    await storage.deleteOne(STORAGE_KEYS.USERS, { id });
+    return userToDelete;
   }
 }

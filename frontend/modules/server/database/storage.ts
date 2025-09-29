@@ -1,98 +1,172 @@
-import { createClient, RedisClientType } from "redis";
+import { getDatabase, COLLECTION_NAMES } from "./connection";
+import { Collection, Document, WithId } from "mongodb";
 import type { Counters } from "@/modules/types";
 
-const FLASHCARDS_KEY = "flashcards";
-const SETS_KEY = "sets";
-const USERS_KEY = "users";
-const COUNTERS_KEY = "counters";
+/**
+ * MongoDB-based storage abstraction layer
+ */
 
-// Initialize Redis client following Vercel guidelines
-let redisClient: RedisClientType;
-
-const getRedisConnection = async (): Promise<RedisClientType | null> => {
-  if (!redisClient && process.env.REDIS_URL) {
-    redisClient = await createClient({ url: process.env.REDIS_URL }).connect() as RedisClientType;
-  }
-  return redisClient;
-};
-
-// In-memory storage for fallback
-let memoryStorage: {
-  flashcards: any[];
-  sets: any[];
-  users: any[];
-  counters: Counters;
-} = {
-  flashcards: [],
-  sets: [],
-  users: [],
-  counters: { flashcardId: 1, setId: 1, userId: 1 },
-};
-
-// Storage abstraction layer
-export const storage = {
-  async get<T>(key: string): Promise<T> {
-    try {
-      if (process.env.REDIS_URL) {
-        const redisClient = await getRedisConnection();
-        if (redisClient) {
-          const data = await redisClient.get(key);
-          if (data) {
-            return JSON.parse(data) as T;
-          }
-        }
-        // Return default values for each key type
-        if (key === COUNTERS_KEY) {
-          return { flashcardId: 1, setId: 1, userId: 1 } as T;
-        }
-        return [] as T;
-      }
-    } catch (error) {
-      console.warn("Redis get failed, falling back to memory:", error);
-    }
-
-    // Fallback to memory
-    const memoryKey = key.replace(":", "") as keyof typeof memoryStorage;
-    return (memoryStorage[memoryKey] ||
-      (key === COUNTERS_KEY
-        ? { flashcardId: 1, setId: 1, userId: 1 }
-        : [])) as T;
-  },
-
-  async set<T>(key: string, value: T): Promise<void> {
-    try {
-      if (process.env.REDIS_URL) {
-        const redisClient = await getRedisConnection();
-        if (redisClient) {
-          await redisClient.set(key, JSON.stringify(value));
-          return;
-        }
-      }
-    } catch (error) {
-      console.warn("Redis set failed, falling back to memory:", error);
-    }
-
-    // Fallback to memory
-    const memoryKey = key.replace(":", "") as keyof typeof memoryStorage;
-    (memoryStorage[memoryKey] as T) = value;
-  },
-};
-
-// Generate unique ID
+// Generate unique auto-incrementing IDs for different entity types
 export const generateId = async (
   type: "flashcard" | "set" | "user"
 ): Promise<number> => {
-  const counters = await storage.get<Counters>(COUNTERS_KEY);
-  const newId = counters[`${type}Id` as keyof Counters];
-  counters[`${type}Id` as keyof Counters] = newId + 1;
-  await storage.set(COUNTERS_KEY, counters);
-  return newId;
+  const db = await getDatabase();
+  const countersCollection = db.collection<{ _id: string; value: number }>("counters");
+  
+  const result = await countersCollection.findOneAndUpdate(
+    { _id: `${type}Id` },
+    { $inc: { value: 1 } },
+    { 
+      upsert: true, 
+      returnDocument: "after" 
+    }
+  );
+  
+  return result?.value || 1;
 };
 
-// Storage keys export for use in repositories
-export const STORAGE_KEYS = {
-  FLASHCARDS: FLASHCARDS_KEY,
-  SETS: SETS_KEY,
-  USERS: USERS_KEY,
-  COUNTERS: COUNTERS_KEY,
-} as const;
+/**
+ * Initialize database with proper indexes and default data
+ */
+export const initializeData = async (): Promise<void> => {
+  const db = await getDatabase();
+  
+  try {
+    // Create indexes for performance
+    await Promise.all([
+      // Users collection indexes
+      db.collection(COLLECTION_NAMES.USERS).createIndex({ email: 1 }, { unique: true }),
+      db.collection(COLLECTION_NAMES.USERS).createIndex({ id: 1 }, { unique: true }),
+      
+      // Flashcards collection indexes
+      db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ userId: 1 }),
+      db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ set: 1 }),
+      db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ id: 1 }, { unique: true }),
+      db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ userId: 1, set: 1 }),
+      
+      // Sets collection indexes
+      db.collection(COLLECTION_NAMES.SETS).createIndex({ userId: 1 }),
+      db.collection(COLLECTION_NAMES.SETS).createIndex({ name: 1 }),
+      db.collection(COLLECTION_NAMES.SETS).createIndex({ id: 1 }, { unique: true }),
+      db.collection(COLLECTION_NAMES.SETS).createIndex({ userId: 1, name: 1 }, { unique: true }),
+      
+      // Study sessions collection indexes
+      db.collection(COLLECTION_NAMES.STUDY_SESSIONS).createIndex({ userId: 1 }),
+      db.collection(COLLECTION_NAMES.STUDY_SESSIONS).createIndex({ setId: 1 }),
+      db.collection(COLLECTION_NAMES.STUDY_SESSIONS).createIndex({ startTime: -1 }),
+    ]);
+    
+    console.log("Database indexes created successfully");
+  } catch (error) {
+    console.warn("Some indexes may already exist:", error);
+  }
+};
+
+/**
+ * Generic storage operations for MongoDB collections
+ */
+export const storage = {
+  /**
+   * Get a collection by name
+   */
+  async getCollection<T extends Document = Document>(collectionName: string): Promise<Collection<T>> {
+    const db = await getDatabase();
+    return db.collection<T>(collectionName);
+  },
+
+  /**
+   * Find documents in a collection
+   */
+  async find<T extends Document = Document>(collectionName: string, filter: any = {}, options: any = {}): Promise<WithId<T>[]> {
+    const collection = await this.getCollection<T>(collectionName);
+    return collection.find(filter, options).toArray();
+  },
+
+  /**
+   * Find one document in a collection
+   */
+  async findOne<T extends Document = Document>(collectionName: string, filter: any): Promise<WithId<T> | null> {
+    const collection = await this.getCollection<T>(collectionName);
+    return collection.findOne(filter);
+  },
+
+  /**
+   * Insert a document into a collection
+   */
+  async insertOne<T extends Document = Document>(collectionName: string, document: T): Promise<WithId<T>> {
+    const collection = await this.getCollection<T>(collectionName);
+    const result = await collection.insertOne(document as any);
+    return { ...document, _id: result.insertedId } as WithId<T>;
+  },
+
+  /**
+   * Insert multiple documents into a collection
+   */
+  async insertMany<T extends Document = Document>(collectionName: string, documents: T[]): Promise<WithId<T>[]> {
+    const collection = await this.getCollection<T>(collectionName);
+    const result = await collection.insertMany(documents as any);
+    return documents.map((doc, index) => ({
+      ...doc,
+      _id: result.insertedIds[index]
+    })) as WithId<T>[];
+  },
+
+  /**
+   * Update a document in a collection
+   */
+  async updateOne<T extends Document = Document>(collectionName: string, filter: any, update: any, options: any = {}): Promise<WithId<T> | null> {
+    const collection = await this.getCollection<T>(collectionName);
+    const result = await collection.findOneAndUpdate(
+      filter,
+      update,
+      { returnDocument: "after", ...options }
+    );
+    return result ? result as unknown as WithId<T> : null;
+  },
+
+  /**
+   * Update multiple documents in a collection
+   */
+  async updateMany(collectionName: string, filter: any, update: any): Promise<number> {
+    const collection = await this.getCollection(collectionName);
+    const result = await collection.updateMany(filter, update);
+    return result.modifiedCount;
+  },
+
+  /**
+   * Delete a document from a collection
+   */
+  async deleteOne(collectionName: string, filter: any): Promise<boolean> {
+    const collection = await this.getCollection(collectionName);
+    const result = await collection.deleteOne(filter);
+    return result.deletedCount > 0;
+  },
+
+  /**
+   * Delete multiple documents from a collection
+   */
+  async deleteMany(collectionName: string, filter: any): Promise<number> {
+    const collection = await this.getCollection(collectionName);
+    const result = await collection.deleteMany(filter);
+    return result.deletedCount;
+  },
+
+  /**
+   * Count documents in a collection
+   */
+  async count(collectionName: string, filter: any = {}): Promise<number> {
+    const collection = await this.getCollection(collectionName);
+    return collection.countDocuments(filter);
+  },
+
+  /**
+   * Perform aggregation operations
+   */
+  async aggregate<T extends Document = Document>(collectionName: string, pipeline: any[]): Promise<T[]> {
+    const collection = await this.getCollection<Document>(collectionName);
+    return collection.aggregate<T>(pipeline).toArray();
+  }
+};
+
+// Export collection names for use in repositories
+export const STORAGE_KEYS = COLLECTION_NAMES;

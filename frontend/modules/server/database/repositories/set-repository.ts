@@ -1,71 +1,72 @@
 import { FlashcardRepository } from "./flashcard-repository";
-import { generateId } from "../storage";
+import { generateId, storage, STORAGE_KEYS } from "../storage";
 import type { FlashcardSet, CreateSetDataInternal } from "@/modules/types";
 
 export class SetRepository {
   private flashcardRepo = new FlashcardRepository();
 
-  // Sets are derived from flashcards in this implementation
+  // Sets are derived from flashcards using MongoDB aggregation for efficiency
   async getAll(): Promise<FlashcardSet[]> {
-    const flashcards = await this.flashcardRepo.getAll();
-    const setMap = new Map<string, FlashcardSet>();
-
-    flashcards.forEach((card) => {
-      const setKey = `${card.userId}-${card.set.toLowerCase()}`;
-      if (!setMap.has(setKey)) {
-        setMap.set(setKey, {
-          id: setMap.size + 1,
-          name: card.set,
-          description: "",
-          difficulty: 3, // Default difficulty
-          userId: card.userId,
-          createdAt: card.createdAt,
-          cardCount: 1,
-        });
-      } else {
-        const existingSet = setMap.get(setKey)!;
-        existingSet.cardCount++;
-        // Use earliest creation date
-        if (card.createdAt < existingSet.createdAt) {
-          existingSet.createdAt = card.createdAt;
+    const pipeline = [
+      {
+        $group: {
+          _id: { userId: "$userId", set: "$set" },
+          name: { $first: "$set" },
+          userId: { $first: "$userId" },
+          createdAt: { $min: "$createdAt" },
+          cardCount: { $sum: 1 }
         }
+      },
+      {
+        $project: {
+          _id: 0,
+          id: { $add: [{ $toInt: "$_id.userId" }, { $multiply: [{ $toInt: "$cardCount" }, 1000] }] },
+          name: "$name",
+          description: "",
+          difficulty: 3,
+          userId: "$userId",
+          createdAt: "$createdAt",
+          cardCount: "$cardCount"
+        }
+      },
+      {
+        $sort: { createdAt: 1 }
       }
-    });
+    ];
 
-    return Array.from(setMap.values()).sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
+    return await storage.aggregate<FlashcardSet>(STORAGE_KEYS.FLASHCARDS, pipeline);
   }
 
   async getByUserId(userId: number): Promise<FlashcardSet[]> {
-    const flashcards = await this.flashcardRepo.getByUserId(userId);
-    const setMap = new Map<string, FlashcardSet>();
-
-    flashcards.forEach((card) => {
-      const setKey = card.set.toLowerCase();
-      if (!setMap.has(setKey)) {
-        setMap.set(setKey, {
-          id: setMap.size + 1,
-          name: card.set,
-          description: "",
-          difficulty: 3, // Default difficulty
-          userId: card.userId,
-          createdAt: card.createdAt,
-          cardCount: 1,
-        });
-      } else {
-        const existingSet = setMap.get(setKey)!;
-        existingSet.cardCount++;
-        // Use earliest creation date
-        if (card.createdAt < existingSet.createdAt) {
-          existingSet.createdAt = card.createdAt;
+    const pipeline = [
+      { $match: { userId } },
+      {
+        $group: {
+          _id: "$set",
+          name: { $first: "$set" },
+          userId: { $first: "$userId" },
+          createdAt: { $min: "$createdAt" },
+          cardCount: { $sum: 1 }
         }
+      },
+      {
+        $project: {
+          _id: 0,
+          id: { $add: [userId, { $multiply: ["$cardCount", 1000] }] },
+          name: "$name",
+          description: "",
+          difficulty: 3,
+          userId: "$userId",
+          createdAt: "$createdAt",
+          cardCount: "$cardCount"
+        }
+      },
+      {
+        $sort: { createdAt: 1 }
       }
-    });
+    ];
 
-    return Array.from(setMap.values()).sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
+    return await storage.aggregate<FlashcardSet>(STORAGE_KEYS.FLASHCARDS, pipeline);
   }
 
   async create(data: CreateSetDataInternal): Promise<FlashcardSet> {
