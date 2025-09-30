@@ -19,7 +19,7 @@ import type {
   CreateSetData,
   UpdateSetData,
 } from "@/modules/types";
-import { ArrowLeft, BookOpen, PlusCircle, Loader2, Play } from "lucide-react";
+import { ArrowLeft, BookOpen, PlusCircle, Play } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -130,7 +130,7 @@ function SetsTable({ sets, onEdit, onDelete }: SetsTableProps) {
 }
 
 export function SetsView() {
-  const { sets, loading, error, create, update, remove } = useSets();
+  const { sets, error, create, update, remove } = useSets();
   const [isCreating, setIsCreating] = useState(false);
   const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,7 +140,6 @@ export function SetsView() {
       setIsSubmitting(true);
       await create(data);
       setIsCreating(false);
-      toast.success("Set oprettet!");
     } catch (error) {
       toast.error("Kunne ikke oprette set");
     } finally {
@@ -153,9 +152,8 @@ export function SetsView() {
 
     try {
       setIsSubmitting(true);
-      await update(editingSet.id.toString(), data);
+      await update({ id: editingSet.id.toString(), data });
       setEditingSet(null);
-      toast.success("Set opdateret!");
     } catch (error) {
       toast.error("Kunne ikke opdatere set");
     } finally {
@@ -190,16 +188,6 @@ export function SetsView() {
     setEditingSet(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Indlæser sets...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">

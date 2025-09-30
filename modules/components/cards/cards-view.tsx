@@ -7,13 +7,13 @@ import { FlashcardList } from "@/modules/components/flashcards/flashcard-list";
 import { FlashcardForm } from "@/modules/components/flashcards/flashcard-form";
 import { useFlashcards } from "@/modules/hooks/use-flashcards";
 import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
-import { ArrowLeft, PlusCircle, Loader2, BookOpen } from "lucide-react";
+import { ArrowLeft, PlusCircle, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import type { Flashcard, CreateFlashcardData, UpdateFlashcardData } from "@/modules/types";
 
 export function CardsView() {
-  const { flashcards, loading, error, refresh, create, update, remove } = useFlashcards();
+  const { flashcards, error, refresh, create, update, remove } = useFlashcards();
   const [isCreating, setIsCreating] = useState(false);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,7 +23,6 @@ export function CardsView() {
       setIsSubmitting(true);
       await create(data);
       setIsCreating(false);
-      toast.success("Flashcard oprettet!");
     } catch (error) {
       toast.error("Kunne ikke oprette flashcard");
     } finally {
@@ -36,9 +35,8 @@ export function CardsView() {
     
     try {
       setIsSubmitting(true);
-      await update(editingCard.id.toString(), data);
+      await update({ id: editingCard.id.toString(), data });
       setEditingCard(null);
-      toast.success("Flashcard opdateret!");
     } catch (error) {
       toast.error("Kunne ikke opdatere flashcard");
     } finally {
@@ -73,16 +71,6 @@ export function CardsView() {
     setEditingCard(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Indlæser flashcards...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

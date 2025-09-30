@@ -11,19 +11,8 @@ export default function StudyPage() {
   const params = useParams();
   const setName = decodeURIComponent(params['set-name'] as string);
 
-  const { flashcards, loading, error } = useFlashcardsBySet(setName);
-  const { sets, loading: setsLoading } = useSets();
-
-  if (loading || setsLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Henter flashcards...</p>
-        </div>
-      </div>
-    );
-  }
+  const { flashcards, error } = useFlashcardsBySet(setName);
+  const { sets } = useSets();
 
   if (error) {
     return (
