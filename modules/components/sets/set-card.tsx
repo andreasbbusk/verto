@@ -62,7 +62,7 @@ export function SetCard({
       <CardFooter className="pt-3 border-t bg-gray-50/50">
         <div className="flex w-full gap-2">
           <Link
-            href={`/study/${encodeURIComponent(set.name)}`}
+            href={`/study/${set.id}`}
             className="flex-1"
           >
             <Button className="w-full" size="sm">

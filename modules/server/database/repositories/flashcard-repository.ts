@@ -1,8 +1,8 @@
 import { storage, generateId, STORAGE_KEYS } from "../storage";
-import type { 
-  Flashcard, 
-  CreateFlashcardDataInternal, 
-  UpdateFlashcardData 
+import type {
+  Flashcard,
+  CreateFlashcardDataInternal,
+  UpdateFlashcardData
 } from "@/modules/types";
 
 export class FlashcardRepository {
@@ -15,29 +15,21 @@ export class FlashcardRepository {
     return flashcard || undefined;
   }
 
-  async getBySet(setName: string): Promise<Flashcard[]> {
-    return await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS, {
-      set: new RegExp(`^${setName}$`, 'i')
-    });
+  async getBySetId(setId: number): Promise<Flashcard[]> {
+    return await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS, { setId });
   }
 
   async getByUserId(userId: number): Promise<Flashcard[]> {
     return await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS, { userId });
   }
 
-  async getByUserIdAndSet(userId: number, setName: string): Promise<Flashcard[]> {
-    return await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS, {
-      userId,
-      set: new RegExp(`^${setName}$`, 'i')
-    });
-  }
-
   async create(data: CreateFlashcardDataInternal): Promise<Flashcard> {
     const newFlashcard: Flashcard = {
       id: await generateId("flashcard"),
+      setId: data.setId,
       front: data.front.trim(),
       back: data.back.trim(),
-      set: data.set || "General",
+      starred: data.starred || false,
       userId: data.userId,
       createdAt: new Date().toISOString(),
       reviewCount: 0,
@@ -49,9 +41,9 @@ export class FlashcardRepository {
 
   async update(id: number, data: UpdateFlashcardData): Promise<Flashcard> {
     const updateData: any = {
-      ...(data.front && { front: data.front.trim() }),
-      ...(data.back && { back: data.back.trim() }),
-      ...(data.set && { set: data.set }),
+      ...(data.front !== undefined && { front: data.front.trim() }),
+      ...(data.back !== undefined && { back: data.back.trim() }),
+      ...(data.starred !== undefined && { starred: data.starred }),
       updatedAt: new Date().toISOString(),
     };
 

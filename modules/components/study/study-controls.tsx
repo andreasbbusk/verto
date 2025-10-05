@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { Button } from '@/modules/components/ui/button';
-import { Card, CardContent } from '@/modules/components/ui/card';
-import { Badge } from '@/modules/components/ui/badge';
-import { cn } from '@/modules/lib/utils';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  RotateCcw, 
-  Home, 
-  Shuffle, 
+import { Button } from "@/modules/components/ui/button";
+import { Card, CardContent } from "@/modules/components/ui/card";
+import { Badge } from "@/modules/components/ui/badge";
+import { cn } from "@/modules/lib/utils";
+import {
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Home,
+  Shuffle,
   Settings,
   Play,
-  Pause
-} from 'lucide-react';
+  Pause,
+} from "lucide-react";
 
 interface StudyControlsProps {
   currentIndex: number;
@@ -46,13 +46,18 @@ export function StudyControls({
   onModeChange,
   autoPlayEnabled = false,
   onToggleAutoPlay,
-  className
+  className,
 }: StudyControlsProps) {
   const isFirstCard = currentIndex === 0;
   const isLastCard = currentIndex === totalCards - 1;
 
   return (
-    <Card className={cn("w-full bg-white/80 backdrop-blur-sm border-0 shadow-modern", className)}>
+    <Card
+      className={cn(
+        "w-full bg-card/80 backdrop-blur-sm border border-border",
+        className
+      )}
+    >
       <CardContent className="p-6">
         <div className="space-y-6">
           {/* Primary Navigation */}
@@ -62,7 +67,7 @@ export function StudyControls({
               size="lg"
               onClick={onPrevious}
               disabled={totalCards <= 1}
-              className="flex-1 max-w-40 shadow-modern transition-all duration-200 hover:shadow-modern-lg"
+              className="flex-1 max-w-40 transition-all duration-200"
             >
               <ChevronLeft className="h-5 w-5 mr-2" />
               Previous
@@ -73,13 +78,13 @@ export function StudyControls({
                 variant={isFlipped ? "secondary" : "default"}
                 size="lg"
                 onClick={onFlip}
-                className="w-full shadow-modern bg-brand-purple hover:bg-brand-purple/90"
+                className="w-full"
               >
                 {isFlipped ? "Show Front" : "Flip Card"}
               </Button>
-              <Badge 
-                variant="outline" 
-                className="text-sm px-3 py-1 bg-brand-purple-light text-brand-purple border-brand-purple/20"
+              <Badge
+                variant="outline"
+                className="text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20"
               >
                 {currentIndex + 1} / {totalCards}
               </Badge>
@@ -90,7 +95,7 @@ export function StudyControls({
               size="lg"
               onClick={onNext}
               disabled={totalCards <= 1}
-              className="flex-1 max-w-40 shadow-modern transition-all duration-200 hover:shadow-modern-lg"
+              className="flex-1 max-w-40 transition-all duration-200"
             >
               Next
               <ChevronRight className="h-5 w-5 ml-2" />
@@ -105,18 +110,18 @@ export function StudyControls({
                 size="sm"
                 onClick={onExit}
                 title="Return to dashboard"
-                className="bg-white border-2 border-red-300 text-red-600 hover:bg-red-500 hover:text-white shadow-modern transition-all duration-200 hover:shadow-modern-lg font-medium cursor-pointer"
+                className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all duration-200"
               >
                 <Home className="h-4 w-4 mr-2" />
                 Exit
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onReset}
                 title="Start over"
-                className="bg-white border-2 border-blue-300 text-blue-600 hover:bg-blue-500 hover:text-white shadow-modern transition-all duration-200 hover:shadow-modern-lg font-medium cursor-pointer"
+                className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Reset
@@ -130,9 +135,10 @@ export function StudyControls({
                   size="sm"
                   onClick={onToggleAutoPlay}
                   title={autoPlayEnabled ? "Stop auto-play" : "Start auto-play"}
-                  className={autoPlayEnabled 
-                    ? "bg-brand-yellow hover:bg-brand-yellow/80 text-white shadow-modern transition-all duration-200 hover:shadow-modern-lg font-medium cursor-pointer" 
-                    : "bg-white border-2 border-brand-yellow text-brand-yellow hover:bg-brand-yellow hover:text-white shadow-modern transition-all duration-200 hover:shadow-modern-lg font-medium cursor-pointer"
+                  className={
+                    autoPlayEnabled
+                      ? "transition-all duration-200"
+                      : "border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
                   }
                 >
                   {autoPlayEnabled ? (
@@ -150,7 +156,7 @@ export function StudyControls({
                   size="sm"
                   onClick={onShuffle}
                   title="Shuffle cards"
-                  className="bg-white border-2 border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white shadow-modern transition-all duration-200 hover:shadow-modern-lg font-medium cursor-pointer"
+                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
                 >
                   <Shuffle className="h-4 w-4 mr-2" />
                   Shuffle
@@ -163,7 +169,7 @@ export function StudyControls({
                   size="sm"
                   onClick={onSettings}
                   title="Settings"
-                  className="bg-white border-2 border-gray-300 text-gray-600 hover:bg-gray-500 hover:text-white shadow-modern transition-all duration-200 hover:shadow-modern-lg font-medium cursor-pointer"
+                  className="transition-all duration-200"
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
@@ -175,22 +181,36 @@ export function StudyControls({
           <div className="text-center text-sm text-muted-foreground border-t border-border/50 pt-4">
             <div className="flex items-center justify-center gap-6 flex-wrap">
               <div className="flex items-center gap-2">
-                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">←</kbd>
-                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">→</kbd>
+                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">
+                  ←
+                </kbd>
+                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">
+                  →
+                </kbd>
                 <span className="text-xs">Navigate</span>
               </div>
               <div className="flex items-center gap-2">
-                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">↑</kbd>
-                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">↓</kbd>
-                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">Space</kbd>
+                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">
+                  ↑
+                </kbd>
+                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">
+                  ↓
+                </kbd>
+                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">
+                  Space
+                </kbd>
                 <span className="text-xs">Flip</span>
               </div>
               <div className="flex items-center gap-2">
-                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">Esc</kbd>
+                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">
+                  Esc
+                </kbd>
                 <span className="text-xs">Exit</span>
               </div>
               <div className="flex items-center gap-2">
-                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">S</kbd>
+                <kbd className="px-2 py-1 bg-muted rounded-md text-xs font-mono">
+                  S
+                </kbd>
                 <span className="text-xs">Shuffle</span>
               </div>
             </div>

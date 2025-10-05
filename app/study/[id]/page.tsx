@@ -2,17 +2,15 @@
 
 import { useParams } from "next/navigation";
 import { StudyInterface } from "@/modules/components/study/study-interface";
-import { useFlashcardsBySet } from "@/modules/hooks/use-flashcards";
-import { useSets } from "@/modules/hooks/use-sets";
+import { useSetById } from "@/modules/hooks/use-sets";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import Link from "next/link";
 
 export default function StudyPage() {
   const params = useParams();
-  const setName = decodeURIComponent(params['set-name'] as string);
+  const setId = parseInt(params['id'] as string, 10);
 
-  const { flashcards, error } = useFlashcardsBySet(setName);
-  const { sets } = useSets();
+  const { set, flashcards, error } = useSetById(setId);
 
   if (error) {
     return (
@@ -36,7 +34,7 @@ export default function StudyPage() {
     );
   }
 
-  if (flashcards.length === 0) {
+  if (!set || flashcards.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -58,14 +56,11 @@ export default function StudyPage() {
     );
   }
 
-  const currentSet = sets.find(set => set.name === setName);
-  const setDifficulty = currentSet?.difficulty || 3;
-
   return (
-    <StudyInterface 
-      flashcards={flashcards} 
-      setName={setName}
-      setDifficulty={setDifficulty}
+    <StudyInterface
+      flashcards={flashcards}
+      setName={set.name}
+      setDifficulty={set.difficulty}
     />
   );
 }

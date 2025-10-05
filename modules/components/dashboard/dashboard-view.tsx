@@ -9,7 +9,15 @@ import {
   CardTitle,
 } from "@/modules/components/ui/card";
 import { Button } from "@/modules/components/ui/button";
-import { BookOpen, Brain, Target, Plus, TrendingUp, ArrowRight, Sparkles } from "lucide-react";
+import {
+  BookOpen,
+  Brain,
+  Target,
+  Plus,
+  TrendingUp,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 
 export function DashboardView() {
@@ -25,8 +33,8 @@ export function DashboardView() {
       value: user.stats.totalCardsStudied,
       icon: BookOpen,
       description: "Total cards reviewed",
-      color: "bg-brand-purple",
-      bgColor: "bg-brand-purple-light"
+      color: "bg-brand",
+      bgColor: "bg-brand-light",
     },
     {
       title: "Current Streak",
@@ -34,7 +42,7 @@ export function DashboardView() {
       icon: TrendingUp,
       description: "Days in a row",
       color: "bg-brand-yellow",
-      bgColor: "bg-brand-yellow-light"
+      bgColor: "bg-brand-yellow-light",
     },
     {
       title: "Study Sessions",
@@ -42,7 +50,7 @@ export function DashboardView() {
       icon: Brain,
       description: "Total sessions completed",
       color: "bg-brand-gray",
-      bgColor: "bg-brand-gray-light"
+      bgColor: "bg-brand-gray-light",
     },
     {
       title: "Longest Streak",
@@ -50,35 +58,35 @@ export function DashboardView() {
       icon: Target,
       description: "Personal best",
       color: "bg-brand-teal",
-      bgColor: "bg-brand-teal-light"
+      bgColor: "bg-brand-teal-light",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-soft">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="border-b border-border/50 bg-white/80 backdrop-blur-sm">
+      <div className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center py-8">
+          <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                Welcome back, {user.name}!
+              <h1 className="font-mono text-2xl font-bold text-foreground tracking-tight">
+                Welcome back, {user.name}
               </h1>
-              <p className="text-muted-foreground mt-2 text-lg">
-                Ready to continue your learning journey?
+              <p className="text-muted-foreground mt-1 text-sm">
+                Continue your learning
               </p>
             </div>
-            <div className="flex space-x-4">
+            <div className="flex gap-2">
               <Link href="/sets">
-                <Button size="lg" className="shadow-modern">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create Set
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Set
                 </Button>
               </Link>
               <Link href="/sets">
-                <Button variant="outline" size="lg" className="shadow-modern">
-                  <BookOpen className="h-5 w-5 mr-2" />
-                  Browse Sets
+                <Button variant="outline" size="sm">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Browse
                 </Button>
               </Link>
             </div>
@@ -89,128 +97,139 @@ export function DashboardView() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {stats.map((stat, index) => (
-            <Card key={index} className={`${stat.bgColor} border-0 shadow-modern transition-all duration-300 hover:shadow-modern-lg hover:-translate-y-1`}>
-              <CardContent className="p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div className={`p-3 rounded-2xl ${stat.color}`}>
-                    <stat.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-foreground">
-                      {stat.value}
-                    </div>
+            <Card key={index} className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-8 h-8 border border-border flex items-center justify-center">
+                  <stat.icon className="h-4 w-4 text-foreground" />
+                </div>
+                <div className="text-right">
+                  <div className="font-mono text-2xl font-bold text-foreground">
+                    {stat.value}
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1">
-                    {stat.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    {stat.description}
-                  </p>
-                </div>
-              </CardContent>
+              </div>
+              <div>
+                <h3 className="font-mono text-xs text-muted-foreground mb-1">
+                  {stat.title}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
+              </div>
             </Card>
           ))}
         </div>
 
         {/* Main Action Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Start Studying Card */}
-          <Card className="bg-brand-purple border-0 text-white shadow-modern-lg overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-purple to-purple-700 opacity-90" />
-            <CardContent className="relative p-10">
-              <div className="flex items-start justify-between mb-8">
-                <div className="bg-white/20 p-4 rounded-2xl">
-                  <Sparkles className="h-8 w-8 text-white" />
-                </div>
-                <div className="text-white/80 text-right">
-                  <div className="text-sm font-medium">Daily Goal</div>
-                  <div className="text-2xl font-bold">0 / {user.preferences.studyGoal}</div>
+          <Card className="p-8 bg-primary border-primary">
+            <div className="flex items-start justify-between mb-6">
+              <div className="w-10 h-10 border border-background flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-background" />
+              </div>
+              <div className="text-right">
+                <div className="font-mono text-xs text-background/60">Daily Goal</div>
+                <div className="font-mono text-lg font-bold text-background">
+                  0 / {user.preferences.studyGoal}
                 </div>
               </div>
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold mb-2">Start Studying</h3>
-                <p className="text-white/90">
-                  Continue your learning journey and build lasting knowledge
-                </p>
-              </div>
-              <Link href="/sets" className="block">
-                <Button size="lg" variant="secondary" className="w-full group">
-                  Start Learning
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-            </CardContent>
+            </div>
+            <div className="mb-6">
+              <h3 className="font-mono text-xl font-bold mb-2 text-background">Start Studying</h3>
+              <p className="text-sm text-background/80">
+                Continue your learning journey
+              </p>
+            </div>
+            <Link href="/sets" className="block">
+              <Button size="sm" className="w-full bg-background text-foreground hover:bg-background/90 border-background">
+                Start Learning
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </Card>
 
           {/* Recent Activity Card */}
-          <Card className="bg-brand-gray-light border-0 shadow-modern-lg">
-            <CardContent className="p-10">
-              <div className="flex items-start justify-between mb-8">
-                <div className="bg-brand-gray p-4 rounded-2xl">
-                  <Brain className="h-8 w-8 text-white" />
-                </div>
+          <Card className="p-8">
+            <div className="flex items-start justify-between mb-6">
+              <div className="w-10 h-10 border border-border flex items-center justify-center">
+                <Brain className="h-5 w-5 text-foreground" />
               </div>
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold text-foreground mb-2">Recent Activity</h3>
-                <p className="text-muted-foreground">
-                  Your latest study sessions and progress
-                </p>
-              </div>
-              <div className="text-center py-8 text-muted-foreground">
-                <Brain className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                <p className="text-lg">Start studying to see your activity here</p>
-              </div>
-            </CardContent>
+            </div>
+            <div className="mb-6">
+              <h3 className="font-mono text-xl font-bold text-foreground mb-2">
+                Recent Activity
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Your latest study sessions
+              </p>
+            </div>
+            <div className="text-center py-8 text-muted-foreground">
+              <Brain className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p className="text-sm">
+                Start studying to see activity
+              </p>
+            </div>
           </Card>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-brand-yellow-light border-0 shadow-modern transition-all duration-300 hover:shadow-modern-lg hover:-translate-y-1">
-            <CardContent className="p-8 text-center">
-              <div className="bg-brand-yellow p-4 rounded-2xl mx-auto mb-6 w-fit">
-                <Plus className="h-8 w-8 text-white" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-6 hover:border-foreground/30 transition-colors">
+            <div className="mb-4">
+              <div className="w-10 h-10 border border-border flex items-center justify-center mb-4">
+                <Plus className="h-5 w-5 text-foreground" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">Create New Set</h3>
-              <p className="text-muted-foreground mb-6">Build your own flashcard collection</p>
-              <Link href="/sets">
-                <Button variant="outline" className="w-full">
-                  Get Started
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-brand-teal-light border-0 shadow-modern transition-all duration-300 hover:shadow-modern-lg hover:-translate-y-1">
-            <CardContent className="p-8 text-center">
-              <div className="bg-brand-teal p-4 rounded-2xl mx-auto mb-6 w-fit">
-                <BookOpen className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">Browse Library</h3>
-              <p className="text-muted-foreground mb-6">Explore your flashcard sets</p>
-              <Link href="/sets">
-                <Button variant="outline" className="w-full">
-                  Browse Sets
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border-0 shadow-modern transition-all duration-300 hover:shadow-modern-lg hover:-translate-y-1">
-            <CardContent className="p-8 text-center">
-              <div className="bg-primary p-4 rounded-2xl mx-auto mb-6 w-fit">
-                <Target className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">Track Progress</h3>
-              <p className="text-muted-foreground mb-6">Monitor your learning statistics</p>
-              <Button variant="outline" className="w-full" disabled>
-                Coming Soon
+              <h3 className="font-mono text-sm font-semibold text-foreground mb-1">
+                Create New Set
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Build your flashcard collection
+              </p>
+            </div>
+            <Link href="/sets">
+              <Button variant="outline" size="sm" className="w-full">
+                Get Started
               </Button>
-            </CardContent>
+            </Link>
+          </Card>
+
+          <Card className="p-6 hover:border-foreground/30 transition-colors">
+            <div className="mb-4">
+              <div className="w-10 h-10 border border-border flex items-center justify-center mb-4">
+                <BookOpen className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="font-mono text-sm font-semibold text-foreground mb-1">
+                Browse Library
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Explore your sets
+              </p>
+            </div>
+            <Link href="/sets">
+              <Button variant="outline" size="sm" className="w-full">
+                Browse
+              </Button>
+            </Link>
+          </Card>
+
+          <Card className="p-6 opacity-60">
+            <div className="mb-4">
+              <div className="w-10 h-10 border border-border flex items-center justify-center mb-4">
+                <Target className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="font-mono text-sm font-semibold text-foreground mb-1">
+                Track Progress
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Monitor your statistics
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="w-full" disabled>
+              Coming Soon
+            </Button>
           </Card>
         </div>
       </div>

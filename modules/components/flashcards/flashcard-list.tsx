@@ -14,7 +14,6 @@ interface FlashcardListProps {
   onEdit?: (flashcard: Flashcard) => void;
   onDelete?: (flashcard: Flashcard) => void;
   showActions?: boolean;
-  groupBySet?: boolean;
 }
 
 export function FlashcardList({
@@ -22,22 +21,11 @@ export function FlashcardList({
   onEdit,
   onDelete,
   showActions = true,
-  groupBySet = false,
 }: FlashcardListProps) {
   const [filteredCards, setFilteredCards] = useState<Flashcard[]>(flashcards);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Group flashcards by set if requested
-  const groupedCards = groupBySet
-    ? filteredCards.reduce((groups, card) => {
-        const setName = card.set || "General";
-        if (!groups[setName]) {
-          groups[setName] = [];
-        }
-        groups[setName].push(card);
-        return groups;
-      }, {} as Record<string, Flashcard[]>)
-    : { "Alle kort": filteredCards };
+  const groupedCards = { "Alle kort": filteredCards };
 
   const handleEdit = (flashcard: Flashcard) => {
     onEdit?.(flashcard);
@@ -105,12 +93,6 @@ export function FlashcardList({
       {/* Content */}
       {Object.entries(groupedCards).map(([setName, cards]) => (
         <div key={setName} className="space-y-4">
-          {groupBySet && (
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">{setName}</h3>
-              <Badge variant="secondary">{cards.length} kort</Badge>
-            </div>
-          )}
 
           {viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -134,7 +116,7 @@ export function FlashcardList({
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{flashcard.set}</Badge>
+                          {flashcard.starred && <Badge variant="outline">⭐ Stjernet</Badge>}
                           <span className="text-xs text-gray-500">
                             {new Date(flashcard.createdAt).toLocaleDateString(
                               "da-DK"

@@ -4,7 +4,6 @@ import { useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/modules/stores/authStore";
 import { useAuthGuard } from "@/modules/hooks/use-auth-guard";
-import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -32,16 +31,7 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
 
   // Show loading state during initialization or authentication check
   if (!isInitialized || loading) {
-    return (
-      fallback || (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      )
-    );
+    return fallback || null;
   }
 
   // Don't render children if not authenticated (will redirect)

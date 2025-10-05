@@ -23,16 +23,16 @@ export function ProgressBar({
     <div className={cn("space-y-3", className)}>
       {/* Progress bar */}
       <div className="relative">
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-muted rounded-full h-2">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+            className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
             style={{ width: `${percentage}%` }}
           />
         </div>
-        
+
         {/* Progress text */}
         {showNumbers && (
-          <div className="flex justify-between text-xs text-gray-600 mt-1">
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
             <span>Kort {current + 1}</span>
             <span>{Math.round(percentage)}%</span>
             <span>af {total}</span>
@@ -51,10 +51,10 @@ export function ProgressBar({
                 className={cn(
                   "w-3 h-3 rounded-full transition-all duration-200 hover:scale-110",
                   index === current
-                    ? "bg-blue-600 scale-110 shadow-lg"
+                    ? "bg-primary scale-110 shadow-sm ring-2 ring-primary/20"
                     : index < current
-                    ? "bg-green-500 hover:bg-green-600"
-                    : "bg-gray-300 hover:bg-gray-400"
+                    ? "bg-primary/60 hover:bg-primary/80"
+                    : "bg-muted hover:bg-muted-foreground/20"
                 )}
                 title={`Gå til kort ${index + 1}`}
               />
@@ -75,18 +75,18 @@ export function ProgressBar({
                 className={cn(
                   "w-2 h-2 rounded-full transition-all duration-200",
                   i === current
-                    ? "bg-blue-600 scale-125"
+                    ? "bg-primary scale-125"
                     : i < current
-                    ? "bg-green-500"
-                    : "bg-gray-300"
+                    ? "bg-primary/60"
+                    : "bg-muted"
                 )}
               />
             ))}
-            
+
             {/* Show ellipsis if needed */}
             {current > 5 && current < total - 3 && (
               <>
-                <span className="text-gray-400 px-1">...</span>
+                <span className="text-muted-foreground px-1">...</span>
                 {/* Show dots around current */}
                 {[-1, 0, 1].map((offset) => {
                   const index = current + offset;
@@ -98,20 +98,20 @@ export function ProgressBar({
                         className={cn(
                           "w-2 h-2 rounded-full transition-all duration-200",
                           offset === 0
-                            ? "bg-blue-600 scale-125"
+                            ? "bg-primary scale-125"
                             : offset < 0
-                            ? "bg-green-500"
-                            : "bg-gray-300"
+                            ? "bg-primary/60"
+                            : "bg-muted"
                         )}
                       />
                     );
                   }
                   return null;
                 })}
-                <span className="text-gray-400 px-1">...</span>
+                <span className="text-muted-foreground px-1">...</span>
               </>
             )}
-            
+
             {/* Show last few dots */}
             {[...Array(3)].map((_, i) => {
               const index = total - 3 + i;
@@ -122,10 +122,10 @@ export function ProgressBar({
                   className={cn(
                     "w-2 h-2 rounded-full transition-all duration-200",
                     index === current
-                      ? "bg-blue-600 scale-125"
+                      ? "bg-primary scale-125"
                       : index < current
-                      ? "bg-green-500"
-                      : "bg-gray-300"
+                      ? "bg-primary/60"
+                      : "bg-muted"
                   )}
                 />
               );

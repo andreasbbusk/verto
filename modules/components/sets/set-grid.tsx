@@ -43,7 +43,7 @@ export function SetGrid({
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         break;
       case "cardCount":
-        comparison = a.cardCount - b.cardCount;
+        comparison = (a.cardCount || 0) - (b.cardCount || 0);
         break;
     }
 
@@ -156,7 +156,7 @@ export function SetGrid({
           Viser {sortedSets.length} af {sets.length} sets
         </span>
         <Badge variant="outline">
-          {sets.reduce((total, set) => total + set.cardCount, 0)} kort i alt
+          {sets.reduce((total, set) => total + (set.cardCount || 0), 0)} kort i alt
         </Badge>
       </div>
 

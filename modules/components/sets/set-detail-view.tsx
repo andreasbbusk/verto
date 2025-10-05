@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  createFlashcard,
-  deleteFlashcard,
-  getFlashcardsBySet,
-  getSets,
-  updateFlashcard
-} from "@/modules/api";
-import { FlashcardForm } from "@/modules/components/flashcards/flashcard-form";
+import { FlashcardDialog } from "@/modules/components/flashcards/flashcard-dialog";
 import { FlashcardList } from "@/modules/components/flashcards/flashcard-list";
 import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
 import { Badge } from "@/modules/components/ui/badge";
@@ -17,7 +10,6 @@ import type {
   CreateFlashcardData,
   CreateSetData,
   Flashcard,
-  FlashcardSet,
   UpdateFlashcardData
 } from "@/modules/types";
 import {
@@ -25,90 +17,52 @@ import {
   BarChart3,
   BookOpen,
   Calendar,
-  Loader2,
   Play,
   PlusCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { SetForm } from "./set-form";
+import { SetDialog } from "./set-dialog";
+import { useSetById, useSets } from "@/modules/hooks/use-sets";
+import { useFlashcardMutations } from "@/modules/hooks/use-flashcards";
 
 interface SetDetailViewProps {
-  name: string;
+  id: number;
 }
 
-export function SetDetailView({ name }: SetDetailViewProps) {
-  const [set, setSet] = useState<FlashcardSet | null>(null);
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isAddingCard, setIsAddingCard] = useState(false);
+export function SetDetailView({ id }: SetDetailViewProps) {
+  const [setDialogOpen, setSetDialogOpen] = useState(false);
+  const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  // Find set by name since we're using set name as ID in the URL
-  useEffect(() => {
-    const fetchSetData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Get all sets and find the one with matching name
-        const allSets = await getSets();
-        const foundSet = allSets.find(s => s.name === name);
-        
-        if (!foundSet) {
-          setError("Set ikke fundet");
-          return;
-        }
-        
-        setSet(foundSet);
-        
-        // Get flashcards for this set
-        const flashcardsData = await getFlashcardsBySet(foundSet.name);
-        setFlashcards(flashcardsData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Kunne ikke hente set data");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { set, flashcards, loading, error } = useSetById(id);
+  const flashcardMutations = useFlashcardMutations(id);
 
-    fetchSetData();
-  }, [name]);
+  const { update: updateSet, remove: removeSet } = useSets();
 
   const handleUpdateSet = async (data: CreateSetData) => {
     if (!set) return;
-    
+
     try {
-      setIsSubmitting(true);
-      // Since sets are derived from flashcards, we can't directly update a set
-      // We would need to implement a different approach or show a message
-      toast.info("Set opdatering er ikke implementeret endnu");
-      setIsEditing(false);
+      await updateSet({ id: set.id, data });
     } catch (error) {
       toast.error("Kunne ikke opdatere set");
-    } finally {
-      setIsSubmitting(false);
+      throw error;
     }
   };
 
   const handleDeleteSet = async () => {
     if (!set) return;
-    
+
     if (!confirm(`Er du sikker på du vil slette set "${set.name}" og alle dets flashcards?`)) {
       return;
     }
 
     try {
-      // Delete all flashcards in the set
-      await Promise.all(
-        flashcards.map(card => deleteFlashcard(card.id.toString()))
-      );
+      await removeSet(set.id);
       toast.success("Set slettet!");
       router.push("/sets");
     } catch (error) {
@@ -118,60 +72,44 @@ export function SetDetailView({ name }: SetDetailViewProps) {
 
   const handleCreateCard = async (data: CreateFlashcardData) => {
     if (!set) return;
-    
+
     try {
-      setIsSubmitting(true);
-      const response = await createFlashcard({
-        ...data,
-        set: set.name, // Ensure the card is created in this set
-      });
-      setFlashcards(prev => [...prev, response.data]);
-      setIsAddingCard(false);
-      toast.success("Flashcard tilføjet!");
+      await flashcardMutations.create(data);
     } catch (error) {
-      toast.error("Kunne ikke oprette flashcard");
-    } finally {
-      setIsSubmitting(false);
+      // Error toast is handled in the mutation
+      throw error;
     }
   };
 
   const handleUpdateCard = async (data: UpdateFlashcardData) => {
     if (!editingCard) return;
-    
+
     try {
-      setIsSubmitting(true);
-      const response = await updateFlashcard(editingCard.id.toString(), data);
-      setFlashcards(prev => 
-        prev.map(card => card.id === editingCard.id ? response.data : card)
-      );
-      setEditingCard(null);
-      toast.success("Flashcard opdateret!");
+      await flashcardMutations.update({ cardId: editingCard.id, data });
     } catch (error) {
-      toast.error("Kunne ikke opdatere flashcard");
-    } finally {
-      setIsSubmitting(false);
+      // Error toast is handled in the mutation
+      throw error;
     }
   };
 
   const handleDeleteCard = async (flashcard: Flashcard) => {
     try {
-      await deleteFlashcard(flashcard.id.toString());
-      setFlashcards(prev => prev.filter(card => card.id !== flashcard.id));
-      toast.success("Flashcard slettet!");
+      await flashcardMutations.remove(flashcard.id);
     } catch (error) {
-      toast.error("Kunne ikke slette flashcard");
+      // Error toast is handled in the mutation
     }
   };
 
   const handleEditCard = (flashcard: Flashcard) => {
     setEditingCard(flashcard);
-    setIsAddingCard(false);
+    setCardDialogOpen(true);
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setIsAddingCard(false);
-    setEditingCard(null);
+  const handleCardDialogChange = (open: boolean) => {
+    setCardDialogOpen(open);
+    if (!open) {
+      setEditingCard(null);
+    }
   };
 
   const handleCardFormSubmit = async (data: CreateFlashcardData | UpdateFlashcardData) => {
@@ -182,16 +120,6 @@ export function SetDetailView({ name }: SetDetailViewProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Indlæser set...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (error || !set) {
     return (
@@ -247,23 +175,21 @@ export function SetDetailView({ name }: SetDetailViewProps) {
               </p>
             </div>
           </div>
-          {!isEditing && !isAddingCard && !editingCard && (
-            <div className="flex gap-2">
-              <Link href={`/study/${encodeURIComponent(set.name)}`}>
-                <Button>
-                  <Play className="h-4 w-4 mr-2" />
-                  Start Studie
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsAddingCard(true)}
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Tilføj Kort
+          <div className="flex gap-2">
+            <Link href={`/study/${set.id}`}>
+              <Button>
+                <Play className="h-4 w-4 mr-2" />
+                Start Studie
               </Button>
-            </div>
-          )}
+            </Link>
+            <Button
+              variant="outline"
+              onClick={() => setCardDialogOpen(true)}
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Tilføj Kort
+            </Button>
+          </div>
         </div>
       </AnimatedSection>
 
@@ -310,28 +236,22 @@ export function SetDetailView({ name }: SetDetailViewProps) {
         </div>
       </AnimatedSection>
 
-      {/* Forms */}
-      {isEditing && (
-        <AnimatedSection delay={0.2}>
-          <SetForm
-            set={set}
-            onSubmit={handleUpdateSet}
-            onCancel={handleCancel}
-            isLoading={isSubmitting}
-          />
-        </AnimatedSection>
-      )}
+      {/* Dialogs */}
+      <SetDialog
+        open={setDialogOpen}
+        onOpenChange={setSetDialogOpen}
+        set={set}
+        onSubmit={handleUpdateSet}
+        isLoading={flashcardMutations.isUpdating}
+      />
 
-      {(isAddingCard || editingCard) && (
-        <AnimatedSection delay={0.2}>
-          <FlashcardForm
-            flashcard={editingCard || undefined}
-            onSubmit={handleCardFormSubmit}
-            onCancel={handleCancel}
-            isLoading={isSubmitting}
-          />
-        </AnimatedSection>
-      )}
+      <FlashcardDialog
+        open={cardDialogOpen}
+        onOpenChange={handleCardDialogChange}
+        flashcard={editingCard || undefined}
+        onSubmit={handleCardFormSubmit}
+        isLoading={flashcardMutations.isCreating || flashcardMutations.isUpdating}
+      />
 
       {/* Flashcards */}
       <AnimatedSection delay={0.3}>
@@ -352,7 +272,7 @@ export function SetDetailView({ name }: SetDetailViewProps) {
                       Tilføj dit første flashcard til dette set
                     </p>
                   </div>
-                  <Button onClick={() => setIsAddingCard(true)}>
+                  <Button onClick={() => setCardDialogOpen(true)}>
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Tilføj Flashcard
                   </Button>
@@ -364,7 +284,6 @@ export function SetDetailView({ name }: SetDetailViewProps) {
               flashcards={flashcards}
               onEdit={handleEditCard}
               onDelete={handleDeleteCard}
-              groupBySet={false}
             />
           )}
         </div>

@@ -1,56 +1,22 @@
 import { api } from "./client";
-import type { 
-  Flashcard, 
-  FlashcardSet, 
-  CreateFlashcardData, 
+import type {
+  Flashcard,
+  FlashcardSet,
+  CreateFlashcardData,
   UpdateFlashcardData,
   CreateSetData,
   UpdateSetData,
-  ApiResponse 
+  ApiResponse
 } from "@/modules/types";
-
-// Flashcard API functions
-export const getFlashcards = async (): Promise<Flashcard[]> => {
-  const response = await api.get<ApiResponse<Flashcard[]>>("/api/flashcards");
-  return response.data;
-};
-
-export const getFlashcardById = async (id: string): Promise<Flashcard> => {
-  const response = await api.get<ApiResponse<Flashcard>>(`/api/flashcards/${id}`);
-  return response.data;
-};
-
-export const getFlashcardsBySet = async (
-  setName: string
-): Promise<Flashcard[]> => {
-  const response = await api.get<ApiResponse<Flashcard[]>>(
-    `/api/sets/${encodeURIComponent(setName)}/flashcards`
-  );
-  return response.data;
-};
-
-export const createFlashcard = async (
-  flashcard: CreateFlashcardData
-): Promise<ApiResponse<Flashcard>> => {
-  return api.post<ApiResponse<Flashcard>>("/api/flashcards", flashcard);
-};
-
-export const updateFlashcard = async (
-  id: string,
-  flashcard: UpdateFlashcardData
-): Promise<ApiResponse<Flashcard>> => {
-  return api.put<ApiResponse<Flashcard>>(`/api/flashcards/${id}`, flashcard);
-};
-
-export const deleteFlashcard = async (
-  id: string
-): Promise<ApiResponse<void>> => {
-  return api.delete<ApiResponse<void>>(`/api/flashcards/${id}`);
-};
 
 // Set API functions
 export const getSets = async (): Promise<FlashcardSet[]> => {
   const response = await api.get<ApiResponse<FlashcardSet[]>>("/api/sets");
+  return response.data;
+};
+
+export const getSetById = async (id: number): Promise<FlashcardSet> => {
+  const response = await api.get<ApiResponse<FlashcardSet>>(`/api/sets/${id}`);
   return response.data;
 };
 
@@ -61,12 +27,43 @@ export const createSet = async (
 };
 
 export const updateSet = async (
-  id: string,
+  id: number,
   setData: UpdateSetData
 ): Promise<ApiResponse<FlashcardSet>> => {
   return api.put<ApiResponse<FlashcardSet>>(`/api/sets/${id}`, setData);
 };
 
-export const deleteSet = async (id: string): Promise<ApiResponse<void>> => {
+export const deleteSet = async (id: number): Promise<ApiResponse<void>> => {
   return api.delete<ApiResponse<void>>(`/api/sets/${id}`);
+};
+
+// Flashcard API functions
+export const createFlashcard = async (
+  setId: number,
+  flashcard: Omit<CreateFlashcardData, 'setId'>
+): Promise<ApiResponse<Flashcard>> => {
+  return api.post<ApiResponse<Flashcard>>(
+    `/api/sets/${setId}/flashcards`,
+    flashcard
+  );
+};
+
+export const updateFlashcard = async (
+  setId: number,
+  cardId: number,
+  flashcard: UpdateFlashcardData
+): Promise<ApiResponse<Flashcard>> => {
+  return api.put<ApiResponse<Flashcard>>(
+    `/api/sets/${setId}/flashcards/${cardId}`,
+    flashcard
+  );
+};
+
+export const deleteFlashcard = async (
+  setId: number,
+  cardId: number
+): Promise<ApiResponse<void>> => {
+  return api.delete<ApiResponse<void>>(
+    `/api/sets/${setId}/flashcards/${cardId}`
+  );
 };

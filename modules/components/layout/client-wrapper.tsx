@@ -20,14 +20,9 @@ export function AnimatedSection({
   className = "",
 }: AnimatedSectionProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay }}
-      className={className}
-    >
+    <div className={className}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -113,16 +108,9 @@ export function ActionButton({
     }
 
     try {
-      if (item.front) {
-        // It's a flashcard
-        await deleteFlashcard(item.id);
-        toast.success(`Flashcard "${item.front}" er blevet slettet.`);
-      } else {
-        // It's a set
-        await deleteSet(item.id);
-        toast.success(`Set "${item.name}" er blevet slettet.`);
-      }
-      router.refresh(); // Refresh the page to show changes
+      // TODO: Update this to use the new API structure with setId
+      toast.info("Delete functionality needs to be updated");
+      router.refresh();
     } catch (error) {
       console.error("Error deleting item:", error);
       toast.error(

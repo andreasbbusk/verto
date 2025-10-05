@@ -1,13 +1,14 @@
 // Core domain types
 export interface Flashcard {
     id: number;
+    setId: number;
     front: string;
     back: string;
-    set: string;
+    starred: boolean;
     userId: number;
     createdAt: string;
-    reviewCount: number;
     updatedAt?: string;
+    reviewCount: number;
     performance?: CardPerformance;
   }
 
@@ -25,11 +26,14 @@ export interface CardPerformance {
   export interface FlashcardSet {
     id: number;
     name: string;
-    description?: string;
+    description: string;
     difficulty: number; // 1-5 scale (1=very easy, 5=very hard)
+    starred: boolean;
     userId: number;
     createdAt: string;
-    cardCount: number;
+    updatedAt?: string;
+    cardCount?: number; // Optional, computed on-the-fly
+    flashcards?: Flashcard[]; // Optional, populated when fetching details
   }
   
   export interface User {
@@ -59,34 +63,41 @@ export interface CardPerformance {
   
   // API Data Transfer Objects
   export interface CreateFlashcardData {
+    setId: number;
     front: string;
     back: string;
-    set?: string;
+    starred?: boolean;
   }
 
   // Internal data type for server operations
   export interface CreateFlashcardDataInternal extends CreateFlashcardData {
     userId: number;
   }
-  
+
   export interface UpdateFlashcardData {
     front?: string;
     back?: string;
-    set?: string;
+    starred?: boolean;
   }
   
   export interface CreateSetData {
     name: string;
     description?: string;
     difficulty?: number; // 1-5 scale, defaults to 3 (medium)
+    starred?: boolean;
   }
 
   // Internal data type for server operations
   export interface CreateSetDataInternal extends CreateSetData {
     userId: number;
   }
-  
-  export interface UpdateSetData extends Partial<CreateSetData> {}
+
+  export interface UpdateSetData {
+    name?: string;
+    description?: string;
+    difficulty?: number;
+    starred?: boolean;
+  }
   
   export interface CreateUserData {
     email: string;

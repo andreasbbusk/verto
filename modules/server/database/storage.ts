@@ -40,9 +40,9 @@ export const initializeData = async (): Promise<void> => {
       
       // Flashcards collection indexes
       db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ userId: 1 }),
-      db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ set: 1 }),
+      db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ setId: 1 }),
       db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ id: 1 }, { unique: true }),
-      db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ userId: 1, set: 1 }),
+      db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ userId: 1, setId: 1 }),
       
       // Sets collection indexes
       db.collection(COLLECTION_NAMES.SETS).createIndex({ userId: 1 }),

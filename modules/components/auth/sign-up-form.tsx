@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/modules/components/ui/card";
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
-import { Loader2, Eye, EyeOff, Check, X } from "lucide-react";
+import { Eye, EyeOff, Check, X } from "lucide-react";
 
 interface SignUpFormProps {
   onSuccess?: (user: SanitizedUser) => void;
@@ -254,14 +254,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
                 className="w-full"
                 disabled={!canSubmit || loading || isSubmitting}
               >
-                {loading || isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  "Create Account"
-                )}
+                {loading || isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
             )}
           </form.Subscribe>

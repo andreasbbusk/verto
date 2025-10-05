@@ -1,102 +1,102 @@
-import { FlashcardRepository } from "./flashcard-repository";
 import { generateId, storage, STORAGE_KEYS } from "../storage";
-import type { FlashcardSet, CreateSetDataInternal } from "@/modules/types";
+import type { FlashcardSet, CreateSetDataInternal, UpdateSetData, Flashcard } from "@/modules/types";
 
 export class SetRepository {
-  private flashcardRepo = new FlashcardRepository();
-
-  // Sets are derived from flashcards using MongoDB aggregation for efficiency
   async getAll(): Promise<FlashcardSet[]> {
-    const pipeline = [
-      {
-        $group: {
-          _id: { userId: "$userId", set: "$set" },
-          name: { $first: "$set" },
-          userId: { $first: "$userId" },
-          createdAt: { $min: "$createdAt" },
-          cardCount: { $sum: 1 }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          id: { $add: [{ $toInt: "$_id.userId" }, { $multiply: [{ $toInt: "$cardCount" }, 1000] }] },
-          name: "$name",
-          description: "",
-          difficulty: 3,
-          userId: "$userId",
-          createdAt: "$createdAt",
-          cardCount: "$cardCount"
-        }
-      },
-      {
-        $sort: { createdAt: 1 }
-      }
-    ];
+    return await storage.find<FlashcardSet>(STORAGE_KEYS.SETS);
+  }
 
-    return await storage.aggregate<FlashcardSet>(STORAGE_KEYS.FLASHCARDS, pipeline);
+  async getById(id: number): Promise<FlashcardSet | undefined> {
+    const set = await storage.findOne<FlashcardSet>(STORAGE_KEYS.SETS, { id });
+    return set || undefined;
+  }
+
+  async getByIdWithFlashcards(id: number): Promise<FlashcardSet | undefined> {
+    const set = await this.getById(id);
+    if (!set) return undefined;
+
+    const flashcards = await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS, { setId: id });
+
+    return {
+      ...set,
+      flashcards,
+      cardCount: flashcards.length,
+    };
   }
 
   async getByUserId(userId: number): Promise<FlashcardSet[]> {
-    const pipeline = [
-      { $match: { userId } },
-      {
-        $group: {
-          _id: "$set",
-          name: { $first: "$set" },
-          userId: { $first: "$userId" },
-          createdAt: { $min: "$createdAt" },
-          cardCount: { $sum: 1 }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          id: { $add: [userId, { $multiply: ["$cardCount", 1000] }] },
-          name: "$name",
-          description: "",
-          difficulty: 3,
-          userId: "$userId",
-          createdAt: "$createdAt",
-          cardCount: "$cardCount"
-        }
-      },
-      {
-        $sort: { createdAt: 1 }
-      }
-    ];
+    const sets = await storage.find<FlashcardSet>(STORAGE_KEYS.SETS, { userId });
 
-    return await storage.aggregate<FlashcardSet>(STORAGE_KEYS.FLASHCARDS, pipeline);
+    // Add card counts
+    const setsWithCounts = await Promise.all(
+      sets.map(async (set) => {
+        const cardCount = await storage.count(STORAGE_KEYS.FLASHCARDS, { setId: set.id });
+        return { ...set, cardCount };
+      })
+    );
+
+    return setsWithCounts;
   }
 
   async create(data: CreateSetDataInternal): Promise<FlashcardSet> {
-    // For this implementation, sets are derived from flashcards
-    // We can create an empty set by creating a placeholder flashcard
-    const userSets = await this.getByUserId(data.userId);
-    const existingSet = userSets.find(
-      (set) => set.name.toLowerCase() === data.name.toLowerCase()
-    );
+    const existingSets = await storage.find<FlashcardSet>(STORAGE_KEYS.SETS, {
+      userId: data.userId,
+      name: new RegExp(`^${data.name.trim()}$`, 'i')
+    });
 
-    if (existingSet) {
+    if (existingSets.length > 0) {
       throw new Error("Set already exists");
     }
 
-    // Create a placeholder flashcard to represent the set
-    await this.flashcardRepo.create({
-      front: "Welcome to " + data.name,
-      back: "This is your new flashcard set. Edit or delete this card and add your own!",
-      set: data.name.trim(),
-      userId: data.userId,
-    });
-
-    return {
+    const newSet: FlashcardSet = {
       id: await generateId("set"),
       name: data.name.trim(),
       description: data.description?.trim() || "",
       difficulty: data.difficulty || 3,
+      starred: data.starred || false,
       userId: data.userId,
       createdAt: new Date().toISOString(),
-      cardCount: 1,
     };
+
+    await storage.insertOne(STORAGE_KEYS.SETS, newSet);
+    return { ...newSet, cardCount: 0 };
+  }
+
+  async update(id: number, data: UpdateSetData): Promise<FlashcardSet> {
+    const updateData: any = {
+      ...(data.name && { name: data.name.trim() }),
+      ...(data.description !== undefined && { description: data.description.trim() }),
+      ...(data.difficulty !== undefined && { difficulty: data.difficulty }),
+      ...(data.starred !== undefined && { starred: data.starred }),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedSet = await storage.updateOne<FlashcardSet>(
+      STORAGE_KEYS.SETS,
+      { id },
+      { $set: updateData }
+    );
+
+    if (!updatedSet) {
+      throw new Error("Set not found");
+    }
+
+    const cardCount = await storage.count(STORAGE_KEYS.FLASHCARDS, { setId: id });
+    return { ...updatedSet, cardCount };
+  }
+
+  async delete(id: number): Promise<FlashcardSet> {
+    const setToDelete = await this.getById(id);
+    if (!setToDelete) {
+      throw new Error("Set not found");
+    }
+
+    // Delete all flashcards in this set (cascade delete)
+    await storage.deleteMany(STORAGE_KEYS.FLASHCARDS, { setId: id });
+
+    // Delete the set
+    await storage.deleteOne(STORAGE_KEYS.SETS, { id });
+
+    return setToDelete;
   }
 }

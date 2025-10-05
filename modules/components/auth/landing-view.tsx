@@ -87,12 +87,12 @@ export function LandingView() {
   // Show loading state while initializing
   if (!isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="h-4 w-4 text-primary-foreground animate-pulse" />
+          <div className="w-8 h-8 border border-foreground flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="h-4 w-4 text-foreground" />
           </div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -105,7 +105,7 @@ export function LandingView() {
 
   if (authMode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {authMode === "signin" ? (
             <SignInForm
@@ -118,13 +118,14 @@ export function LandingView() {
               onSwitchToSignIn={() => setAuthMode("signin")}
             />
           )}
-          <div className="mt-4 text-center">
+          <div className="mt-6 text-center">
             <Button
-              variant="link"
+              variant="ghost"
               onClick={() => setAuthMode(null)}
-              className="text-sm text-muted-foreground"
+              size="sm"
+              className="text-sm"
             >
-              ← Back to homepage
+              ← Back
             </Button>
           </div>
         </div>
@@ -133,28 +134,30 @@ export function LandingView() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-soft">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 bg-white/80 backdrop-blur-sm">
+      <header className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-brand-purple rounded-2xl flex items-center justify-center shadow-modern">
-                <BookOpen className="h-5 w-5 text-white" />
+              <div className="w-8 h-8 border border-foreground flex items-center justify-center">
+                <BookOpen className="h-4 w-4 text-foreground" />
               </div>
-              <span className="text-2xl font-bold tracking-tight">Flashcards</span>
+              <span className="font-mono text-lg tracking-tight">
+                Flashcards
+              </span>
             </div>
-            <div className="space-x-4">
-              <Button 
-                variant="ghost" 
+            <div className="space-x-2">
+              <Button
+                variant="ghost"
                 onClick={() => setAuthMode("signin")}
-                className="hover:bg-brand-purple/10 hover:text-brand-purple"
+                size="sm"
               >
                 Sign In
               </Button>
-              <Button 
+              <Button
                 onClick={() => setAuthMode("signup")}
-                className="bg-brand-purple hover:bg-brand-purple/90 shadow-modern"
+                size="sm"
               >
                 Get Started
               </Button>
@@ -164,31 +167,27 @@ export function LandingView() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-24 px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-8 tracking-tight">
-            Master Any Subject with
-            <span className="text-brand-purple block mt-3">Smart Flashcards</span>
+      <section className="py-32 px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="font-mono text-6xl sm:text-7xl lg:text-8xl font-bold text-foreground mb-6 tracking-tighter leading-none">
+            Master anything with flashcards.
           </h1>
-          <p className="text-xl sm:text-2xl text-muted-foreground max-w-4xl mx-auto mb-12 leading-relaxed">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
             Create, study, and track your progress with our intelligent
-            flashcard system. Perfect for students, professionals, and lifelong
-            learners.
+            flashcard system.
           </p>
-          <div className="space-y-4 sm:space-y-0 sm:space-x-6 sm:flex sm:justify-center">
+          <div className="flex gap-3">
             <Button
               size="lg"
               onClick={() => setAuthMode("signup")}
-              className="w-full sm:w-auto bg-brand-purple hover:bg-brand-purple/90 shadow-modern-lg text-lg px-8 py-4 h-auto"
             >
-              Start Learning Free
-              <ArrowRight className="ml-3 h-5 w-5" />
+              Get Started
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button
               size="lg"
               variant="outline"
               onClick={() => setAuthMode("signin")}
-              className="w-full sm:w-auto shadow-modern text-lg px-8 py-4 h-auto hover:bg-brand-purple/5 hover:text-brand-purple hover:border-brand-purple"
             >
               Sign In
             </Button>
@@ -197,113 +196,105 @@ export function LandingView() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6 tracking-tight">
-              Everything You Need to Learn Effectively
+      <section className="py-24 px-6 lg:px-8 border-t border-border">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-16">
+            <h2 className="font-mono text-3xl sm:text-4xl font-bold text-foreground mb-4 tracking-tight">
+              Everything you need
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Our platform combines proven learning techniques with modern
-              technology
+            <p className="text-base text-muted-foreground max-w-2xl">
+              Proven learning techniques combined with modern technology
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => {
-              const colors = ['bg-brand-purple', 'bg-brand-yellow', 'bg-brand-teal', 'bg-brand-gray'];
-              const lightColors = ['bg-brand-purple-light', 'bg-brand-yellow-light', 'bg-brand-teal-light', 'bg-brand-gray-light'];
-              return (
-                <Card key={index} className={`text-center ${lightColors[index]} border-0 shadow-modern transition-all duration-300 hover:shadow-modern-lg hover:-translate-y-1`}>
-                  <CardContent className="p-8">
-                    <div className={`w-16 h-16 ${colors[index]} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-modern`}>
-                      <feature.icon className="h-8 w-8 text-white" />
-                    </div>
-                    <CardTitle className="text-xl font-bold text-foreground mb-4">{feature.title}</CardTitle>
-                    <CardDescription className="text-muted-foreground leading-relaxed">{feature.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {features.map((feature, index) => (
+              <Card key={index} className="p-6 hover:border-foreground/30 transition-colors">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 border border-border flex items-center justify-center shrink-0">
+                    <feature.icon className="h-5 w-5 text-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-mono text-base font-semibold text-foreground mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="py-24 px-6 lg:px-8 border-t border-border">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-                Why Choose Our Flashcard Platform?
+              <h2 className="font-mono text-3xl sm:text-4xl font-bold text-foreground mb-8 tracking-tight">
+                Why flashcards?
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                      <Check className="h-4 w-4 text-green-600" />
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-5 h-5 border border-foreground flex items-center justify-center">
+                      <Check className="h-3 w-3 text-foreground" />
                     </div>
-                    <span className="text-lg text-gray-700">{benefit}</span>
+                    <span className="text-sm text-foreground">{benefit}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-8">
-                <Button size="lg" onClick={() => setAuthMode("signup")}>
-                  Get Started Today
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
             </div>
-            <div className="relative">
-              <div className="bg-white rounded-lg shadow-2xl p-8">
-                <div className="space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center">
-                    <BookOpen className="h-12 w-12 text-primary" />
-                  </div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+            <Card className="p-8">
+              <div className="space-y-4">
+                <div className="h-3 bg-muted w-3/4"></div>
+                <div className="h-3 bg-muted w-1/2"></div>
+                <div className="h-32 border border-border flex items-center justify-center">
+                  <BookOpen className="h-12 w-12 text-muted-foreground" />
                 </div>
+                <div className="h-3 bg-muted w-2/3"></div>
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-primary">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-            Ready to Supercharge Your Learning?
+      <section className="py-24 px-6 lg:px-8 border-t border-border">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="font-mono text-4xl sm:text-5xl font-bold text-foreground mb-4 tracking-tight">
+            Ready to start learning?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join thousands of learners who are already using our platform to
-            achieve their goals.
+          <p className="text-base text-muted-foreground mb-6">
+            Join learners who are using flashcards to achieve their goals.
           </p>
           <Button
             size="lg"
-            variant="secondary"
             onClick={() => setAuthMode("signup")}
           >
-            Start Your Free Account
+            Get Started
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <BookOpen className="h-4 w-4 text-primary-foreground" />
+      <footer className="border-t border-border py-8 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 border border-foreground flex items-center justify-center">
+                <BookOpen className="h-3 w-3 text-foreground" />
+              </div>
+              <span className="font-mono text-sm">Flashcards</span>
             </div>
-            <span className="text-xl font-bold">Flashcards</span>
+            <p className="text-sm text-muted-foreground">
+              © 2024 All rights reserved
+            </p>
           </div>
-          <p className="text-gray-400">
-            © 2024 Flashcards. All rights reserved. Built with ❤️ for learners
-            everywhere.
-          </p>
         </div>
       </footer>
     </div>

@@ -95,7 +95,7 @@ const FlashcardComponent = ({
         {/* Front Side */}
         <motion.div
           className={cn(
-            "absolute inset-0 w-full h-full backface-hidden rounded-2xl bg-brand-purple shadow-modern-lg p-8 flex flex-col justify-between",
+            "absolute inset-0 w-full h-full backface-hidden rounded-2xl bg-brand shadow-modern-lg p-8 flex flex-col justify-between",
             flipped ? "rotate-x-180" : "rotate-x-0"
           )}
           initial={{ opacity: 0 }}
@@ -105,12 +105,12 @@ const FlashcardComponent = ({
           {/* Header with set badge and edit buttons */}
           <div className="flex justify-between items-start">
             <div className="flex justify-start">
-              {flashcard.set && (
+              {flashcard.starred && (
                 <Badge
                   variant="secondary"
                   className="bg-white bg-opacity-20 backdrop-blur-sm text-white border-white border-opacity-30"
                 >
-                  {flashcard.set}
+                  ⭐ Stjernet
                 </Badge>
               )}
             </div>
@@ -201,12 +201,12 @@ const FlashcardComponent = ({
           {/* Header with set badge and edit buttons */}
           <div className="flex justify-between items-start">
             <div className="flex justify-start">
-              {flashcard.set && (
+              {flashcard.starred && (
                 <Badge
                   variant="secondary"
                   className="bg-white bg-opacity-20 backdrop-blur-sm text-white border-white border-opacity-30"
                 >
-                  {flashcard.set}
+                  ⭐ Stjernet
                 </Badge>
               )}
             </div>

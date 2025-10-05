@@ -98,19 +98,14 @@ export function AppNavigation({ children }: AppNavigationProps) {
 
   return (
     <SidebarProvider>
-      <Sidebar 
-        variant="inset"
-        className="border-r border-border shadow-sm"
-      >
+      <Sidebar variant="inset" className="border-subtle shadow-sm">
         {/* Sidebar Header */}
         <SidebarHeader className="border-b border-border px-6 py-4">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 bg-brand-purple rounded-lg">
-              <GraduationCap className="h-5 w-5 text-white" />
+            <div className="flex items-center justify-center w-9 h-9 bg-primary rounded-lg">
+              <GraduationCap className="icon-md text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-gray-900">
-              FlashCards
-            </span>
+            <span className="text-heading-3 text-sidebar-primary">FlashCards</span>
           </Link>
         </SidebarHeader>
 
@@ -118,35 +113,42 @@ export function AppNavigation({ children }: AppNavigationProps) {
         <SidebarContent className="px-2 py-4">
           {/* Main Navigation */}
           <SidebarGroup>
-            <SidebarGroupLabel className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <SidebarGroupLabel className="px-4 py-2">
               Navigation
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1 px-2">
+              <SidebarMenu className="px-2 gap-1">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
 
                   return (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton 
-                        asChild 
+                      <SidebarMenuButton
+                        asChild
                         isActive={active}
                         className={cn(
-                          "w-full flex items-start gap-3 px-3 py-3 rounded-lg text-sm transition-colors",
+                          "w-full flex items-start gap-3 p-3 rounded-lg transition-colors duration-200",
                           active
-                            ? "bg-brand-purple text-white"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-brand-purple"
+                            ? "bg-primary text-primary-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         )}
                       >
-                        <Link href={item.href} className="flex items-start gap-3 w-full">
-                          <Icon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <Link
+                          href={item.href}
+                          className="flex items-start gap-3 w-full"
+                        >
+                          <Icon className="icon-sm flex-shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm leading-5">{item.name}</div>
-                            <div className={cn(
-                              "text-xs leading-4 mt-0.5",
-                              active ? "text-white/80" : "text-gray-500"
-                            )}>
+                            <div className="font-medium text-body-sm leading-5">
+                              {item.name}
+                            </div>
+                            <div
+                              className={cn(
+                                "text-xs leading-4 mt-0.5 normal-case tracking-normal",
+                                active ? "text-primary-foreground/80" : "text-muted-foreground"
+                              )}
+                            >
                               {item.description}
                             </div>
                           </div>
@@ -161,11 +163,11 @@ export function AppNavigation({ children }: AppNavigationProps) {
 
           {/* Quick Actions */}
           <SidebarGroup className="mt-8">
-            <SidebarGroupLabel className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <SidebarGroupLabel className="px-4 py-2">
               Hurtige Handlinger
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-2 px-2">
+              <SidebarMenu className="px-2 gap-2">
                 {quickActions.map((action, index) => {
                   const Icon = action.icon;
 
@@ -176,13 +178,13 @@ export function AppNavigation({ children }: AppNavigationProps) {
                           <Button
                             size="sm"
                             className={cn(
-                              "w-full justify-start h-9 px-3 text-sm font-medium transition-all rounded-lg",
+                              "w-full justify-start h-9 px-3 text-body-sm font-medium rounded-lg transition-all duration-200",
                               index === 0
-                                ? "bg-brand-yellow hover:bg-brand-yellow/90 text-white border-0"
-                                : "bg-transparent border border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white"
+                                ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0"
+                                : "bg-transparent border border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                             )}
                           >
-                            <Icon className="h-4 w-4 mr-2" />
+                            <Icon className="icon-sm mr-2" />
                             {action.name}
                           </Button>
                         </Link>
@@ -206,9 +208,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
         <header className="flex h-16 shrink-0 items-center gap-2 px-4 border-b border-border">
           <SidebarTrigger />
         </header>
-        <div className="flex-1 p-6 bg-gradient-soft">
-          {children}
-        </div>
+        <div className="flex-1 p-6 bg-gradient-soft">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );
