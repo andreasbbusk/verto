@@ -14,6 +14,7 @@ import {
   Settings,
   Play,
   Pause,
+  Star,
 } from "lucide-react";
 
 interface StudyControlsProps {
@@ -23,13 +24,15 @@ interface StudyControlsProps {
   onPrevious: () => void;
   onNext: () => void;
   onFlip: () => void;
-  onReset: () => void;
   onExit: () => void;
   onShuffle?: () => void;
   onSettings?: () => void;
   onModeChange?: () => void;
   autoPlayEnabled?: boolean;
   onToggleAutoPlay?: () => void;
+  filterStarredOnly?: boolean;
+  onToggleStarredFilter?: () => void;
+  onResetProgress?: () => void;
   className?: string;
 }
 
@@ -40,13 +43,15 @@ export function StudyControls({
   onPrevious,
   onNext,
   onFlip,
-  onReset,
   onExit,
   onShuffle,
   onSettings,
   onModeChange,
   autoPlayEnabled = false,
   onToggleAutoPlay,
+  filterStarredOnly = false,
+  onToggleStarredFilter,
+  onResetProgress,
   className,
 }: StudyControlsProps) {
   const isFirstCard = currentIndex === 0;
@@ -114,14 +119,18 @@ export function StudyControls({
                 <Home className="h-4 w-4" />
               </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onReset}
-                title="Start over"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+              {onResetProgress && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onResetProgress}
+                  title="Start fra begyndelsen (R)"
+                  className="gap-1"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  <span className="text-xs">Nulstil</span>
+                </Button>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -148,6 +157,19 @@ export function StudyControls({
                   title="Shuffle cards"
                 >
                   <Shuffle className="h-4 w-4" />
+                </Button>
+              )}
+
+              {onToggleStarredFilter && (
+                <Button
+                  variant={filterStarredOnly ? "default" : "outline"}
+                  size="sm"
+                  onClick={onToggleStarredFilter}
+                  title={filterStarredOnly ? "Vis alle kort" : "Vis kun favoritter"}
+                  className="gap-1"
+                >
+                  <Star className="h-4 w-4" fill={filterStarredOnly ? "currentColor" : "none"} />
+                  <span className="text-xs">Filter</span>
                 </Button>
               )}
 
@@ -178,16 +200,20 @@ export function StudyControls({
               Flip
             </KbdGroup>
             <KbdGroup className="flex items-center gap-1.5">
+              <Kbd>E</Kbd>
+              Edit
+            </KbdGroup>
+            <KbdGroup className="flex items-center gap-1.5">
+              <Kbd>F</Kbd>
+              Star
+            </KbdGroup>
+            <KbdGroup className="flex items-center gap-1.5">
               <Kbd>R</Kbd>
-              Reset
+              Nulstil
             </KbdGroup>
             <KbdGroup className="flex items-center gap-1.5">
               <Kbd>S</Kbd>
               Shuffle
-            </KbdGroup>
-            <KbdGroup className="flex items-center gap-1.5">
-              <Kbd>Esc</Kbd>
-              Exit
             </KbdGroup>
           </div>
         </div>
