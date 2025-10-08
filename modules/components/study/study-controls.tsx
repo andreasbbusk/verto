@@ -94,13 +94,17 @@ export function StudyControls({
             </div>
 
             <Button
-              variant="outline"
+              variant={isLastCard ? "default" : "outline"}
               size="lg"
               onClick={onNext}
               disabled={totalCards <= 1}
               className="flex-1 max-w-32"
             >
-              <ChevronRight className="h-5 w-5" />
+              {isLastCard ? (
+                <span className="text-sm font-medium">Afslut</span>
+              ) : (
+                <ChevronRight className="h-5 w-5" />
+              )}
             </Button>
           </div>
 

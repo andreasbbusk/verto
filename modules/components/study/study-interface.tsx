@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import FlashcardComponent from "@/modules/components/flashcards/flashcard";
 import { ProgressBar } from "./progress-bar";
 import { StudyControls } from "./study-controls";
 import { QuickEditDialog } from "./quick-edit-dialog";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import { Button } from "@/modules/components/ui/button";
+import { Badge } from "@/modules/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +46,10 @@ export function StudyInterface({
 
   // Initialize from saved progress or start at 0
   const savedProgress = getProgress(setId);
-  const initialIndex = savedProgress !== null && savedProgress < flashcards.length ? savedProgress : 0;
+  const initialIndex =
+    savedProgress !== null && savedProgress < flashcards.length
+      ? savedProgress
+      : 0;
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -56,6 +61,7 @@ export function StudyInterface({
   const [filterStarredOnly, setFilterStarredOnly] = useState(false);
   const [exitAlertOpen, setExitAlertOpen] = useState(false);
   const [resetAlertOpen, setResetAlertOpen] = useState(false);
+  const [cardsReviewed, setCardsReviewed] = useState(new Set<number>());
 
   // Apply starred filter
   const displayCards = filterStarredOnly
@@ -75,7 +81,12 @@ export function StudyInterface({
 
   // Restore focus after dialogs close
   useEffect(() => {
-    if (!editDialogOpen && !exitAlertOpen && !resetAlertOpen && containerRef.current) {
+    if (
+      !editDialogOpen &&
+      !exitAlertOpen &&
+      !resetAlertOpen &&
+      containerRef.current
+    ) {
       containerRef.current.focus();
     }
   }, [editDialogOpen, exitAlertOpen, resetAlertOpen]);
@@ -195,6 +206,7 @@ export function StudyInterface({
     setAutoPlayEnabled(false);
     setShowResults(false);
     setCardStartTime(new Date());
+    setCardsReviewed(new Set());
   }, [flashcards]);
 
   const handleResetProgress = useCallback(() => {
@@ -203,6 +215,7 @@ export function StudyInterface({
     setCurrentIndex(0);
     setIsFlipped(false);
     setResetAlertOpen(false);
+    setCardsReviewed(new Set());
     toast.success("Fremskridt nulstillet");
   }, [clearProgress, setId]);
 
@@ -221,8 +234,14 @@ export function StudyInterface({
   }, [router, setId, currentIndex, displayCards.length, saveProgress]);
 
   const handleFlipCard = useCallback(() => {
-    setIsFlipped((prev) => !prev);
-  }, []);
+    setIsFlipped((prev) => {
+      // Track card as reviewed when flipping to back side
+      if (!prev) {
+        setCardsReviewed((reviewed) => new Set(reviewed).add(currentIndex));
+      }
+      return !prev;
+    });
+  }, [currentIndex]);
 
   const handleToggleStar = useCallback(async (flashcard: Flashcard) => {
     try {
@@ -234,7 +253,11 @@ export function StudyInterface({
         prev.map((card) => (card.id === flashcard.id ? response.data : card))
       );
 
-      toast.success(response.data.starred ? "Tilføjet til favoritter" : "Fjernet fra favoritter");
+      toast.success(
+        response.data.starred
+          ? "Tilføjet til favoritter"
+          : "Fjernet fra favoritter"
+      );
     } catch (error) {
       toast.error("Kunne ikke opdatere flashcard");
       console.error(error);
@@ -248,7 +271,11 @@ export function StudyInterface({
   const handleSaveEdit = useCallback(
     async (flashcard: Flashcard, updates: { front: string; back: string }) => {
       try {
-        const response = await updateFlashcard(flashcard.setId, flashcard.id, updates);
+        const response = await updateFlashcard(
+          flashcard.setId,
+          flashcard.id,
+          updates
+        );
 
         setStudyCards((prev) =>
           prev.map((card) => (card.id === flashcard.id ? response.data : card))
@@ -269,11 +296,12 @@ export function StudyInterface({
     const handleKeyDown = (event: KeyboardEvent) => {
       // Ignore keyboard shortcuts when typing in textarea
       const target = event.target as HTMLElement;
-      if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+      if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
         return;
       }
 
-      if (showResults || editDialogOpen || exitAlertOpen || resetAlertOpen) return;
+      if (showResults || editDialogOpen || exitAlertOpen || resetAlertOpen)
+        return;
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
@@ -329,7 +357,9 @@ export function StudyInterface({
               <div className="text-muted-foreground text-4xl">📚</div>
               <div>
                 <h3 className="font-semibold text-lg text-foreground">
-                  {filterStarredOnly ? "Ingen stjernede flashcards" : "Ingen flashcards"}
+                  {filterStarredOnly
+                    ? "Ingen stjernede flashcards"
+                    : "Ingen flashcards"}
                 </h3>
                 <p className="text-muted-foreground">
                   {filterStarredOnly
@@ -363,7 +393,9 @@ export function StudyInterface({
           <h1 className="text-xl font-semibold text-foreground mb-3">
             {setName}
             {filterStarredOnly && (
-              <span className="text-sm text-muted-foreground ml-2">(★ Favoritter)</span>
+              <span className="text-sm text-muted-foreground ml-2">
+                (★ Favoritter)
+              </span>
             )}
           </h1>
           <ProgressBar
@@ -422,7 +454,8 @@ export function StudyInterface({
           <AlertDialogHeader>
             <AlertDialogTitle>Afslut studiesession?</AlertDialogTitle>
             <AlertDialogDescription>
-              Er du sikker på, at du vil afslutte denne studiesession og vende tilbage til settet?
+              Er du sikker på, at du vil afslutte denne studiesession og vende
+              tilbage til settet?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -440,7 +473,8 @@ export function StudyInterface({
           <AlertDialogHeader>
             <AlertDialogTitle>Start forfra?</AlertDialogTitle>
             <AlertDialogDescription>
-              Dit fremskridt i dette set vil blive nulstillet, og du starter fra det første kort.
+              Dit fremskridt i dette set vil blive nulstillet, og du starter fra
+              det første kort.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -449,6 +483,61 @@ export function StudyInterface({
               Start forfra
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Completion Dialog */}
+      <AlertDialog open={showResults} onOpenChange={setShowResults}>
+        <AlertDialogContent asChild>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-center text-3xl font-bold">
+                {(() => {
+                  const percentage = Math.round((cardsReviewed.size / displayCards.length) * 100);
+                  if (percentage === 100) return "Fantastisk arbejde!";
+                  if (percentage >= 80) return "Flot klaret!";
+                  return "Godt gået!";
+                })()}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center space-y-6 pt-6">
+                <div>
+                  <div className="text-lg text-foreground mb-2">
+                    Du har gennemført studiesessionen
+                  </div>
+                  <div className="text-muted-foreground text-sm">{setName}</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-6 border border-primary/20">
+                  <div className="text-center space-y-3">
+                    <div className="text-5xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                      {Math.round((cardsReviewed.size / displayCards.length) * 100)}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {cardsReviewed.size} af {displayCards.length} kort gennemgået
+                    </div>
+                  </div>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4 sm:justify-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetStudy();
+                  setShowResults(false);
+                }}
+              >
+                Studér igen
+              </Button>
+              <Button onClick={exitStudy}>
+                Afslut session
+              </Button>
+            </AlertDialogFooter>
+          </motion.div>
         </AlertDialogContent>
       </AlertDialog>
     </div>
