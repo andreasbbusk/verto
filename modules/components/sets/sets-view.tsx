@@ -1,8 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/modules/components/ui/alert-dialog";
+import { Badge } from "@/modules/components/ui/badge";
 import { Button } from "@/modules/components/ui/button";
-import { Card, CardContent } from "@/modules/components/ui/card";
+import { Card } from "@/modules/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,16 +21,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/modules/components/ui/table";
-import { SetDialog } from "./set-dialog";
 import { useSets } from "@/modules/hooks/use-sets";
+import { cn } from "@/modules/lib/utils";
+import { useViewStore } from "@/modules/stores/viewStore";
 import type {
-  FlashcardSet,
   CreateSetData,
+  FlashcardSet,
   UpdateSetData,
 } from "@/modules/types";
-import { ArrowLeft, BookOpen, PlusCircle, Play } from "lucide-react";
+import {
+  BookOpen,
+  Edit,
+  LayoutGrid,
+  LayoutList,
+  Play,
+  PlusCircle,
+  Star,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { SetCard } from "./set-card";
+import { SetDialog } from "./set-dialog";
 
 interface SetsTableProps {
   sets: FlashcardSet[];
@@ -29,77 +53,135 @@ interface SetsTableProps {
 }
 
 function SetsTable({ sets, onEdit, onDelete }: SetsTableProps) {
+  const router = useRouter();
+
+  const handleRowClick = (setId: number) => {
+    router.push(`/sets/${setId}`);
+  };
+
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border">
-            <TableHead className="px-4 py-3 text-left font-mono text-xs text-muted-foreground">
-              NAME
+            <TableHead className="px-6 py-3 text-left font-mono text-xs text-muted-foreground uppercase tracking-wide">
+              Navn
             </TableHead>
-            <TableHead className="hidden md:table-cell px-4 py-3 text-left font-mono text-xs text-muted-foreground">
-              CARDS
+            <TableHead className="hidden md:table-cell px-4 py-3 text-left font-mono text-xs text-muted-foreground uppercase tracking-wide">
+              Kort
             </TableHead>
-            <TableHead className="hidden sm:table-cell px-4 py-3 text-left font-mono text-xs text-muted-foreground">
-              CREATED
+            <TableHead className="hidden lg:table-cell px-4 py-3 text-left font-mono text-xs text-muted-foreground uppercase tracking-wide">
+              Oprettet
             </TableHead>
-            <TableHead className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">
-              ACTIONS
+            <TableHead className="px-6 py-3 text-right font-mono text-xs text-muted-foreground uppercase tracking-wide">
+              Handlinger
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sets.map((set) => (
-            <TableRow key={set.id} className="border-b border-border last:border-0 hover:bg-accent">
-              <TableCell className="px-4 py-4">
-                <div>
-                  <Link
-                    href={`/sets/${set.id}`}
-                    className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-                  >
-                    {set.name}
-                  </Link>
-                  <div className="md:hidden mt-1">
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>{set.cardCount} cards</span>
-                      <span>·</span>
-                      <span>{new Date(set.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-                    </div>
+          {sets.map((set, index) => (
+            <TableRow
+              key={set.id}
+              onClick={() => handleRowClick(set.id)}
+              className={cn(
+                "border-b border-border last:border-0 cursor-pointer transition-all animate-in fade-in group",
+                "hover:bg-accent/50 "
+              )}
+              style={{
+                animationDelay: `${index * 30}ms`,
+                animationFillMode: "backwards",
+              }}
+            >
+              {/* Name Column */}
+              <TableCell className="px-6 py-5">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    {set.starred && (
+                      <Star className="h-4 w-4 text-primary fill-primary flex-shrink-0" />
+                    )}
+                    <h3 className="text-base font-mono font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                      {set.name}
+                    </h3>
+                    {set.difficulty && (
+                      <Badge
+                        variant="outline"
+                        className="font-mono text-xs flex-shrink-0"
+                      >
+                        Lvl {set.difficulty}
+                      </Badge>
+                    )}
+                  </div>
+                  {set.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {set.description}
+                    </p>
+                  )}
+                  {/* Mobile meta */}
+                  <div className="md:hidden flex items-center gap-3 text-xs text-muted-foreground font-mono">
+                    <span className="flex items-center gap-1">
+                      <BookOpen className="h-3 w-3" />
+                      {set.cardCount}
+                    </span>
+                    <span>·</span>
+                    <span>
+                      {new Date(set.createdAt).toLocaleDateString("da-DK", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="hidden md:table-cell px-4 py-4">
-                <span className="text-sm text-muted-foreground">
-                  {set.cardCount}
+
+              {/* Card Count Column */}
+              <TableCell className="hidden md:table-cell px-4 py-5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-mono text-foreground">
+                    {set.cardCount}
+                  </span>
+                </div>
+              </TableCell>
+
+              {/* Created Column */}
+              <TableCell className="hidden lg:table-cell px-4 py-5">
+                <span className="text-sm font-mono text-muted-foreground">
+                  {new Date(set.createdAt).toLocaleDateString("da-DK", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </span>
               </TableCell>
-              <TableCell className="hidden sm:table-cell px-4 py-4">
-                <span className="text-sm text-muted-foreground">
-                  {new Date(set.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
-              </TableCell>
-              <TableCell className="px-4 py-4">
-                <div className="flex items-center justify-end gap-2">
+
+              {/* Actions Column */}
+              <TableCell className="px-6 py-5">
+                <div
+                  className="flex items-center justify-end gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Link href={`/study/${set.id}`}>
-                    <Button size="sm" variant="ghost">
-                      <Play className="h-3 w-3 mr-1" />
-                      Study
+                    <Button size="sm" variant="default" className="h-8">
+                      <Play className="h-3 w-3 mr-1.5" />
+                      <span className="hidden sm:inline">Studer</span>
                     </Button>
                   </Link>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onEdit(set)}
+                    className="h-8 w-8 p-0"
+                    title="Rediger sæt"
                   >
-                    Edit
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onDelete(set)}
-                    className="text-destructive hover:text-destructive"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                    title="Slet sæt"
                   >
-                    Delete
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </TableCell>
@@ -111,11 +193,47 @@ function SetsTable({ sets, onEdit, onDelete }: SetsTableProps) {
   );
 }
 
+interface SetsGridProps {
+  sets: FlashcardSet[];
+  onEdit: (set: FlashcardSet) => void;
+  onDelete: (set: FlashcardSet) => void;
+}
+
+function SetsGrid({ sets, onEdit, onDelete }: SetsGridProps) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {sets.map((set, index) => (
+        <div
+          key={set.id}
+          className="animate-in fade-in slide-in-from-bottom-4"
+          style={{
+            animationDelay: `${index * 50}ms`,
+            animationFillMode: "backwards",
+          }}
+        >
+          <SetCard set={set} onEdit={onEdit} onDelete={onDelete} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SetsView() {
-  const { sets, error, loading, create, update, remove } = useSets();
+  const searchParams = useSearchParams();
+  const { sets, error, create, update, remove } = useSets();
+  const { setsView, setSetsView } = useViewStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [setToDelete, setSetToDelete] = useState<FlashcardSet | null>(null);
+
+  // Check for create URL param and auto-open dialog
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setDialogOpen(true);
+    }
+  }, [searchParams]);
 
   const handleCreate = async (data: CreateSetData) => {
     try {
@@ -156,10 +274,19 @@ export function SetsView() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (set: FlashcardSet) => {
+  const handleDelete = (set: FlashcardSet) => {
+    setSetToDelete(set);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!setToDelete) return;
+
     try {
-      await remove(set.id);
+      await remove(setToDelete.id);
       toast.success("Set slettet!");
+      setDeleteDialogOpen(false);
+      setSetToDelete(null);
     } catch (error) {
       toast.error("Kunne ikke slette set");
     }
@@ -168,7 +295,10 @@ export function SetsView() {
   const handleDialogChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
-      setEditingSet(null);
+      // Delay clearing editingSet to prevent flickering during close animation
+      setTimeout(() => {
+        setEditingSet(null);
+      }, 200);
     }
   };
 
@@ -179,23 +309,45 @@ export function SetsView() {
         <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
           <div>
             <h1 className="font-mono text-4xl font-bold text-foreground tracking-tight">
-              Sets
+              Flashcard sæt
             </h1>
             <p className="text-muted-foreground mt-2 text-sm">
-              Manage your flashcard sets
+              Administrér dine sæt her.
             </p>
           </div>
-          <Button
-            onClick={() => setDialogOpen(true)}
-            size="sm"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            New Set
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* View Toggle */}
+            <Button
+              onClick={() => setDialogOpen(true)}
+              size="sm"
+              className="transition-all hover:shadow-md hover:shadow-primary/20"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Nyt sæt
+            </Button>
+            <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-card">
+              <Button
+                variant={setsView === "grid" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSetsView("grid")}
+                className="px-3 transition-all"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={setsView === "table" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSetsView("table")}
+                className="px-3 transition-all"
+              >
+                <LayoutList className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Dialog */}
+      {/* Dialogs */}
       <SetDialog
         open={dialogOpen}
         onOpenChange={handleDialogChange}
@@ -203,6 +355,27 @@ export function SetsView() {
         onSubmit={handleFormSubmit}
         isLoading={isSubmitting}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-mono">Slet set?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Er du sikker på du vil slette set &quot;{setToDelete?.name}&quot;?
+              Denne handling kan ikke fortrydes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuller</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Slet
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Content */}
       <div>
@@ -216,14 +389,10 @@ export function SetsView() {
                 {error}
               </div>
               <p className="text-muted-foreground text-sm">
-                Try reloading the page
+                Prøv at genindlæse siden
               </p>
             </div>
           </Card>
-        ) : loading ? (
-          <div className="flex items-center justify-center p-12">
-            <div className="w-6 h-6 border border-foreground border-t-transparent rounded-full animate-spin"></div>
-          </div>
         ) : sets.length === 0 ? (
           <Card className="p-12">
             <div className="text-center space-y-6">
@@ -232,23 +401,34 @@ export function SetsView() {
               </div>
               <div>
                 <h3 className="font-mono font-bold text-lg text-foreground mb-2">
-                  No sets found
+                  Ingen sæt fundet
                 </h3>
                 <p className="text-muted-foreground text-sm">
-                  Create your first flashcard set to get started
+                  Opret dit første flashcard-sæt for at komme i gang
                 </p>
               </div>
-              <Button
-                onClick={() => setDialogOpen(true)}
-                size="sm"
-              >
+              <Button onClick={() => setDialogOpen(true)} size="sm">
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Create First Set
+                Opret første sæt
               </Button>
             </div>
           </Card>
         ) : (
-          <SetsTable sets={sets} onEdit={handleEdit} onDelete={handleDelete} />
+          <div key={setsView} className="animate-in fade-in duration-300">
+            {setsView === "table" ? (
+              <SetsTable
+                sets={sets}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ) : (
+              <SetsGrid
+                sets={sets}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            )}
+          </div>
         )}
       </div>
     </div>

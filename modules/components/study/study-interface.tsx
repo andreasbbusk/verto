@@ -191,7 +191,7 @@ export function StudyInterface({
 
   if (studyCards.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-soft flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center space-y-4">
@@ -212,11 +212,11 @@ export function StudyInterface({
   const currentCard = studyCards[currentIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-soft">
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Header */}
-        <div className="text-center bg-card/80 backdrop-blur-sm rounded-lg p-8 border border-border">
-          <h1 className="text-heading-2 font-bold text-foreground mb-4">
+        <div className="text-center bg-card rounded-lg p-4 border border-border">
+          <h1 className="text-heading-2 font-bold text-foreground mb-3">
             {setName}
           </h1>
           <ProgressBar
@@ -250,45 +250,6 @@ export function StudyInterface({
           autoPlayEnabled={autoPlayEnabled}
           onToggleAutoPlay={() => setAutoPlayEnabled((prev) => !prev)}
         />
-
-        {/* Study Stats */}
-        <Card className="bg-card/80 backdrop-blur-sm border border-border">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-body-sm text-muted-foreground">
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-primary rounded-full" />
-                    <span className="font-medium">
-                      Progress:{" "}
-                      {Math.round(
-                        ((currentIndex + 1) / studyCards.length) * 100
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-primary/60 rounded-full" />
-                    <span>
-                      Remaining: {studyCards.length - currentIndex - 1}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  {autoPlayEnabled && (
-                    <div className="flex items-center gap-2 text-primary">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                      <span className="font-medium">Auto-play active</span>
-                    </div>
-                  )}
-                  <span className="font-medium">
-                    Total: {studyCards.length} cards
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

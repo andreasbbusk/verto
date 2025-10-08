@@ -23,9 +23,9 @@ export function ProgressBar({
     <div className={cn("space-y-3", className)}>
       {/* Progress bar */}
       <div className="relative">
-        <div className="w-full bg-muted rounded-full h-2">
+        <div className="w-full bg-muted border rounded-full h-2">
           <div
-            className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
+            className="bg-primary h-2 -translate-[1px] rounded-full transition-all duration-300 ease-out"
             style={{ width: `${percentage}%` }}
           />
         </div>
@@ -49,12 +49,12 @@ export function ProgressBar({
                 key={index}
                 onClick={() => onProgressClick(index)}
                 className={cn(
-                  "w-3 h-3 rounded-full transition-all duration-200 hover:scale-110",
+                  "w-3 h-3 rounded-full  transition-all duration-200 hover:scale-110",
                   index === current
                     ? "bg-primary scale-110 shadow-sm ring-2 ring-primary/20"
                     : index < current
                     ? "bg-primary/60 hover:bg-primary/80"
-                    : "bg-muted hover:bg-muted-foreground/20"
+                    : "bg-muted border hover:bg-muted-foreground/20"
                 )}
                 title={`Gå til kort ${index + 1}`}
               />
@@ -73,7 +73,7 @@ export function ProgressBar({
                 key={i}
                 onClick={() => onProgressClick(i)}
                 className={cn(
-                  "w-2 h-2 rounded-full transition-all duration-200",
+                  "w-2 h-2 border rounded-full transition-all duration-200",
                   i === current
                     ? "bg-primary scale-125"
                     : i < current
@@ -96,7 +96,7 @@ export function ProgressBar({
                         key={index}
                         onClick={() => onProgressClick(index)}
                         className={cn(
-                          "w-2 h-2 rounded-full transition-all duration-200",
+                          "w-2 h-2 border rounded-full transition-all duration-200",
                           offset === 0
                             ? "bg-primary scale-125"
                             : offset < 0
@@ -120,7 +120,7 @@ export function ProgressBar({
                   key={index}
                   onClick={() => onProgressClick(index)}
                   className={cn(
-                    "w-2 h-2 rounded-full transition-all duration-200",
+                    "w-2 h-2 border rounded-full transition-all duration-200",
                     index === current
                       ? "bg-primary scale-125"
                       : index < current

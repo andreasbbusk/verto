@@ -1,18 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { SearchFilter } from "@/modules/components/layout/client-wrapper";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/modules/components/ui/alert-dialog";
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
-import { Badge } from "@/modules/components/ui/badge";
-import { SearchFilter } from "@/modules/components/layout/client-wrapper";
-import FlashcardComponent from "./flashcard";
+import { cn } from "@/modules/lib/utils";
+import { useViewStore } from "@/modules/stores/viewStore";
 import type { Flashcard } from "@/modules/types";
-import { Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { LayoutGrid, LayoutList } from "lucide-react";
+import { useState, useEffect } from "react";
+import FlashcardComponent from "./flashcard";
 
 interface FlashcardListProps {
   flashcards: Flashcard[];
   onEdit?: (flashcard: Flashcard) => void;
   onDelete?: (flashcard: Flashcard) => void;
+  onToggleStar?: (flashcard: Flashcard) => void;
   showActions?: boolean;
 }
 
@@ -20,10 +32,18 @@ export function FlashcardList({
   flashcards,
   onEdit,
   onDelete,
+  onToggleStar,
   showActions = true,
 }: FlashcardListProps) {
   const [filteredCards, setFilteredCards] = useState<Flashcard[]>(flashcards);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const { flashcardsView, setFlashcardsView } = useViewStore();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<Flashcard | null>(null);
+
+  // Sync filteredCards with flashcards prop when it changes
+  useEffect(() => {
+    setFilteredCards(flashcards);
+  }, [flashcards]);
 
   const groupedCards = { "Alle kort": filteredCards };
 
@@ -32,30 +52,17 @@ export function FlashcardList({
   };
 
   const handleDelete = (flashcard: Flashcard) => {
-    if (
-      confirm(`Er du sikker på du vil slette flashcard "${flashcard.front}"?`)
-    ) {
-      onDelete?.(flashcard);
-    }
+    setCardToDelete(flashcard);
+    setDeleteDialogOpen(true);
   };
 
-  if (flashcards.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-8">
-          <div className="text-center space-y-4">
-            <div className="text-gray-400 text-lg">📚</div>
-            <div>
-              <h3 className="font-semibold text-lg">Ingen flashcards fundet</h3>
-              <p className="text-gray-500">
-                Start med at oprette dit første flashcard
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const confirmDelete = () => {
+    if (cardToDelete) {
+      onDelete?.(cardToDelete);
+      setDeleteDialogOpen(false);
+      setCardToDelete(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -70,22 +77,22 @@ export function FlashcardList({
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-card">
           <Button
-            variant={viewMode === "grid" ? "default" : "outline"}
+            variant={flashcardsView === "grid" ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("grid")}
+            onClick={() => setFlashcardsView("grid")}
+            className="px-3 transition-all"
           >
-            <Eye className="h-4 w-4 mr-1" />
-            Kort
+            <LayoutGrid className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === "list" ? "default" : "outline"}
+            variant={flashcardsView === "table" ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("list")}
+            onClick={() => setFlashcardsView("table")}
+            className="px-3 transition-all"
           >
-            <EyeOff className="h-4 w-4 mr-1" />
-            Liste
+            <LayoutList className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -93,64 +100,93 @@ export function FlashcardList({
       {/* Content */}
       {Object.entries(groupedCards).map(([setName, cards]) => (
         <div key={setName} className="space-y-4">
-
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {flashcardsView === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {cards.map((flashcard) => (
                 <div key={flashcard.id} className="relative">
                   <FlashcardComponent
                     flashcard={flashcard}
                     editMode={showActions}
+                    onEdit={showActions ? onEdit : undefined}
+                    onDelete={showActions ? onDelete : undefined}
+                    onToggleStar={onToggleStar}
                   />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {cards.map((flashcard) => (
-                <Card
-                  key={flashcard.id}
-                  className="hover:shadow-md transition-shadow"
-                >
+                <Card key={flashcard.id} className="border-2 border-border">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          {flashcard.starred && <Badge variant="outline">⭐ Stjernet</Badge>}
-                          <span className="text-xs text-gray-500">
+                      <div className="flex-1 space-y-3">
+                        {/* Badges and meta row */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {onToggleStar && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onToggleStar(flashcard)}
+                              className="h-6 px-2 -ml-2"
+                            >
+                              <span
+                                className={cn(
+                                  "text-sm",
+                                  flashcard.starred
+                                    ? "text-primary"
+                                    : "text-muted-foreground"
+                                )}
+                              >
+                                {flashcard.starred ? "★" : "☆"}
+                              </span>
+                            </Button>
+                          )}
+                          <span className="text-xs text-muted-foreground font-mono">
                             {new Date(flashcard.createdAt).toLocaleDateString(
                               "da-DK"
                             )}
                           </span>
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-sm text-gray-900">
-                            {flashcard.front}
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {flashcard.back}
-                          </p>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Gennemgået {flashcard.reviewCount} gange
+
+                        {/* Content */}
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                              Forside
+                            </p>
+                            <h4 className="font-semibold text-base text-foreground leading-relaxed">
+                              {flashcard.front}
+                            </h4>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                              Bagside
+                            </p>
+                            <p className="text-sm text-foreground/75 leading-relaxed">
+                              {flashcard.back}
+                            </p>
+                          </div>
                         </div>
                       </div>
 
                       {showActions && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => handleEdit(flashcard)}
+                            className="h-7 text-xs px-3"
                           >
-                            <Edit className="h-4 w-4" />
+                            Rediger
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => handleDelete(flashcard)}
+                            className="h-7 text-xs px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            Slet
                           </Button>
                         </div>
                       )}
@@ -162,6 +198,28 @@ export function FlashcardList({
           )}
         </div>
       ))}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Slet flashcard?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Er du sikker på du vil slette dette flashcard? Denne handling kan
+              ikke fortrydes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuller</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Slet
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {filteredCards.length === 0 && flashcards.length > 0 && (
         <Card>

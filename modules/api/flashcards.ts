@@ -6,7 +6,8 @@ import type {
   UpdateFlashcardData,
   CreateSetData,
   UpdateSetData,
-  ApiResponse
+  ApiResponse,
+  BulkCreateResult,
 } from "@/modules/types";
 
 // Set API functions
@@ -65,5 +66,15 @@ export const deleteFlashcard = async (
 ): Promise<ApiResponse<void>> => {
   return api.delete<ApiResponse<void>>(
     `/api/sets/${setId}/flashcards/${cardId}`
+  );
+};
+
+export const createFlashcardsBulk = async (
+  setId: number,
+  flashcards: Omit<CreateFlashcardData, 'setId'>[]
+): Promise<ApiResponse<BulkCreateResult>> => {
+  return api.post<ApiResponse<BulkCreateResult>>(
+    `/api/sets/${setId}/flashcards/bulk`,
+    { flashcards }
   );
 };

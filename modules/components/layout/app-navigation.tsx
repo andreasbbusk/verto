@@ -15,19 +15,32 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/modules/components/ui/sidebar";
+import { ScrollArea } from "@/modules/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/modules/components/ui/tooltip";
 import { UserMenu } from "./user-menu";
+import { FlashcardDialog } from "../flashcards/flashcard-dialog";
 import { cn } from "@/modules/lib/utils";
+import { useSets } from "@/modules/hooks/use-sets";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Home,
   Library,
   Calendar,
   Settings,
-  GraduationCap,
   Plus,
   BookOpen,
+  ChevronRight,
 } from "lucide-react";
 
 const navigationItems = [
@@ -35,38 +48,30 @@ const navigationItems = [
     name: "Dashboard",
     href: "/dashboard",
     icon: Home,
-    description: "Oversigt og statistikker",
   },
   {
-    name: "Mine Sets",
+    name: "Flashcard Sæt",
     href: "/sets",
     icon: Library,
-    description: "Administrer dine flashcard sets",
   },
   {
     name: "Kalender",
     href: "/calendar",
     icon: Calendar,
-    description: "Se din studiehistorik",
-  },
-  {
-    name: "Indstillinger",
-    href: "/settings",
-    icon: Settings,
-    description: "Personlige præferencer",
-  },
+  }
 ];
 
 const quickActions = [
   {
-    name: "Nyt Set",
-    href: "/sets",
+    name: "Nyt Sæt",
+    href: "/sets?create=true",
     icon: Plus,
   },
   {
     name: "Nyt Kort",
-    href: "/cards",
+    href: "#",
     icon: BookOpen,
+    action: "create-card" as const,
   },
 ];
 
@@ -74,8 +79,51 @@ interface AppNavigationProps {
   children: React.ReactNode;
 }
 
+function SetMenuItem({ set, isActive }: { set: any; isActive: boolean }) {
+  const MAX_LENGTH = 20;
+  const isTruncated = set.name.length > MAX_LENGTH;
+  const displayName = isTruncated ? `${set.name.slice(0, MAX_LENGTH)}...` : set.name;
+
+  return (
+    <SidebarMenuSubItem>
+      <Tooltip delayDuration={200}>
+        <TooltipTrigger
+        asChild>
+          <div className="w-full">
+            <SidebarMenuSubButton
+              asChild
+              isActive={isActive}
+              className={cn(
+                "hover:bg-sidebar-accent w-full",
+                isActive && "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
+              )}
+            >
+              <Link href={`/sets/${set.id}`} className="flex items-center gap-2 w-full min-w-0">
+                <span className="text-xs text-muted-foreground w-6 flex-shrink-0">
+                  {set.cardCount || 0}
+                </span>
+                <span className="text-sm flex-1">
+                  {displayName}
+                </span>
+              </Link>
+            </SidebarMenuSubButton>
+          </div>
+        </TooltipTrigger>
+        {isTruncated && (
+          <TooltipContent  side="right">
+            <p>{set.name}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </SidebarMenuSubItem>
+  );
+}
+
 export function AppNavigation({ children }: AppNavigationProps) {
   const pathname = usePathname();
+  const { sets } = useSets();
+  const [setsExpanded, setSetsExpanded] = useState(true);
+  const [createCardDialogOpen, setCreateCardDialogOpen] = useState(false);
 
   const isActive = (href: string) => {
     // Handle root dashboard route
@@ -98,29 +146,94 @@ export function AppNavigation({ children }: AppNavigationProps) {
 
   return (
     <SidebarProvider>
-      <Sidebar variant="inset" className="border-subtle shadow-sm">
+      <Sidebar variant="inset">
         {/* Sidebar Header */}
-        <SidebarHeader className="border-b border-border px-6 py-4">
+        <SidebarHeader className="px-6 py-4">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 bg-primary rounded-lg">
-              <GraduationCap className="icon-md text-primary-foreground" />
-            </div>
-            <span className="text-heading-3 text-sidebar-primary">FlashCards</span>
+            <span className="text-lg font-semibold text-sidebar-foreground font-mono">FlashCards</span>
           </Link>
         </SidebarHeader>
 
         {/* Sidebar Content */}
-        <SidebarContent className="px-2 py-4">
+        <SidebarContent className="py-4">
           {/* Main Navigation */}
           <SidebarGroup>
-            <SidebarGroupLabel className="px-4 py-2">
+            <SidebarGroupLabel className="px-4 py-2 mb-2 font-mono">
               Navigation
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="px-2 gap-1">
+              <SidebarMenu className="px-3 gap-1">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
+
+                  // Special handling for Flashcard Sæt with dropdown
+                  if (item.href === "/sets") {
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <div
+                          className={cn(
+                            "w-full h-auto py-2 px-3 rounded-md hover:bg-sidebar-accent flex items-center gap-3 transition-colors",
+                            active && !pathname.includes("/sets/") && "bg-[var(--color-sidebar-accent-active)]"
+                          )}
+                        >
+                          <Link
+                            href={item.href}
+                            className="flex items-center gap-3 flex-1 min-w-0"
+                            onClick={() => setSetsExpanded(true)}
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="font-medium text-sm">
+                              {item.name}
+                            </span>
+                          </Link>
+                          <button
+                            onClick={() => setSetsExpanded(!setsExpanded)}
+                            className="flex-shrink-0 p-1 hover:bg-sidebar-accent-active rounded transition-colors"
+                          >
+                            <ChevronRight
+                              className={cn(
+                                "w-4 h-4 transition-transform",
+                                setsExpanded && "rotate-90"
+                              )}
+                            />
+                          </button>
+                        </div>
+                        <motion.div
+                          initial={false}
+                          animate={{
+                            height: setsExpanded ? "auto" : 0,
+                            opacity: setsExpanded ? 1 : 0,
+                          }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className={cn(sets.length > 5 && "max-h-[200px]")}>
+                            <ScrollArea className={cn(sets.length > 5 && "h-[200px]")}>
+                              <SidebarMenuSub className="pr-2">
+                                {sets.length === 0 ? (
+                                  <p className="px-3 py-2 text-xs text-muted-foreground">
+                                    Ingen sæt endnu
+                                  </p>
+                                ) : (
+                                  sets.map((set) => {
+                                    const setActive = pathname === `/sets/${set.id}`;
+                                    return (
+                                      <SetMenuItem
+                                        key={set.id}
+                                        set={set}
+                                        isActive={setActive}
+                                      />
+                                    );
+                                  })
+                                )}
+                              </SidebarMenuSub>
+                            </ScrollArea>
+                          </div>
+                        </motion.div>
+                      </SidebarMenuItem>
+                    );
+                  }
 
                   return (
                     <SidebarMenuItem key={item.href}>
@@ -128,30 +241,18 @@ export function AppNavigation({ children }: AppNavigationProps) {
                         asChild
                         isActive={active}
                         className={cn(
-                          "w-full flex items-start gap-3 p-3 rounded-lg transition-colors duration-200",
-                          active
-                            ? "bg-primary text-primary-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          "w-full h-auto py-2 px-3 hover:bg-sidebar-accent",
+                          active && "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
                         )}
                       >
                         <Link
                           href={item.href}
-                          className="flex items-start gap-3 w-full"
+                          className="flex items-center gap-3 w-full"
                         >
-                          <Icon className="icon-sm flex-shrink-0 mt-0.5" />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-body-sm leading-5">
-                              {item.name}
-                            </div>
-                            <div
-                              className={cn(
-                                "text-xs leading-4 mt-0.5 normal-case tracking-normal",
-                                active ? "text-primary-foreground/80" : "text-muted-foreground"
-                              )}
-                            >
-                              {item.description}
-                            </div>
-                          </div>
+                          <Icon className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-medium text-sm">
+                            {item.name}
+                          </span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -162,53 +263,69 @@ export function AppNavigation({ children }: AppNavigationProps) {
           </SidebarGroup>
 
           {/* Quick Actions */}
-          <SidebarGroup className="mt-8">
-            <SidebarGroupLabel className="px-4 py-2">
+          <SidebarGroup className="my-6">
+            <SidebarGroupLabel className="py-2 mb-2 font-mono">
               Hurtige Handlinger
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="px-2 gap-2">
+              <div className="px-2 flex flex-col gap-2">
                 {quickActions.map((action, index) => {
                   const Icon = action.icon;
 
+                  if (action.action === "create-card") {
+                    return (
+                      <Button
+                        key={`${action.name}-${index}`}
+                        size="sm"
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => setCreateCardDialogOpen(true)}
+                      >
+                        <Icon className="w-4 h-4 mr-2" />
+                        {action.name}
+                      </Button>
+                    );
+                  }
+
                   return (
-                    <SidebarMenuItem key={`${action.href}-${index}`}>
-                      <SidebarMenuButton asChild>
-                        <Link href={action.href}>
-                          <Button
-                            size="sm"
-                            className={cn(
-                              "w-full justify-start h-9 px-3 text-body-sm font-medium rounded-lg transition-all duration-200",
-                              index === 0
-                                ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0"
-                                : "bg-transparent border border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                            )}
-                          >
-                            <Icon className="icon-sm mr-2" />
-                            {action.name}
-                          </Button>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <Button
+                      key={`${action.href}-${index}`}
+                      asChild
+                      size="sm"
+                      variant={index === 0 ? "default" : "outline"}
+                      className="w-full justify-start"
+                    >
+                      <Link href={action.href}>
+                        <Icon className="w-4 h-4 mr-2" />
+                        {action.name}
+                      </Link>
+                    </Button>
                   );
                 })}
-              </SidebarMenu>
+              </div>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
         {/* Sidebar Footer */}
-        <SidebarFooter className="border-t border-border p-3">
+        <SidebarFooter className="p-3">
           <UserMenu />
         </SidebarFooter>
       </Sidebar>
 
+      {/* Create Card Dialog */}
+      <FlashcardDialog
+        open={createCardDialogOpen}
+        onOpenChange={setCreateCardDialogOpen}
+        mode="select-set"
+      />
+
       {/* Main Content */}
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4 border-b border-border">
+        <header className="flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger />
         </header>
-        <div className="flex-1 p-6 bg-gradient-soft">{children}</div>
+        <div className="flex-1 p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -1,59 +1,65 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+html {
+  overscroll-behavior: none;
+}
+
 @theme inline {
-  /* Base Colors */
-  --color-background: oklch(0.08 0.005 250);
-  --color-foreground: oklch(0.97 0.005 250);
-  --color-card: oklch(0.12 0.005 250);
-  --color-card-foreground: oklch(0.97 0.005 250);
-  --color-popover: oklch(0.10 0.005 250);
-  --color-popover-foreground: oklch(0.97 0.005 250);
+  /* Base Colors - Pure neutral blacks and whites */
+  --color-background: oklch(0.1822 0 0);
+  --color-foreground: oklch(0.97 0 0);
+  --color-card: oklch(0.22 0 0);
+  --color-card-foreground: oklch(0.97 0 0);
+  --color-popover: oklch(0.1822 0 0);
+  --color-popover-foreground: oklch(0.97 0 0);
 
-  /* Accent & Primary */
-  --color-primary: oklch(0.55 0.18 230);
-  --color-primary-foreground: oklch(0.08 0.005 250);
+  /* Accent & Primary - Osmo Supply Orange */
+  --color-primary: oklch(0.668 0.2212 33.71);
+  --color-primary-foreground: oklch(0.08 0 0);
 
-  /* Secondary */
-  --color-secondary: oklch(0.16 0.005 250);
-  --color-secondary-foreground: oklch(0.97 0.005 250);
+  /* Secondary - Subtle grays */
+  --color-secondary: oklch(0.22 0 0);
+  --color-secondary-foreground: oklch(0.97 0 0);
 
-  /* Muted */
-  --color-muted: oklch(0.20 0.005 250);
-  --color-muted-foreground: oklch(0.55 0.005 250);
+  /* Muted - Neutral grays */
+  --color-muted: oklch(0.22 0 0);
+  --color-muted-foreground: oklch(0.55 0 0);
 
-  /* Accent Hover States */
-  --color-accent: oklch(0.15 0.005 250);
-  --color-accent-foreground: oklch(0.97 0.005 250);
+  /* Accent Hover States - Lighter blacks */
+  --color-accent: oklch(0.22 0 0);
+  --color-accent-foreground: oklch(0.97 0 0);
 
-  /* Destructive */
+  /* Destructive - Keep red for errors */
   --color-destructive: oklch(0.55 0.22 25);
-  --color-destructive-foreground: oklch(0.97 0.005 250);
+  --color-destructive-foreground: oklch(0.97 0 0);
 
-  /* Borders & Input */
-  --color-border: oklch(0.22 0.005 250);
-  --color-input: oklch(0.14 0.005 250);
-  --color-ring: oklch(0.55 0.18 230);
+  /* Borders & Input - Pure neutral */
+  --color-border: oklch(0.35 0 0);
+  --color-input: oklch(0.14 0 0);
+  --color-ring: oklch(0.668 0.2212 33.71);
 
-  /* Brand Colors (unified to single accent) */
-  --color-brand: oklch(0.55 0.18 230);
-  --color-brand-yellow: oklch(0.55 0.18 230);
-  --color-brand-teal: oklch(0.55 0.18 230);
+  /* Brand Colors - All unified to Osmo orange */
+  --color-brand: oklch(0.668 0.2212 33.71);
 
   --color-chart-1: oklch(0.646 0.222 41.116);
   --color-chart-2: oklch(0.6 0.118 184.704);
   --color-chart-3: oklch(0.398 0.07 227.392);
   --color-chart-4: oklch(0.828 0.189 84.429);
   --color-chart-5: oklch(0.769 0.188 70.08);
-  /* Sidebar Colors */
-  --color-sidebar: oklch(0.10 0.005 250);
-  --color-sidebar-foreground: oklch(0.85 0.005 250);
-  --color-sidebar-primary: oklch(0.97 0.005 250);
-  --color-sidebar-primary-foreground: oklch(0.10 0.005 250);
-  --color-sidebar-accent: oklch(0.15 0.005 250);
-  --color-sidebar-accent-foreground: oklch(0.97 0.005 250);
-  --color-sidebar-border: oklch(0.22 0.005 250);
-  --color-sidebar-ring: oklch(0.55 0.18 230);
+
+  /* Sidebar Colors - Pure neutral blacks */
+  --color-sidebar: oklch(0.22 0 0);
+  --color-sidebar-foreground: oklch(0.85 0 0);
+  --color-sidebar-primary: oklch(0.97 0 0);
+  --color-sidebar-primary-foreground: oklch(0.10 0 0);
+  --color-sidebar-accent: oklch(0.28 0 0);
+  /* Hover state - lighter than bg */
+  --color-sidebar-accent-foreground: oklch(0.97 0 0);
+  --color-sidebar-accent-active: oklch(0.34 0 0);
+  /* Active state - even lighter */
+  --color-sidebar-border: oklch(0.22 0 0);
+  --color-sidebar-ring: oklch(0.62 0.22 35);
 
   /* Typography */
   --font-sans: var(--font-geist-sans);
@@ -70,13 +76,41 @@
     font-feature-settings: "rlig"1, "calt"1;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-mono tracking-tight;
   }
 
 }
 
 @layer utilities {
+
+  /* 3D Transform Utilities for Flashcard Flip */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .transform-style-preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .rotate-x-0 {
+    transform: rotateX(0deg);
+  }
+
+  .rotate-x-180 {
+    transform: rotateX(180deg);
+  }
+
   /* Animations */
   @keyframes fadeInUp {
     from {

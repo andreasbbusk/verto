@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -8,9 +9,20 @@ import {
 } from "@/modules/components/ui/card";
 import { Button } from "@/modules/components/ui/button";
 import { Badge } from "@/modules/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/modules/components/ui/alert-dialog";
 import type { FlashcardSet } from "@/modules/types";
-import { BookOpen, Edit, Trash2, Play } from "lucide-react";
+import { BookOpen, Play, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface SetCardProps {
   set: FlashcardSet;
@@ -25,74 +37,117 @@ export function SetCard({
   onDelete,
   showActions = true,
 }: SetCardProps) {
-  const handleEdit = () => {
+  const router = useRouter();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onEdit?.(set);
   };
 
-  const handleDelete = () => {
-    if (confirm(`Er du sikker på du vil slette set "${set.name}"?`)) {
-      onDelete?.(set);
-    }
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    onDelete?.(set);
+    setDeleteDialogOpen(false);
+  };
+
+  const handleCardClick = () => {
+    router.push(`/sets/${set.id}`);
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg truncate group-hover:text-blue-600 transition-colors">
-              {set.name}
-            </h3>
+    <>
+      <Card
+        className="group hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 flex flex-col h-full cursor-pointer"
+        onClick={handleCardClick}
+      >
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-mono text-lg font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                {set.name}
+              </h3>
+            </div>
+            <div className="w-10 h-10 border border-border flex items-center justify-center flex-shrink-0">
+              <BookOpen className="h-5 w-5 text-primary" />
+            </div>
           </div>
-          <BookOpen className="h-5 w-5 text-gray-400 flex-shrink-0" />
-        </div>
-      </CardHeader>
+        </CardHeader>
 
-      <CardContent className="pb-3">
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center gap-4">
-            <Badge variant="secondary" className="font-medium">
-              {set.cardCount} kort
-            </Badge>
-            <span>{new Date(set.createdAt).toLocaleDateString("da-DK")}</span>
+        <CardContent className="pb-4 flex-1">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="font-mono text-xs">
+                {set.cardCount} kort
+              </Badge>
+              {set.difficulty && (
+                <Badge variant="outline" className="font-mono text-xs">
+                  Lvl {set.difficulty}
+                </Badge>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground font-mono">
+              Oprettet: {new Date(set.createdAt).toLocaleDateString("da-DK")}
+            </div>
           </div>
-        </div>
-      </CardContent>
+        </CardContent>
 
-      <CardFooter className="pt-3 border-t bg-gray-50/50">
-        <div className="flex w-full gap-2">
-          <Link
-            href={`/study/${set.id}`}
-            className="flex-1"
-          >
-            <Button className="w-full" size="sm">
-              <Play className="h-4 w-4 mr-2" />
-              Studer
-            </Button>
-          </Link>
+        <CardFooter className="pt-4 border-t border-border">
+          <div className="flex w-full gap-2" onClick={(e) => e.stopPropagation()}>
+            <Link href={`/study/${set.id}`} className="flex-1">
+              <Button className="w-full" size="sm">
+                <Play className="h-3 w-3 mr-2" />
+                Studer
+              </Button>
+            </Link>
 
-          {showActions && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleEdit}
-                className="px-3"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDelete}
-                className="px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
+            {showActions && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEdit}
+                  className="px-3"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeleteClick}
+                  className="px-3 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
+        </CardFooter>
+      </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-mono">Slet set?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Er du sikker på du vil slette set &quot;{set.name}&quot;? Denne handling kan ikke fortrydes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuller</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Slet
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

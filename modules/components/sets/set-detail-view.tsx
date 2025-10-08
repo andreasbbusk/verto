@@ -6,42 +6,85 @@ import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
 import { Badge } from "@/modules/components/ui/badge";
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/components/ui/dropdown-menu";
+import { useFlashcardMutations } from "@/modules/hooks/use-flashcards";
+import { useSetById, useSets } from "@/modules/hooks/use-sets";
 import type {
   CreateFlashcardData,
   CreateSetData,
   Flashcard,
-  UpdateFlashcardData
+  UpdateFlashcardData,
 } from "@/modules/types";
 import {
   ArrowLeft,
   BarChart3,
   BookOpen,
   Calendar,
+  ChevronDown,
   Play,
-  PlusCircle
+  PlusCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SetDialog } from "./set-dialog";
-import { useSetById, useSets } from "@/modules/hooks/use-sets";
-import { useFlashcardMutations } from "@/modules/hooks/use-flashcards";
 
 interface SetDetailViewProps {
   id: number;
 }
 
+type FilterType = "all" | "starred" | "due";
+
 export function SetDetailView({ id }: SetDetailViewProps) {
+  const searchParams = useSearchParams();
   const [setDialogOpen, setSetDialogOpen] = useState(false);
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const router = useRouter();
 
-  const { set, flashcards, loading, error } = useSetById(id);
+  const { set, flashcards, error } = useSetById(id);
   const flashcardMutations = useFlashcardMutations(id);
 
   const { update: updateSet, remove: removeSet } = useSets();
+
+  // Filter flashcards based on active filter
+  const filteredFlashcards = useMemo(() => {
+    return flashcards.filter((card) => {
+      if (activeFilter === "all") return true;
+      if (activeFilter === "starred") return card.starred;
+      if (activeFilter === "due") {
+        if (!card.performance?.nextReview) return false;
+        return new Date(card.performance.nextReview) <= new Date();
+      }
+      return true;
+    });
+  }, [flashcards, activeFilter]);
+
+  // Calculate counts for each filter
+  const starredCount = useMemo(
+    () => flashcards.filter((card) => card.starred).length,
+    [flashcards]
+  );
+  const dueCount = useMemo(() => {
+    return flashcards.filter((card) => {
+      if (!card.performance?.nextReview) return false;
+      return new Date(card.performance.nextReview) <= new Date();
+    }).length;
+  }, [flashcards]);
+
+  // Check for createCard URL param and auto-open dialog
+  useEffect(() => {
+    if (searchParams.get("createCard") === "true") {
+      setCardDialogOpen(true);
+    }
+  }, [searchParams]);
 
   const handleUpdateSet = async (data: CreateSetData) => {
     if (!set) return;
@@ -57,7 +100,11 @@ export function SetDetailView({ id }: SetDetailViewProps) {
   const handleDeleteSet = async () => {
     if (!set) return;
 
-    if (!confirm(`Er du sikker på du vil slette set "${set.name}" og alle dets flashcards?`)) {
+    if (
+      !confirm(
+        `Er du sikker på du vil slette set "${set.name}" og alle dets flashcards?`
+      )
+    ) {
       return;
     }
 
@@ -75,6 +122,19 @@ export function SetDetailView({ id }: SetDetailViewProps) {
 
     try {
       await flashcardMutations.create(data);
+    } catch (error) {
+      // Error toast is handled in the mutation
+      throw error;
+    }
+  };
+
+  const handleBulkCreateCards = async (
+    cards: Omit<CreateFlashcardData, "setId">[]
+  ) => {
+    if (!set) return;
+
+    try {
+      await flashcardMutations.createBulk(cards);
     } catch (error) {
       // Error toast is handled in the mutation
       throw error;
@@ -100,6 +160,17 @@ export function SetDetailView({ id }: SetDetailViewProps) {
     }
   };
 
+  const handleToggleStar = async (flashcard: Flashcard) => {
+    try {
+      await flashcardMutations.update({
+        cardId: flashcard.id,
+        data: { starred: !flashcard.starred },
+      });
+    } catch (error) {
+      // Error toast is handled in the mutation
+    }
+  };
+
   const handleEditCard = (flashcard: Flashcard) => {
     setEditingCard(flashcard);
     setCardDialogOpen(true);
@@ -108,18 +179,22 @@ export function SetDetailView({ id }: SetDetailViewProps) {
   const handleCardDialogChange = (open: boolean) => {
     setCardDialogOpen(open);
     if (!open) {
-      setEditingCard(null);
+      // Delay clearing editingCard to prevent flickering during close animation
+      setTimeout(() => {
+        setEditingCard(null);
+      }, 200);
     }
   };
 
-  const handleCardFormSubmit = async (data: CreateFlashcardData | UpdateFlashcardData) => {
+  const handleCardFormSubmit = async (
+    data: CreateFlashcardData | UpdateFlashcardData
+  ) => {
     if (editingCard) {
       await handleUpdateCard(data as UpdateFlashcardData);
     } else {
       await handleCreateCard(data as CreateFlashcardData);
     }
   };
-
 
   if (error || !set) {
     return (
@@ -132,63 +207,89 @@ export function SetDetailView({ id }: SetDetailViewProps) {
             </Button>
           </Link>
         </div>
-        
-        <Card>
-          <CardContent className="flex items-center justify-center p-8">
-            <div className="text-center">
-              <div className="text-red-600 font-medium mb-2">
-                {error || "Set ikke fundet"}
-              </div>
-              <p className="text-gray-500 text-sm mb-4">
-                Settet eksisterer ikke eller du har ikke adgang til det
-              </p>
-              <Link href="/sets">
-                <Button variant="outline">
-                  Tilbage til sets
-                </Button>
-              </Link>
+
+        <Card className="p-8">
+          <div className="text-center">
+            <div className="w-12 h-12 border border-destructive flex items-center justify-center mx-auto mb-4">
+              <div className="text-destructive text-lg">!</div>
             </div>
-          </CardContent>
+            <div className="text-destructive font-mono text-sm mb-2">
+              {error || "Set ikke fundet"}
+            </div>
+            <p className="text-muted-foreground text-sm mb-4">
+              Settet eksisterer ikke eller du har ikke adgang til det
+            </p>
+            <Link href="/sets">
+              <Button variant="outline" size="sm">
+                Tilbage til sets
+              </Button>
+            </Link>
+          </div>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <AnimatedSection>
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/sets">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Tilbage til sets
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">
+        <div className="flex items-center space-x-4 mb-6">
+          <Link href="/sets">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Tilbage til sets
+            </Button>
+          </Link>
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="font-mono text-4xl font-bold text-foreground tracking-tight">
                 {set.name}
               </h1>
-              <p className="text-gray-600 mt-1">
-                {set.description || "Administrer flashcards i dette set"}
-              </p>
+              <Badge variant="secondary" className="font-mono text-xs">
+                Sværhedsgrad: {set.difficulty}/5
+              </Badge>
             </div>
+            <p className="text-muted-foreground mt-2 text-sm">
+              {set.description || "Administrer flashcards i dette set"}
+            </p>
           </div>
           <div className="flex gap-2">
             <Link href={`/study/${set.id}`}>
-              <Button>
+              <Button size="sm">
                 <Play className="h-4 w-4 mr-2" />
                 Start Studie
               </Button>
             </Link>
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setCardDialogOpen(true)}
             >
               <PlusCircle className="h-4 w-4 mr-2" />
               Tilføj Kort
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Indstillinger
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setSetDialogOpen(true)}>
+                  Rediger Set
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleDeleteSet}
+                  className="text-destructive"
+                >
+                  Slet Set
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </AnimatedSection>
@@ -197,23 +298,33 @@ export function SetDetailView({ id }: SetDetailViewProps) {
       <AnimatedSection delay={0.1}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <BookOpen className="h-5 w-5 text-blue-600" />
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 border border-border flex items-center justify-center">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Antal Kort</p>
-                  <p className="text-2xl font-bold text-gray-900">{flashcards.length}</p>
+                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+                    Antal Kort
+                  </p>
+                  <p className="text-2xl font-mono font-bold text-foreground">
+                    {flashcards.length}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5 text-green-600" />
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 border border-border flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Oprettet</p>
-                  <p className="text-sm font-bold text-gray-900">
+                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+                    Oprettet
+                  </p>
+                  <p className="text-sm font-mono font-bold text-foreground">
                     {new Date(set.createdAt).toLocaleDateString("da-DK")}
                   </p>
                 </div>
@@ -221,13 +332,20 @@ export function SetDetailView({ id }: SetDetailViewProps) {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-purple-600" />
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 border border-border flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Reviews</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {flashcards.reduce((sum, card) => sum + card.reviewCount, 0)}
+                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+                    Total Reviews
+                  </p>
+                  <p className="text-2xl font-mono font-bold text-foreground">
+                    {flashcards.reduce(
+                      (sum, card) => sum + card.reviewCount,
+                      0
+                    )}
                   </p>
                 </div>
               </div>
@@ -250,40 +368,102 @@ export function SetDetailView({ id }: SetDetailViewProps) {
         onOpenChange={handleCardDialogChange}
         flashcard={editingCard || undefined}
         onSubmit={handleCardFormSubmit}
-        isLoading={flashcardMutations.isCreating || flashcardMutations.isUpdating}
+        onBulkSubmit={handleBulkCreateCards}
+        isLoading={
+          flashcardMutations.isCreating ||
+          flashcardMutations.isUpdating ||
+          flashcardMutations.isCreatingBulk
+        }
       />
 
       {/* Flashcards */}
-      <AnimatedSection delay={0.3}>
+      <AnimatedSection delay={0.2}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Flashcards</h2>
-            <Badge variant="secondary">{flashcards.length} kort</Badge>
+            <h2 className="text-xl font-mono font-bold text-foreground">
+              Flashcards
+            </h2>
+            <Badge variant="secondary">
+              {activeFilter === "all"
+                ? `${flashcards.length} kort`
+                : `${filteredFlashcards.length} af ${flashcards.length} kort`}
+            </Badge>
           </div>
-          
+
+          {/* Filter buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activeFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter("all")}
+            >
+              Alle ({flashcards.length})
+            </Button>
+            <Button
+              variant={activeFilter === "starred" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter("starred")}
+            >
+              Stjernet ({starredCount})
+            </Button>
+            <Button
+              variant={activeFilter === "due" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter("due")}
+            >
+              Til Gennemgang ({dueCount})
+            </Button>
+          </div>
+
           {flashcards.length === 0 ? (
-            <Card>
-              <CardContent className="flex items-center justify-center p-8">
-                <div className="text-center space-y-4">
-                  <BookOpen className="h-12 w-12 text-gray-400 mx-auto" />
-                  <div>
-                    <h3 className="font-semibold text-lg">Ingen flashcards</h3>
-                    <p className="text-gray-500">
-                      Tilføj dit første flashcard til dette set
-                    </p>
-                  </div>
-                  <Button onClick={() => setCardDialogOpen(true)}>
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Tilføj Flashcard
-                  </Button>
+            <Card className="p-12">
+              <div className="text-center space-y-6">
+                <div className="w-16 h-16 border border-border flex items-center justify-center mx-auto">
+                  <BookOpen className="h-8 w-8 text-muted-foreground" />
                 </div>
-              </CardContent>
+                <div>
+                  <h3 className="font-mono font-bold text-lg text-foreground mb-2">
+                    Ingen flashcards
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    Tilføj dit første flashcard til dette set
+                  </p>
+                </div>
+                <Button onClick={() => setCardDialogOpen(true)} size="sm">
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Tilføj Flashcard
+                </Button>
+              </div>
+            </Card>
+          ) : filteredFlashcards.length === 0 ? (
+            <Card className="p-12">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 border border-border flex items-center justify-center mx-auto">
+                  <BookOpen className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-mono font-bold text-lg text-foreground mb-2">
+                    Ingen kort matcher filteret
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    Prøv et andet filter eller tilføj flere flashcards
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setActiveFilter("all")}
+                  variant="outline"
+                  size="sm"
+                >
+                  Vis Alle Kort
+                </Button>
+              </div>
             </Card>
           ) : (
             <FlashcardList
-              flashcards={flashcards}
+              flashcards={filteredFlashcards}
               onEdit={handleEditCard}
               onDelete={handleDeleteCard}
+              onToggleStar={handleToggleStar}
             />
           )}
         </div>

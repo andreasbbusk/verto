@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import { Button } from "@/modules/components/ui/button";
 import { Input } from "@/modules/components/ui/input";
 import { Label } from "@/modules/components/ui/label";
 import { Textarea } from "@/modules/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "@/modules/components/ui/toggle-group";
 import { toast } from "sonner";
 import type { FlashcardSet, CreateSetData } from "@/modules/types";
 
@@ -31,27 +32,41 @@ export function SetDialog({
   isLoading = false,
 }: SetDialogProps) {
   const [formData, setFormData] = useState({
-    name: set?.name || "",
-    description: set?.description || "",
-    difficulty: set?.difficulty || 3,
+    name: "",
+    description: "",
+    difficulty: 3,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Reset form when dialog opens/closes or set changes
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      setFormData({
-        name: "",
-        description: "",
-        difficulty: 3,
-      });
-      setErrors({});
-    } else if (set) {
+  // Update form data when set prop changes or dialog opens
+  useEffect(() => {
+    if (open && set) {
       setFormData({
         name: set.name,
         description: set.description || "",
         difficulty: set.difficulty || 3,
       });
+    } else if (open && !set) {
+      setFormData({
+        name: "",
+        description: "",
+        difficulty: 3,
+      });
+    }
+  }, [open, set]);
+
+  // Reset form when dialog closes (with delay to prevent flickering during animation)
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Delay clearing to prevent flickering during close animation
+      setTimeout(() => {
+        setFormData({
+          name: "",
+          description: "",
+          difficulty: 3,
+        });
+        setErrors({});
+      }, 200);
     }
     onOpenChange(newOpen);
   };
@@ -103,12 +118,18 @@ export function SetDialog({
       }
     };
 
+  const handleDifficultyChange = (value: string) => {
+    if (value) {
+      setFormData((prev) => ({ ...prev, difficulty: parseInt(value) }));
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-heading-3">
-            {set ? "Rediger Set" : "Opret Nyt Set"}
+            {set ? "Rediger Sæt" : "Opret Nyt Sæt"}
           </DialogTitle>
           <DialogDescription>
             {set
@@ -119,7 +140,7 @@ export function SetDialog({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-body-sm font-medium">
-              Set Navn *
+              Sæt Navn *
             </Label>
             <Input
               id="name"
@@ -147,7 +168,7 @@ export function SetDialog({
               value={formData.description}
               onChange={handleInputChange("description")}
               placeholder="Tilføj en beskrivelse af hvad dette set indeholder"
-              rows={3}
+              rows={4}
               className={errors.description ? "border-destructive" : ""}
               maxLength={200}
             />
@@ -157,6 +178,39 @@ export function SetDialog({
             <p className="text-xs text-muted-foreground">
               {formData.description.length}/200 tegn
             </p>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-body-sm font-medium">
+                Sværhedsgrad
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Vælg en sværhedsgrad fra 1 til 5
+              </p>
+            </div>
+            <ToggleGroup
+              type="single"
+              value={formData.difficulty.toString()}
+              onValueChange={handleDifficultyChange}
+              className="justify-start gap-1"
+            >
+              <ToggleGroupItem value="1" className="font-mono w-16">
+                1
+              </ToggleGroupItem>
+              <ToggleGroupItem value="2" className="font-mono w-16">
+                2
+              </ToggleGroupItem>
+              <ToggleGroupItem value="3" className="font-mono w-16">
+                3
+              </ToggleGroupItem>
+              <ToggleGroupItem value="4" className="font-mono w-16">
+                4
+              </ToggleGroupItem>
+              <ToggleGroupItem value="5" className="font-mono w-16">
+                5
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">

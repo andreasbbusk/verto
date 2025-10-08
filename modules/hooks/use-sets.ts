@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getSets,
@@ -22,11 +22,10 @@ const queryKeys = {
 
 export function useSets() {
   const queryClient = useQueryClient();
-  
-  const query = useQuery({
+
+  const query = useSuspenseQuery({
     queryKey: queryKeys.sets,
     queryFn: getSets,
-    initialData: undefined,
   });
 
   const createMutation = useMutation({
@@ -97,7 +96,6 @@ export function useSets() {
 
   return {
     sets: query.data ?? [],
-    loading: query.isLoading,
     error: query.error?.message || null,
     refresh: () => queryClient.invalidateQueries({ queryKey: queryKeys.sets }),
     create: createMutation.mutateAsync,
@@ -110,16 +108,14 @@ export function useSets() {
 export function useSetById(id: number) {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useSuspenseQuery({
     queryKey: queryKeys.setById(id),
     queryFn: () => getSetById(id),
-    enabled: !!id,
   });
 
   return {
     set: query.data,
     flashcards: query.data?.flashcards || [],
-    loading: query.isPending,
     error: query.error?.message || null,
     refresh: () => queryClient.invalidateQueries({ queryKey: queryKeys.setById(id) }),
   };

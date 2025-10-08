@@ -74,6 +74,30 @@ export interface CardPerformance {
     userId: number;
   }
 
+  // Bulk flashcard creation
+  export interface BulkCreateFlashcardData {
+    setId: number;
+    flashcards: Array<Omit<CreateFlashcardData, 'setId'>>;
+  }
+
+  export interface BulkCreateResult {
+    created: Flashcard[];
+    failed: Array<{
+      index: number;
+      card: Omit<CreateFlashcardData, 'setId'>;
+      error: string;
+    }>;
+    successCount: number;
+    failureCount: number;
+  }
+
+  export interface ParsedFlashcard {
+    front: string;
+    back: string;
+    starred?: boolean;
+    error?: string;
+  }
+
   export interface UpdateFlashcardData {
     front?: string;
     back?: string;

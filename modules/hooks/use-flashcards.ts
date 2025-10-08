@@ -6,6 +6,7 @@ import {
   createFlashcard,
   updateFlashcard,
   deleteFlashcard,
+  createFlashcardsBulk,
 } from "@/modules/api";
 import type {
   CreateFlashcardData,
@@ -31,8 +32,11 @@ export function useFlashcardMutations(setId: number) {
   const updateMutation = useMutation({
     mutationFn: ({ cardId, data }: { cardId: number; data: UpdateFlashcardData }) =>
       updateFlashcard(setId, cardId, data),
-    onSuccess: () => {
-      toast.success("Flashcard updated successfully");
+    onSuccess: (_, variables) => {
+      // Only show toast if it's not just a star toggle
+      if (!('starred' in variables.data && Object.keys(variables.data).length === 1)) {
+        toast.success("Flashcard updated successfully");
+      }
       queryClient.invalidateQueries({ queryKey: ['sets', setId] });
     },
     onError: (error) => {
@@ -52,13 +56,35 @@ export function useFlashcardMutations(setId: number) {
     },
   });
 
+  const createBulkMutation = useMutation({
+    mutationFn: (flashcards: Omit<CreateFlashcardData, 'setId'>[]) =>
+      createFlashcardsBulk(setId, flashcards),
+    onSuccess: (response) => {
+      const result = response.data;
+      if (result.failureCount > 0) {
+        toast.warning(
+          `Created ${result.successCount} flashcard(s), ${result.failureCount} failed`
+        );
+      } else {
+        toast.success(`Successfully created ${result.successCount} flashcard(s)`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['sets', setId] });
+      queryClient.invalidateQueries({ queryKey: ['sets'] });
+    },
+    onError: (error) => {
+      toast.error("Failed to create flashcards");
+    },
+  });
+
   return {
     create: createMutation.mutateAsync,
     update: ({ cardId, data }: { cardId: number; data: UpdateFlashcardData }) =>
       updateMutation.mutateAsync({ cardId, data }),
     remove: deleteMutation.mutateAsync,
+    createBulk: createBulkMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isCreatingBulk: createBulkMutation.isPending,
   };
 }

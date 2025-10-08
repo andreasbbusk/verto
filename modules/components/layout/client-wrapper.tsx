@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, ReactNode } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ReactNode, useState } from "react";
 import { toast } from "sonner";
-import { deleteFlashcard, deleteSet } from "@/modules/api";
 
 interface AnimatedSectionProps {
   children: ReactNode;

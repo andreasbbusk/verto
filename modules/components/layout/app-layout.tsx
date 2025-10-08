@@ -7,6 +7,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useAuthStore } from "@/modules/stores/authStore";
 import { ProtectedRoute } from "./protected-route";
 import { AppNavigation } from "./app-navigation";
+import { PageTransition } from "../ui/page-transition";
 import { toast } from "sonner";
 
 interface AppLayoutProps {
@@ -54,18 +55,28 @@ export function AppLayout({ children }: AppLayoutProps) {
     if (requireAuth && !user) {
       return (
         <ProtectedRoute>
-          <AppNavigation>{children}</AppNavigation>
+          <AppNavigation>
+            <PageTransition>{children}</PageTransition>
+          </AppNavigation>
         </ProtectedRoute>
       );
     }
 
     // If user is authenticated, show the navigation layout
     if (user) {
-      return <AppNavigation>{children}</AppNavigation>;
+      return (
+        <AppNavigation>
+          <PageTransition>{children}</PageTransition>
+        </AppNavigation>
+      );
     }
 
     // For unauthenticated pages (like landing page), show children without navigation
-    return <div className="min-h-screen">{children}</div>;
+    return (
+      <div className="min-h-screen">
+        <PageTransition>{children}</PageTransition>
+      </div>
+    );
   };
 
   return (
