@@ -355,12 +355,12 @@ export function StudyInterface({
     <div
       ref={containerRef}
       tabIndex={0}
-      className="min-h-screen bg-background outline-none"
+      className="flex flex-col outline-none -m-6 h-[calc(100vh-6rem)]"
     >
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <div className="flex-1 max-w-5xl mx-auto w-full px-6 flex flex-col overflow-auto">
         {/* Header */}
-        <div className="text-center bg-card rounded-lg p-4 border border-border">
-          <h1 className="text-heading-2 font-bold text-foreground mb-3">
+        <div className="text-center p-2">
+          <h1 className="text-xl font-semibold text-foreground mb-3">
             {setName}
             {filterStarredOnly && (
               <span className="text-sm text-muted-foreground ml-2">(★ Favoritter)</span>
@@ -373,8 +373,8 @@ export function StudyInterface({
           />
         </div>
 
-        {/* Flashcard */}
-        <div className="flex justify-center">
+        {/* Flashcard - centered with more top spacing */}
+        <div className="flex-1 flex items-center justify-center">
           <FlashcardComponent
             flashcard={currentCard}
             isFlipped={isFlipped}
@@ -382,26 +382,30 @@ export function StudyInterface({
             onEdit={handleEdit}
             onToggleStar={() => handleToggleStar(currentCard)}
             showEditButton={true}
-            className="w-full max-w-lg"
+            className="w-full max-w-2xl"
           />
         </div>
+      </div>
 
-        {/* Controls */}
-        <StudyControls
-          currentIndex={currentIndex}
-          totalCards={displayCards.length}
-          isFlipped={isFlipped}
-          onPrevious={goToPrevious}
-          onNext={goToNext}
-          onFlip={handleFlipCard}
-          onExit={() => setExitAlertOpen(true)}
-          onShuffle={shuffleCards}
-          autoPlayEnabled={autoPlayEnabled}
-          onToggleAutoPlay={() => setAutoPlayEnabled((prev) => !prev)}
-          filterStarredOnly={filterStarredOnly}
-          onToggleStarredFilter={toggleStarredFilter}
-          onResetProgress={() => setResetAlertOpen(true)}
-        />
+      {/* Controls - Sticky at bottom */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg z-10">
+        <div className="max-w-5xl mx-auto px-6 py-3">
+          <StudyControls
+            currentIndex={currentIndex}
+            totalCards={displayCards.length}
+            isFlipped={isFlipped}
+            onPrevious={goToPrevious}
+            onNext={goToNext}
+            onFlip={handleFlipCard}
+            onExit={() => setExitAlertOpen(true)}
+            onShuffle={shuffleCards}
+            autoPlayEnabled={autoPlayEnabled}
+            onToggleAutoPlay={() => setAutoPlayEnabled((prev) => !prev)}
+            filterStarredOnly={filterStarredOnly}
+            onToggleStarredFilter={toggleStarredFilter}
+            onResetProgress={() => setResetAlertOpen(true)}
+          />
+        </div>
       </div>
 
       {/* Quick Edit Dialog */}

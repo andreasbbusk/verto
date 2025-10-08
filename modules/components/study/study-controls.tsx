@@ -1,7 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/modules/components/ui/button";
-import { Card, CardContent } from "@/modules/components/ui/card";
 import { Badge } from "@/modules/components/ui/badge";
 import { Kbd, KbdGroup } from "@/modules/components/ui/kbd";
 import { cn } from "@/modules/lib/utils";
@@ -15,6 +15,9 @@ import {
   Play,
   Pause,
   Star,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 interface StudyControlsProps {
@@ -54,18 +57,13 @@ export function StudyControls({
   onResetProgress,
   className,
 }: StudyControlsProps) {
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const isFirstCard = currentIndex === 0;
   const isLastCard = currentIndex === totalCards - 1;
 
   return (
-    <Card
-      className={cn(
-        "w-full bg-card border border-border",
-        className
-      )}
-    >
-      <CardContent className="p-4">
-        <div className="space-y-4">
+    <div className={cn("w-full", className)}>
+      <div className="space-y-3">
           {/* Primary Navigation */}
           <div className="flex items-center justify-center gap-4">
             <Button
@@ -107,7 +105,7 @@ export function StudyControls({
           </div>
 
           {/* Secondary Controls */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -125,13 +123,14 @@ export function StudyControls({
                   size="sm"
                   onClick={onResetProgress}
                   title="Start fra begyndelsen (R)"
-                  className="gap-1"
+                  className="gap-1.5"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  <span className="text-xs">Nulstil</span>
+                  <span className="text-xs hidden sm:inline">Nulstil</span>
                 </Button>
               )}
             </div>
+
 
             <div className="flex items-center gap-2">
               {onToggleAutoPlay && (
@@ -166,10 +165,10 @@ export function StudyControls({
                   size="sm"
                   onClick={onToggleStarredFilter}
                   title={filterStarredOnly ? "Vis alle kort" : "Vis kun favoritter"}
-                  className="gap-1"
+                  className="gap-1.5"
                 >
                   <Star className="h-4 w-4" fill={filterStarredOnly ? "currentColor" : "none"} />
-                  <span className="text-xs">Filter</span>
+                  <span className="text-xs hidden sm:inline">Filter</span>
                 </Button>
               )}
 
@@ -186,8 +185,23 @@ export function StudyControls({
             </div>
           </div>
 
+          {/* Keyboard shortcuts toggle */}
+          <div className="flex justify-center border-t border-border/50 pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowShortcuts(!showShortcuts)}
+              className="text-xs text-muted-foreground hover:text-foreground gap-1.5 h-7"
+            >
+              <HelpCircle className="h-3.5 w-3.5" />
+              Keyboard Shortcuts
+              {showShortcuts ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+
           {/* Keyboard shortcuts hint */}
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground border-t border-border/50 pt-3">
+          {showShortcuts && (
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground pt-3">
             <KbdGroup className="flex items-center gap-1.5">
               <Kbd>←</Kbd>
               <Kbd>→</Kbd>
@@ -215,9 +229,9 @@ export function StudyControls({
               <Kbd>S</Kbd>
               Shuffle
             </KbdGroup>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+            </div>
+          )}
+      </div>
+    </div>
   );
 }

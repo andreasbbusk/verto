@@ -199,7 +199,7 @@ const FlashcardComponent = ({
         transition={{ duration: 0.6, ease: "easeInOut" }}
         style={{ transformStyle: "preserve-3d" }}
         className={cn(
-          "relative w-full h-64 rounded-xl",
+          "relative w-full h-80 rounded-xl",
           !editMode && "cursor-pointer"
         )}
       >
