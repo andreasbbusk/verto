@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/modules/components/ui/badge";
 import { Button } from "@/modules/components/ui/button";
 import { ScrollArea } from "@/modules/components/ui/scroll-area";
+import { Pencil, Star } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,30 +46,6 @@ const FlashcardComponent = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const flipped = onFlip !== undefined ? isFlipped : internalFlipped;
   const setFlipped = onFlip !== undefined ? onFlip : setInternalFlipped;
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key === "ArrowUp" ||
-        event.key === "ArrowDown" ||
-        event.key === " "
-      ) {
-        event.preventDefault();
-        setFlipped(!flipped);
-      }
-    };
-
-    const cardElement = cardRef.current;
-    if (cardElement && !editMode) {
-      cardElement.focus();
-      cardElement.addEventListener("keydown", handleKeyDown);
-
-      return () => {
-        cardElement.removeEventListener("keydown", handleKeyDown);
-      };
-    }
-  }, [editMode, flipped, setFlipped]);
 
   const handleClick = () => {
     if (!editMode) {
@@ -217,14 +194,12 @@ const FlashcardComponent = ({
   return (
     <div className={cn("perspective-1000 w-full max-w-md mx-auto", className)}>
       <motion.div
-        ref={cardRef}
-        tabIndex={editMode ? -1 : 0}
         onClick={handleClick}
         animate={{ rotateX: flipped ? 180 : 0 }}
         transition={{ duration: 0.6, ease: "easeInOut" }}
         style={{ transformStyle: "preserve-3d" }}
         className={cn(
-          "relative w-full h-64 outline-none focus:outline-none rounded-xl",
+          "relative w-full h-80 rounded-xl",
           !editMode && "cursor-pointer"
         )}
       >
@@ -233,6 +208,45 @@ const FlashcardComponent = ({
           style={{ backfaceVisibility: "hidden", transform: "rotateX(0deg)" }}
           className="absolute inset-0 w-full h-full rounded-2xl bg-primary shadow-modern-lg p-8 flex flex-col justify-between"
         >
+          {/* Action buttons */}
+          {(showEditButton || onEdit || onToggleStar) && (
+            <div className="absolute top-3 right-3 flex gap-2">
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(flashcard);
+                  }}
+                  className="h-8 w-8 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+                  title="Rediger kort (E)"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+              {onToggleStar && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleStar(flashcard);
+                  }}
+                  className="h-8 w-8 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+                  title="Tilføj til favoritter (F)"
+                >
+                  <Star
+                    className="h-4 w-4"
+                    fill={flashcard.starred ? "currentColor" : "none"}
+                  />
+                </Button>
+              )}
+            </div>
+          )}
+
           <motion.div
             className="flex-1 flex items-center justify-center"
             initial={{ opacity: 0, y: 20 }}
@@ -261,6 +275,45 @@ const FlashcardComponent = ({
           style={{ backfaceVisibility: "hidden", transform: "rotateX(180deg)" }}
           className="absolute inset-0 w-full h-full rounded-2xl bg-primary shadow-modern-lg p-8 flex flex-col justify-between"
         >
+          {/* Action buttons */}
+          {(showEditButton || onEdit || onToggleStar) && (
+            <div className="absolute top-3 right-3 flex gap-2" style={{ transform: "rotateX(180deg)" }}>
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(flashcard);
+                  }}
+                  className="h-8 w-8 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+                  title="Rediger kort (E)"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+              {onToggleStar && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleStar(flashcard);
+                  }}
+                  className="h-8 w-8 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+                  title="Tilføj til favoritter (F)"
+                >
+                  <Star
+                    className="h-4 w-4"
+                    fill={flashcard.starred ? "currentColor" : "none"}
+                  />
+                </Button>
+              )}
+            </div>
+          )}
+
           <motion.div
             className="flex-1 flex items-center justify-center"
             initial={{ opacity: 0, y: 20 }}

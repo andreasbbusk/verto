@@ -61,6 +61,7 @@ export default function StudyPage() {
       flashcards={flashcards}
       setName={set.name}
       setDifficulty={set.difficulty}
+      setId={setId}
     />
   );
 }

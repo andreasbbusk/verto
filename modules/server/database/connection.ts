@@ -1,17 +1,5 @@
 import { MongoClient, ServerApiVersion, Db } from "mongodb";
 
-// Validate required environment variables
-const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB_NAME;
-
-if (!uri) {
-  throw new Error("MONGODB_URI environment variable is required");
-}
-
-if (!dbName) {
-  throw new Error("MONGODB_DB_NAME environment variable is required");
-}
-
 // Global variables for connection caching
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
@@ -32,6 +20,18 @@ const clientOptions = {
  * Connect to MongoDB with connection pooling and caching
  */
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
+  // Validate required environment variables at runtime
+  const uri = process.env.MONGODB_URI;
+  const dbName = process.env.MONGODB_DB_NAME;
+
+  if (!uri) {
+    throw new Error("MONGODB_URI environment variable is required");
+  }
+
+  if (!dbName) {
+    throw new Error("MONGODB_DB_NAME environment variable is required");
+  }
+
   // Return cached connection if available
   if (cachedClient && cachedDb) {
     return { client: cachedClient, db: cachedDb };
@@ -40,7 +40,7 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
   try {
     // Create new client if not cached
     if (!cachedClient) {
-      cachedClient = new MongoClient(uri as string, clientOptions);
+      cachedClient = new MongoClient(uri, clientOptions);
       await cachedClient.connect();
       
       // Verify connection
@@ -50,7 +50,7 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 
     // Get database instance
     if (!cachedDb) {
-      cachedDb = cachedClient.db(dbName as string);
+      cachedDb = cachedClient.db(dbName);
     }
 
     return { client: cachedClient, db: cachedDb };

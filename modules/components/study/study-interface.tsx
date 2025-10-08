@@ -1,17 +1,35 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import FlashcardComponent from "@/modules/components/flashcards/flashcard";
 import { ProgressBar } from "./progress-bar";
 import { StudyControls } from "./study-controls";
+import { QuickEditDialog } from "./quick-edit-dialog";
 import { Card, CardContent } from "@/modules/components/ui/card";
+import { Button } from "@/modules/components/ui/button";
+import { Badge } from "@/modules/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/modules/components/ui/alert-dialog";
+import { toast } from "sonner";
 import type { Flashcard } from "@/modules/types";
+import { updateFlashcard } from "@/modules/api/flashcards";
+import { useStudyProgressStore } from "@/modules/stores/studyProgressStore";
 
 interface StudyInterfaceProps {
   flashcards: Flashcard[];
   setName: string;
   setDifficulty?: number; // Set-level difficulty (1-5)
+  setId: number;
   onFlashcardUpdate?: (flashcard: Flashcard) => void;
 }
 
@@ -19,15 +37,66 @@ export function StudyInterface({
   flashcards,
   setName,
   setDifficulty = 3,
+  setId,
   onFlashcardUpdate,
 }: StudyInterfaceProps) {
   const router = useRouter();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { getProgress, saveProgress, clearProgress } = useStudyProgressStore();
+
+  // Initialize from saved progress or start at 0
+  const savedProgress = getProgress(setId);
+  const initialIndex =
+    savedProgress !== null && savedProgress < flashcards.length
+      ? savedProgress
+      : 0;
+
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isFlipped, setIsFlipped] = useState(false);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
   const [studyCards, setStudyCards] = useState(flashcards);
   const [showResults, setShowResults] = useState(false);
   const [cardStartTime, setCardStartTime] = useState<Date>(new Date());
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [filterStarredOnly, setFilterStarredOnly] = useState(false);
+  const [exitAlertOpen, setExitAlertOpen] = useState(false);
+  const [resetAlertOpen, setResetAlertOpen] = useState(false);
+  const [cardsReviewed, setCardsReviewed] = useState(new Set<number>());
+
+  // Apply starred filter
+  const displayCards = filterStarredOnly
+    ? studyCards.filter((card) => card.starred)
+    : studyCards;
+
+  const toggleStarredFilter = useCallback(() => {
+    setFilterStarredOnly((prev) => !prev);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+  }, []);
+
+  // Auto-focus container on mount
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
+
+  // Restore focus after dialogs close
+  useEffect(() => {
+    if (
+      !editDialogOpen &&
+      !exitAlertOpen &&
+      !resetAlertOpen &&
+      containerRef.current
+    ) {
+      containerRef.current.focus();
+    }
+  }, [editDialogOpen, exitAlertOpen, resetAlertOpen]);
+
+  // Save progress whenever currentIndex changes
+  useEffect(() => {
+    if (displayCards.length > 0) {
+      saveProgress(setId, currentIndex, displayCards.length);
+    }
+  }, [currentIndex, displayCards.length, setId, saveProgress]);
 
   const goToNext = useCallback(() => {
     if (studyCards.length > 0) {
@@ -137,20 +206,102 @@ export function StudyInterface({
     setAutoPlayEnabled(false);
     setShowResults(false);
     setCardStartTime(new Date());
+    setCardsReviewed(new Set());
   }, [flashcards]);
 
+  const handleResetProgress = useCallback(() => {
+    // Clear saved progress and reset to first card
+    clearProgress(setId);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setResetAlertOpen(false);
+    setCardsReviewed(new Set());
+    toast.success("Fremskridt nulstillet");
+  }, [clearProgress, setId]);
+
   const exitStudy = useCallback(() => {
-    router.push("/sets");
-  }, [router]);
+    // Save final progress before exiting
+    if (displayCards.length > 0) {
+      saveProgress(setId, currentIndex, displayCards.length);
+    }
+
+    // Navigate back to the set detail page
+    if (setId) {
+      router.push(`/sets/${setId}`);
+    } else {
+      router.push("/sets");
+    }
+  }, [router, setId, currentIndex, displayCards.length, saveProgress]);
 
   const handleFlipCard = useCallback(() => {
-    setIsFlipped((prev) => !prev);
+    setIsFlipped((prev) => {
+      // Track card as reviewed when flipping to back side
+      if (!prev) {
+        setCardsReviewed((reviewed) => new Set(reviewed).add(currentIndex));
+      }
+      return !prev;
+    });
+  }, [currentIndex]);
+
+  const handleToggleStar = useCallback(async (flashcard: Flashcard) => {
+    try {
+      const response = await updateFlashcard(flashcard.setId, flashcard.id, {
+        starred: !flashcard.starred,
+      });
+
+      setStudyCards((prev) =>
+        prev.map((card) => (card.id === flashcard.id ? response.data : card))
+      );
+
+      toast.success(
+        response.data.starred
+          ? "Tilføjet til favoritter"
+          : "Fjernet fra favoritter"
+      );
+    } catch (error) {
+      toast.error("Kunne ikke opdatere flashcard");
+      console.error(error);
+    }
   }, []);
+
+  const handleEdit = useCallback(() => {
+    setEditDialogOpen(true);
+  }, []);
+
+  const handleSaveEdit = useCallback(
+    async (flashcard: Flashcard, updates: { front: string; back: string }) => {
+      try {
+        const response = await updateFlashcard(
+          flashcard.setId,
+          flashcard.id,
+          updates
+        );
+
+        setStudyCards((prev) =>
+          prev.map((card) => (card.id === flashcard.id ? response.data : card))
+        );
+
+        toast.success("Flashcard opdateret");
+      } catch (error) {
+        toast.error("Kunne ikke opdatere flashcard");
+        console.error(error);
+        throw error;
+      }
+    },
+    []
+  );
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (showResults) return;
+      // Ignore keyboard shortcuts when typing in textarea
+      const target = event.target as HTMLElement;
+      if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
+        return;
+      }
+
+      if (showResults || editDialogOpen || exitAlertOpen || resetAlertOpen)
+        return;
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
@@ -165,15 +316,18 @@ export function StudyInterface({
       ) {
         event.preventDefault();
         handleFlipCard();
-      } else if (event.key === "Escape") {
-        event.preventDefault();
-        exitStudy();
       } else if (event.key === "r" || event.key === "R") {
         event.preventDefault();
-        resetStudy();
+        setResetAlertOpen(true);
       } else if (event.key === "s" || event.key === "S") {
         event.preventDefault();
         shuffleCards();
+      } else if (event.key === "e" || event.key === "E") {
+        event.preventDefault();
+        handleEdit();
+      } else if (event.key === "f" || event.key === "F") {
+        event.preventDefault();
+        handleToggleStar(studyCards[currentIndex]);
       }
     };
 
@@ -182,14 +336,19 @@ export function StudyInterface({
   }, [
     goToNext,
     goToPrevious,
-    exitStudy,
-    resetStudy,
     shuffleCards,
     showResults,
     handleFlipCard,
+    editDialogOpen,
+    exitAlertOpen,
+    resetAlertOpen,
+    handleEdit,
+    handleToggleStar,
+    studyCards,
+    currentIndex,
   ]);
 
-  if (studyCards.length === 0) {
+  if (displayCards.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -197,11 +356,22 @@ export function StudyInterface({
             <div className="text-center space-y-4">
               <div className="text-muted-foreground text-4xl">📚</div>
               <div>
-                <h3 className="font-semibold text-lg text-foreground">Ingen flashcards</h3>
+                <h3 className="font-semibold text-lg text-foreground">
+                  {filterStarredOnly
+                    ? "Ingen stjernede flashcards"
+                    : "Ingen flashcards"}
+                </h3>
                 <p className="text-muted-foreground">
-                  Dette set indeholder ingen kort at studere
+                  {filterStarredOnly
+                    ? "Ingen kort er markeret som favoritter endnu"
+                    : "Dette set indeholder ingen kort at studere"}
                 </p>
               </div>
+              {filterStarredOnly && (
+                <Button variant="outline" onClick={toggleStarredFilter}>
+                  Vis alle kort
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -209,48 +379,167 @@ export function StudyInterface({
     );
   }
 
-  const currentCard = studyCards[currentIndex];
+  const currentCard = displayCards[currentIndex];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+    <div
+      ref={containerRef}
+      tabIndex={0}
+      className="flex flex-col outline-none -m-6 h-[calc(100vh-6rem)]"
+    >
+      <div className="flex-1 max-w-5xl mx-auto w-full px-6 flex flex-col overflow-auto">
         {/* Header */}
-        <div className="text-center bg-card rounded-lg p-4 border border-border">
-          <h1 className="text-heading-2 font-bold text-foreground mb-3">
+        <div className="text-center p-2">
+          <h1 className="text-xl font-semibold text-foreground mb-3">
             {setName}
+            {filterStarredOnly && (
+              <span className="text-sm text-muted-foreground ml-2">
+                (★ Favoritter)
+              </span>
+            )}
           </h1>
           <ProgressBar
             current={currentIndex}
-            total={studyCards.length}
+            total={displayCards.length}
             onProgressClick={jumpToCard}
           />
         </div>
 
-        {/* Flashcard */}
-        <div className="flex justify-center">
+        {/* Flashcard - centered with more top spacing */}
+        <div className="flex-1 flex items-center justify-center">
           <FlashcardComponent
             flashcard={currentCard}
             isFlipped={isFlipped}
             onFlip={handleFlipCard}
-            className="w-full max-w-lg"
+            onEdit={handleEdit}
+            onToggleStar={() => handleToggleStar(currentCard)}
+            showEditButton={true}
+            className="w-full max-w-2xl"
           />
         </div>
-
-        {/* Controls */}
-        <StudyControls
-          currentIndex={currentIndex}
-          totalCards={studyCards.length}
-          isFlipped={isFlipped}
-          onPrevious={goToPrevious}
-          onNext={goToNext}
-          onFlip={handleFlipCard}
-          onReset={resetStudy}
-          onExit={exitStudy}
-          onShuffle={shuffleCards}
-          autoPlayEnabled={autoPlayEnabled}
-          onToggleAutoPlay={() => setAutoPlayEnabled((prev) => !prev)}
-        />
       </div>
+
+      {/* Controls - Sticky at bottom */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg z-10">
+        <div className="max-w-5xl mx-auto px-6 py-3">
+          <StudyControls
+            currentIndex={currentIndex}
+            totalCards={displayCards.length}
+            isFlipped={isFlipped}
+            onPrevious={goToPrevious}
+            onNext={goToNext}
+            onFlip={handleFlipCard}
+            onExit={() => setExitAlertOpen(true)}
+            onShuffle={shuffleCards}
+            autoPlayEnabled={autoPlayEnabled}
+            onToggleAutoPlay={() => setAutoPlayEnabled((prev) => !prev)}
+            filterStarredOnly={filterStarredOnly}
+            onToggleStarredFilter={toggleStarredFilter}
+            onResetProgress={() => setResetAlertOpen(true)}
+          />
+        </div>
+      </div>
+
+      {/* Quick Edit Dialog */}
+      <QuickEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        flashcard={currentCard}
+        onSave={handleSaveEdit}
+      />
+
+      {/* Exit Confirmation Dialog */}
+      <AlertDialog open={exitAlertOpen} onOpenChange={setExitAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Afslut studiesession?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Er du sikker på, at du vil afslutte denne studiesession og vende
+              tilbage til settet?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Fortsæt med at studere</AlertDialogCancel>
+            <AlertDialogAction onClick={exitStudy}>
+              Afslut session
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Progress Confirmation Dialog */}
+      <AlertDialog open={resetAlertOpen} onOpenChange={setResetAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start forfra?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dit fremskridt i dette set vil blive nulstillet, og du starter fra
+              det første kort.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuller</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetProgress}>
+              Start forfra
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Completion Dialog */}
+      <AlertDialog open={showResults} onOpenChange={setShowResults}>
+        <AlertDialogContent asChild>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-center text-3xl font-bold">
+                {(() => {
+                  const percentage = Math.round((cardsReviewed.size / displayCards.length) * 100);
+                  if (percentage === 100) return "Fantastisk arbejde!";
+                  if (percentage >= 80) return "Flot klaret!";
+                  return "Godt gået!";
+                })()}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center space-y-6 pt-6">
+                <div>
+                  <div className="text-lg text-foreground mb-2">
+                    Du har gennemført studiesessionen
+                  </div>
+                  <div className="text-muted-foreground text-sm">{setName}</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-6 border border-primary/20">
+                  <div className="text-center space-y-3">
+                    <div className="text-5xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                      {Math.round((cardsReviewed.size / displayCards.length) * 100)}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {cardsReviewed.size} af {displayCards.length} kort gennemgået
+                    </div>
+                  </div>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4 sm:justify-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetStudy();
+                  setShowResults(false);
+                }}
+              >
+                Studér igen
+              </Button>
+              <Button onClick={exitStudy}>
+                Afslut session
+              </Button>
+            </AlertDialogFooter>
+          </motion.div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

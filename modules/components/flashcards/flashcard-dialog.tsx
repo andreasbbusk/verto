@@ -415,7 +415,7 @@ export function FlashcardDialog({
                   </div>
 
                   <Button variant="secondary" type="submit" className="w-full">
-                    + Tilføj til batch
+                    Tilføj til visning +
                   </Button>
                 </form>
 
