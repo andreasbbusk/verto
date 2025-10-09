@@ -3,6 +3,7 @@
 import { FlashcardDialog } from "@/modules/components/flashcards/flashcard-dialog";
 import { FlashcardList } from "@/modules/components/flashcards/flashcard-list";
 import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
+import { Breadcrumbs } from "@/modules/components/layout/breadcrumbs";
 import { Badge } from "@/modules/components/ui/badge";
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
@@ -199,14 +200,13 @@ export function SetDetailView({ id }: SetDetailViewProps) {
   if (error || !set) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Link href="/sets">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Tilbage til sets
-            </Button>
-          </Link>
-        </div>
+        <Breadcrumbs
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Flashcard Sæt", href: "/sets" },
+            { label: "Set ikke fundet" },
+          ]}
+        />
 
         <Card className="p-8">
           <div className="text-center">
@@ -234,25 +234,26 @@ export function SetDetailView({ id }: SetDetailViewProps) {
     <div className="space-y-8">
       {/* Header */}
       <AnimatedSection>
-        <div className="flex items-center space-x-4 mb-6">
-          <Link href="/sets">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Tilbage til sets
-            </Button>
-          </Link>
+        <div className="mb-6">
+          <Breadcrumbs
+            items={[
+              { label: "Dashboard", href: "/dashboard" },
+              { label: "Flashcard Sæt", href: "/sets" },
+              { label: set.name },
+            ]}
+          />
         </div>
         <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex flex-col gap-3 mb-2">
               <h1 className="font-mono text-4xl font-bold text-foreground tracking-tight">
                 {set.name}
               </h1>
-              <Badge variant="secondary" className="font-mono text-xs">
+              <Badge variant="default" className="font-mono text-xs">
                 Sværhedsgrad: {set.difficulty}/5
               </Badge>
             </div>
-            <p className="text-muted-foreground mt-2 text-sm">
+            <p className="text-muted-foreground mt-2 text-lg">
               {set.description || "Administrer flashcards i dette set"}
             </p>
           </div>
