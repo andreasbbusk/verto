@@ -4,13 +4,9 @@ import { NextRequest } from "next/server";
 import { userRepository } from "../database";
 import type { User, TokenPayload, SanitizedUser } from "@/modules/types";
 
-// Validate required environment variables
+// Environment variables
 const JWT_SECRET = process.env.JWT_SECRET;
 const SALT_ROUNDS = 12;
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required");
-}
 
 // Password utilities
 export async function hashPassword(password: string): Promise<string> {
@@ -26,12 +22,18 @@ export async function verifyPassword(
 
 // Token utilities
 export function generateToken(userId: number): string {
-  return jwt.sign({ userId }, JWT_SECRET as string, { expiresIn: "7d" });
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET environment variable is required");
+  }
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): TokenPayload | null {
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET environment variable is required");
+  }
   try {
-    const payload = jwt.verify(token, JWT_SECRET as string);
+    const payload = jwt.verify(token, JWT_SECRET);
     return payload as TokenPayload;
   } catch (error) {
     return null;
