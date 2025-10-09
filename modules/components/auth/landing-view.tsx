@@ -1,26 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/modules/stores/authStore";
 import { SignInForm } from "@/modules/components/auth/sign-in-form";
 import { SignUpForm } from "@/modules/components/auth/sign-up-form";
+import { PageLoader } from "@/modules/components/ui/page-loader";
 import { Button } from "@/modules/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Card
 } from "@/modules/components/ui/card";
+import { useAuthStore } from "@/modules/stores/authStore";
 import {
+  ArrowRight,
   BookOpen,
   Brain,
+  Check,
   Target,
   Users,
-  ArrowRight,
-  Check,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const features = [
   {
@@ -87,14 +84,7 @@ export function LandingView() {
   // Show loading state while initializing
   if (!isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-8 h-8 border border-foreground flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="h-4 w-4 text-foreground" />
-          </div>
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
+      <PageLoader />
     );
   }
 

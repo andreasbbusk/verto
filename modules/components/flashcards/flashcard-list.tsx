@@ -15,10 +15,12 @@ import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import { cn } from "@/modules/lib/utils";
 import { useViewStore } from "@/modules/stores/viewStore";
+import { useCardOrderStore } from "@/modules/stores/cardOrderStore";
 import type { Flashcard } from "@/modules/types";
-import { LayoutGrid, LayoutList } from "lucide-react";
-import { useState, useEffect } from "react";
+import { LayoutGrid, LayoutList, ArrowUpDown } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import FlashcardComponent from "./flashcard";
+import { CardReorderDialog } from "./card-reorder-dialog";
 
 interface FlashcardListProps {
   flashcards: Flashcard[];
@@ -35,15 +37,43 @@ export function FlashcardList({
   onToggleStar,
   showActions = true,
 }: FlashcardListProps) {
-  const [filteredCards, setFilteredCards] = useState<Flashcard[]>(flashcards);
   const { flashcardsView, setFlashcardsView } = useViewStore();
+  const { getCardOrder } = useCardOrderStore();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<Flashcard | null>(null);
+  const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
 
-  // Sync filteredCards with flashcards prop when it changes
+  // Get setId from first flashcard (all cards should have same setId)
+  const setId = flashcards[0]?.setId;
+
+  // Apply saved order to flashcards
+  const orderedFlashcards = useMemo(() => {
+    if (!setId) return flashcards;
+
+    const savedOrder = getCardOrder(setId);
+    if (!savedOrder || savedOrder.length === 0) return flashcards;
+
+    // Create a map for quick lookup
+    const cardMap = new Map(flashcards.map(card => [card.id, card]));
+
+    // Filter saved order to only include cards that still exist
+    const validOrder = savedOrder.filter(id => cardMap.has(id));
+
+    // Get cards that are in savedOrder, maintaining the order
+    const orderedCards = validOrder.map(id => cardMap.get(id)!);
+
+    // Add any new cards that aren't in savedOrder
+    const newCards = flashcards.filter(card => !validOrder.includes(card.id));
+
+    return [...orderedCards, ...newCards];
+  }, [flashcards, setId, getCardOrder]);
+
+  const [filteredCards, setFilteredCards] = useState<Flashcard[]>(orderedFlashcards);
+
+  // Sync filteredCards with orderedFlashcards when it changes
   useEffect(() => {
-    setFilteredCards(flashcards);
-  }, [flashcards]);
+    setFilteredCards(orderedFlashcards);
+  }, [orderedFlashcards]);
 
   const groupedCards = { "Alle kort": filteredCards };
 
@@ -70,30 +100,44 @@ export function FlashcardList({
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 max-w-md">
           <SearchFilter
-            items={flashcards}
+            items={orderedFlashcards}
             onFiltered={setFilteredCards}
             searchKey="front"
             placeholder="Søg i flashcards..."
           />
         </div>
 
-        <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-card">
-          <Button
-            variant={flashcardsView === "grid" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setFlashcardsView("grid")}
-            className="px-3 transition-all"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={flashcardsView === "table" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setFlashcardsView("table")}
-            className="px-3 transition-all"
-          >
-            <LayoutList className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-2">
+          {showActions && (
+            <Button
+              variant="default"
+              size="lg"
+              onClick={() => setReorderDialogOpen(true)}
+              className="gap-2"
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              Omarranger
+            </Button>
+          )}
+
+          <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-card">
+            <Button
+              variant={flashcardsView === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFlashcardsView("grid")}
+              className="px-3 transition-all"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={flashcardsView === "table" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFlashcardsView("table")}
+              className="px-3 transition-all"
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -231,6 +275,16 @@ export function FlashcardList({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Card Reorder Dialog */}
+      {setId && (
+        <CardReorderDialog
+          open={reorderDialogOpen}
+          onOpenChange={setReorderDialogOpen}
+          flashcards={flashcards}
+          setId={setId}
+        />
       )}
     </div>
   );
