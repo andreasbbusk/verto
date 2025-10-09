@@ -27,11 +27,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/modules/components/ui/tooltip";
+import { Kbd } from "@/modules/components/ui/kbd";
 import { UserMenu } from "./user-menu";
 import { FlashcardDialog } from "../flashcards/flashcard-dialog";
+import { CommandPalette } from "./command-palette";
 import { cn } from "@/modules/lib/utils";
 import { useSets } from "@/modules/hooks/use-sets";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Home,
@@ -41,6 +43,7 @@ import {
   Plus,
   BookOpen,
   ChevronRight,
+  Search,
 } from "lucide-react";
 
 const navigationItems = [
@@ -58,7 +61,8 @@ const navigationItems = [
     name: "Kalender",
     href: "/calendar",
     icon: Calendar,
-  }
+    disabled: true,
+  },
 ];
 
 const quickActions = [
@@ -82,35 +86,41 @@ interface AppNavigationProps {
 function SetMenuItem({ set, isActive }: { set: any; isActive: boolean }) {
   const MAX_LENGTH = 20;
   const isTruncated = set.name.length > MAX_LENGTH;
-  const displayName = isTruncated ? `${set.name.slice(0, MAX_LENGTH)}...` : set.name;
+  const displayName = isTruncated
+    ? `${set.name.slice(0, MAX_LENGTH)}...`
+    : set.name;
 
   return (
-    <SidebarMenuSubItem>
+    <SidebarMenuSubItem className="relative">
+      {isActive && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-primary rounded-r-full z-10" />
+      )}
       <Tooltip delayDuration={200}>
-        <TooltipTrigger
-        asChild>
+        <TooltipTrigger asChild>
           <div className="w-full">
             <SidebarMenuSubButton
               asChild
               isActive={isActive}
               className={cn(
                 "hover:bg-sidebar-accent w-full",
-                isActive && "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
+                isActive &&
+                  "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
               )}
             >
-              <Link href={`/sets/${set.id}`} className="flex items-center gap-2 w-full min-w-0">
-                <span className="text-xs text-muted-foreground w-6 flex-shrink-0">
+              <Link
+                href={`/sets/${set.id}`}
+                className="flex items-center gap-2 w-full min-w-0"
+              >
+                <span className="text-xs text-muted-foreground w-6 flex-shrink-0 ml-1">
                   {set.cardCount || 0}
                 </span>
-                <span className="text-sm flex-1">
-                  {displayName}
-                </span>
+                <span className="text-sm flex-1">{displayName}</span>
               </Link>
             </SidebarMenuSubButton>
           </div>
         </TooltipTrigger>
         {isTruncated && (
-          <TooltipContent  side="right">
+          <TooltipContent side="right">
             <p>{set.name}</p>
           </TooltipContent>
         )}
@@ -124,6 +134,20 @@ export function AppNavigation({ children }: AppNavigationProps) {
   const { sets } = useSets();
   const [setsExpanded, setSetsExpanded] = useState(true);
   const [createCardDialogOpen, setCreateCardDialogOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // Global keyboard shortcut for command palette
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setCommandPaletteOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   const isActive = (href: string) => {
     // Handle root dashboard route
@@ -150,7 +174,9 @@ export function AppNavigation({ children }: AppNavigationProps) {
         {/* Sidebar Header */}
         <SidebarHeader className="px-6 py-4">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <span className="text-lg font-semibold text-sidebar-foreground font-mono">FlashCards</span>
+            <span className="text-lg font-semibold text-sidebar-foreground font-mono">
+              FlashCards
+            </span>
           </Link>
         </SidebarHeader>
 
@@ -171,33 +197,40 @@ export function AppNavigation({ children }: AppNavigationProps) {
                   if (item.href === "/sets") {
                     return (
                       <SidebarMenuItem key={item.href}>
-                        <div
-                          className={cn(
-                            "w-full h-auto py-2 px-3 rounded-md hover:bg-sidebar-accent flex items-center gap-3 transition-colors",
-                            active && !pathname.includes("/sets/") && "bg-[var(--color-sidebar-accent-active)]"
+                        <div className="relative">
+                          {active && !pathname.includes("/sets/") && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
                           )}
-                        >
-                          <Link
-                            href={item.href}
-                            className="flex items-center gap-3 flex-1 min-w-0"
-                            onClick={() => setSetsExpanded(true)}
+                          <div
+                            className={cn(
+                              "w-full h-auto py-2 px-3 rounded-md hover:bg-sidebar-accent flex items-center gap-3 transition-colors",
+                              active &&
+                                !pathname.includes("/sets/") &&
+                                "bg-[var(--color-sidebar-accent-active)]"
+                            )}
                           >
-                            <Icon className="w-4 h-4 flex-shrink-0" />
-                            <span className="font-medium text-sm">
-                              {item.name}
-                            </span>
-                          </Link>
-                          <button
-                            onClick={() => setSetsExpanded(!setsExpanded)}
-                            className="flex-shrink-0 p-1 hover:bg-sidebar-accent-active rounded transition-colors"
-                          >
-                            <ChevronRight
-                              className={cn(
-                                "w-4 h-4 transition-transform",
-                                setsExpanded && "rotate-90"
-                              )}
-                            />
-                          </button>
+                            <Link
+                              href={item.href}
+                              className="flex items-center gap-3 flex-1 min-w-0"
+                              onClick={() => setSetsExpanded(true)}
+                            >
+                              <Icon className="w-4 h-4 flex-shrink-0" />
+                              <span className="font-medium text-sm">
+                                {item.name}
+                              </span>
+                            </Link>
+                            <button
+                              onClick={() => setSetsExpanded(!setsExpanded)}
+                              className="flex-shrink-0 p-1 hover:bg-sidebar-accent-active rounded transition-colors"
+                            >
+                              <ChevronRight
+                                className={cn(
+                                  "w-4 h-4 transition-transform",
+                                  setsExpanded && "rotate-90"
+                                )}
+                              />
+                            </button>
+                          </div>
                         </div>
                         <motion.div
                           initial={false}
@@ -208,8 +241,12 @@ export function AppNavigation({ children }: AppNavigationProps) {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="overflow-hidden"
                         >
-                          <div className={cn(sets.length > 5 && "max-h-[200px]")}>
-                            <ScrollArea className={cn(sets.length > 5 && "h-[200px]")}>
+                          <div
+                            className={cn(sets.length > 5 && "max-h-[200px]")}
+                          >
+                            <ScrollArea
+                              className={cn(sets.length > 5 && "h-[200px]")}
+                            >
                               <SidebarMenuSub className="pr-2">
                                 {sets.length === 0 ? (
                                   <p className="px-3 py-2 text-xs text-muted-foreground">
@@ -217,7 +254,8 @@ export function AppNavigation({ children }: AppNavigationProps) {
                                   </p>
                                 ) : (
                                   sets.map((set) => {
-                                    const setActive = pathname === `/sets/${set.id}`;
+                                    const setActive =
+                                      pathname === `/sets/${set.id}`;
                                     return (
                                       <SetMenuItem
                                         key={set.id}
@@ -237,24 +275,43 @@ export function AppNavigation({ children }: AppNavigationProps) {
 
                   return (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={active}
-                        className={cn(
-                          "w-full h-auto py-2 px-3 hover:bg-sidebar-accent",
-                          active && "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
+                      <div className="relative">
+                        {active && !item.disabled && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
                         )}
-                      >
-                        <Link
-                          href={item.href}
-                          className="flex items-center gap-3 w-full"
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-medium text-sm">
-                            {item.name}
-                          </span>
-                        </Link>
-                      </SidebarMenuButton>
+                        {item.disabled ? (
+                          <div
+                            className={cn(
+                              "w-full h-auto py-2 px-3 rounded-md flex items-center gap-3 opacity-50 cursor-not-allowed"
+                            )}
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="font-medium text-sm">
+                              {item.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <SidebarMenuButton
+                            asChild
+                            isActive={active}
+                            className={cn(
+                              "w-full h-auto py-2 px-3 hover:bg-sidebar-accent",
+                              active &&
+                                "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
+                            )}
+                          >
+                            <Link
+                              href={item.href}
+                              className="flex items-center gap-3 w-full"
+                            >
+                              <Icon className="w-4 h-4 flex-shrink-0" />
+                              <span className="font-medium text-sm">
+                                {item.name}
+                              </span>
+                            </Link>
+                          </SidebarMenuButton>
+                        )}
+                      </div>
                     </SidebarMenuItem>
                   );
                 })}
@@ -320,10 +377,29 @@ export function AppNavigation({ children }: AppNavigationProps) {
         mode="select-set"
       />
 
+      {/* Command Palette */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+      />
+
       {/* Main Content */}
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-          <SidebarTrigger />
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/95 px-6 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <SidebarTrigger className="-ml-2" />
+          <div className="flex-1" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCommandPaletteOpen(true)}
+            className="relative h-9 w-full max-w-sm justify-start gap-2 text-sm text-muted-foreground bg-background hover:bg-accent/50 border-border/60"
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline-flex flex-1 text-left">
+              Søg sæt eller navigation...
+            </span>
+            <Kbd className="hidden md:inline-flex ml-auto">⌘K</Kbd>
+          </Button>
         </header>
         <div className="flex-1 p-6">{children}</div>
       </SidebarInset>
