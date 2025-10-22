@@ -2,12 +2,10 @@
 
 import { SignInForm } from "@/modules/components/auth/sign-in-form";
 import { SignUpForm } from "@/modules/components/auth/sign-up-form";
-import { PageLoader } from "@/modules/components/ui/page-loader";
 import { Button } from "@/modules/components/ui/button";
 import {
   Card
 } from "@/modules/components/ui/card";
-import { useAuthStore } from "@/modules/stores/authStore";
 import {
   ArrowRight,
   BookOpen,
@@ -16,8 +14,7 @@ import {
   Target,
   Users,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const features = [
   {
@@ -55,58 +52,15 @@ type AuthMode = "signin" | "signup" | null;
 
 export function LandingView() {
   const [authMode, setAuthMode] = useState<AuthMode>(null);
-  const { user, isInitialized } = useAuthStore();
-  const router = useRouter();
-
-  // Redirect to dashboard if already logged in
-  useEffect(() => {
-    if (isInitialized && user) {
-      const redirectPath = sessionStorage.getItem("redirectPath");
-      if (redirectPath) {
-        sessionStorage.removeItem("redirectPath");
-        router.push(redirectPath);
-      } else {
-        router.push("/dashboard");
-      }
-    }
-  }, [isInitialized, user, router]);
-
-  const handleAuthSuccess = () => {
-    const redirectPath = sessionStorage.getItem("redirectPath");
-    if (redirectPath) {
-      sessionStorage.removeItem("redirectPath");
-      router.push(redirectPath);
-    } else {
-      router.push("/dashboard");
-    }
-  };
-
-  // Show loading state while initializing
-  if (!isInitialized) {
-    return (
-      <PageLoader />
-    );
-  }
-
-  // Don't render anything if user is already logged in (will redirect)
-  if (user) {
-    return null;
-  }
 
   if (authMode) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {authMode === "signin" ? (
-            <SignInForm
-              onSuccess={handleAuthSuccess}
-              onSwitchToSignUp={() => setAuthMode("signup")}
-            />
+            <SignInForm onSwitchToSignUp={() => setAuthMode("signup")} />
           ) : (
-            <SignUpForm
-              onSuccess={handleAuthSuccess}
-              onSwitchToSignIn={() => setAuthMode("signin")}
-            />
+            <SignUpForm onSwitchToSignIn={() => setAuthMode("signin")} />
           )}
           <div className="mt-6 text-center">
             <Button

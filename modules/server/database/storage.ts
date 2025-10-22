@@ -1,4 +1,4 @@
-import { getDatabase, COLLECTION_NAMES } from "./connection";
+import clientPromise from "./mongodb-client";
 import { Collection, Document, WithId } from "mongodb";
 import type { Counters } from "@/modules/types";
 
@@ -10,52 +10,53 @@ import type { Counters } from "@/modules/types";
 export const generateId = async (
   type: "flashcard" | "set" | "user"
 ): Promise<number> => {
-  const db = await getDatabase();
+  const client = await clientPromise;
+  const db = client.db(process.env.MONGODB_DB_NAME);
   const countersCollection = db.collection<{ _id: string; value: number }>("counters");
-  
+
   const result = await countersCollection.findOneAndUpdate(
     { _id: `${type}Id` },
     { $inc: { value: 1 } },
-    { 
-      upsert: true, 
-      returnDocument: "after" 
+    {
+      upsert: true,
+      returnDocument: "after"
     }
   );
-  
+
   return result?.value || 1;
 };
+
+const COLLECTION_NAMES = {
+  USERS: "users",
+  FLASHCARDS: "flashcards",
+  SETS: "sets",
+  STUDY_SESSIONS: "study_sessions",
+} as const;
 
 /**
  * Initialize database with proper indexes and default data
  */
 export const initializeData = async (): Promise<void> => {
-  const db = await getDatabase();
-  
+  const client = await clientPromise;
+  const db = client.db(process.env.MONGODB_DB_NAME);
+
   try {
-    // Create indexes for performance
     await Promise.all([
-      // Users collection indexes
       db.collection(COLLECTION_NAMES.USERS).createIndex({ email: 1 }, { unique: true }),
       db.collection(COLLECTION_NAMES.USERS).createIndex({ id: 1 }, { unique: true }),
-      
-      // Flashcards collection indexes
       db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ userId: 1 }),
       db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ setId: 1 }),
       db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ id: 1 }, { unique: true }),
       db.collection(COLLECTION_NAMES.FLASHCARDS).createIndex({ userId: 1, setId: 1 }),
-      
-      // Sets collection indexes
       db.collection(COLLECTION_NAMES.SETS).createIndex({ userId: 1 }),
       db.collection(COLLECTION_NAMES.SETS).createIndex({ name: 1 }),
       db.collection(COLLECTION_NAMES.SETS).createIndex({ id: 1 }, { unique: true }),
       db.collection(COLLECTION_NAMES.SETS).createIndex({ userId: 1, name: 1 }, { unique: true }),
-      
-      // Study sessions collection indexes
       db.collection(COLLECTION_NAMES.STUDY_SESSIONS).createIndex({ userId: 1 }),
       db.collection(COLLECTION_NAMES.STUDY_SESSIONS).createIndex({ setId: 1 }),
       db.collection(COLLECTION_NAMES.STUDY_SESSIONS).createIndex({ startTime: -1 }),
     ]);
-    
+
     console.log("Database indexes created successfully");
   } catch (error) {
     console.warn("Some indexes may already exist:", error);
@@ -66,11 +67,9 @@ export const initializeData = async (): Promise<void> => {
  * Generic storage operations for MongoDB collections
  */
 export const storage = {
-  /**
-   * Get a collection by name
-   */
   async getCollection<T extends Document = Document>(collectionName: string): Promise<Collection<T>> {
-    const db = await getDatabase();
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
     return db.collection<T>(collectionName);
   },
 

@@ -1,36 +1,60 @@
 "use client";
 
-import { useAuthStore } from "@/modules/stores/authStore";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/modules/components/ui/card";
 import { Button } from "@/modules/components/ui/button";
 import {
+  Card
+} from "@/modules/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowRight,
   BookOpen,
   Brain,
-  Target,
   Plus,
-  TrendingUp,
-  ArrowRight,
   Sparkles,
+  Target,
+  TrendingUp,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export function DashboardView() {
-  const { user } = useAuthStore();
+  const { data: session } = useSession();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const res = await fetch("/api/user/me");
+      if (!res.ok) throw new Error("Failed to fetch user");
+      return res.json();
+    },
+    enabled: !!session?.user,
+  });
 
-  if (!user) {
-    return null;
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
   }
+
+  // Provide default values if stats don't exist
+  const userStats = user.stats || {
+    totalCardsStudied: 0,
+    currentStreak: 0,
+    totalStudySessions: 0,
+    longestStreak: 0,
+  };
+
+  const userPreferences = user.preferences || {
+    studyGoal: 20,
+    theme: "system",
+    notifications: true,
+  };
 
   const stats = [
     {
       title: "Cards Studied",
-      value: user.stats.totalCardsStudied,
+      value: userStats.totalCardsStudied,
       icon: BookOpen,
       description: "Total cards reviewed",
       color: "bg-brand",
@@ -38,7 +62,7 @@ export function DashboardView() {
     },
     {
       title: "Current Streak",
-      value: user.stats.currentStreak,
+      value: userStats.currentStreak,
       icon: TrendingUp,
       description: "Days in a row",
       color: "bg-brand-yellow",
@@ -46,7 +70,7 @@ export function DashboardView() {
     },
     {
       title: "Study Sessions",
-      value: user.stats.totalStudySessions,
+      value: userStats.totalStudySessions,
       icon: Brain,
       description: "Total sessions completed",
       color: "bg-brand-gray",
@@ -54,7 +78,7 @@ export function DashboardView() {
     },
     {
       title: "Longest Streak",
-      value: user.stats.longestStreak,
+      value: userStats.longestStreak,
       icon: Target,
       description: "Personal best",
       color: "bg-brand-teal",
@@ -133,7 +157,7 @@ export function DashboardView() {
               <div className="text-right">
                 <div className="font-mono text-xs text-background/60">Daily Goal</div>
                 <div className="font-mono text-lg font-bold text-background">
-                  0 / {user.preferences.studyGoal}
+                  0 / {userPreferences.studyGoal}
                 </div>
               </div>
             </div>

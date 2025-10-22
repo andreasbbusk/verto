@@ -1,50 +1,31 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import clientPromise from "@/modules/server/database/mongodb-client";
 import { userRepository } from "@/modules/server/database";
-import { verifyPassword } from "@/modules/server/auth";
-import { loginSchema } from "@/modules/schemas/authSchemas";
+import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
     }),
     Credentials({
-      name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { type: "email" },
+        password: { type: "password" },
       },
       async authorize(credentials) {
-        // Validate credentials
-        const validation = loginSchema.safeParse(credentials);
-        if (!validation.success) {
-          return null;
-        }
+        if (!credentials?.email || !credentials?.password) return null;
 
-        const { email, password } = validation.data;
+        const user = await userRepository.getByEmail(credentials.email as string);
+        if (!user) return null;
 
-        // Find user
-        const user = await userRepository.getByEmail(email);
-        if (!user) {
-          return null;
-        }
+        const isValid = await bcrypt.compare(credentials.password as string, user.password);
+        if (!isValid) return null;
 
-        // Verify password
-        const isValid = await verifyPassword(password, user.password);
-        if (!isValid) {
-          return null;
-        }
-
-        // Update last login
         await userRepository.updateLastLogin(user.id);
 
-        // Return user object (password will be excluded by NextAuth)
         return {
           id: user.id.toString(),
           email: user.email,
@@ -55,27 +36,53 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: {
     strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: 7 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/",
-    error: "/",
   },
   callbacks: {
-    async jwt({ token, user, account }) {
-      // Initial sign in
-      if (user) {
+    async jwt({ token, user, account, profile }) {
+      if (user && account?.provider === "google") {
+        // Handle Google OAuth sign-in
+        let dbUser = await userRepository.getByEmail(user.email!);
+
+        if (!dbUser) {
+          // Create new user in our database
+          dbUser = await userRepository.create({
+            email: user.email!,
+            name: user.name || profile?.name || "User",
+            password: "", // OAuth users don't have passwords
+            createdAt: new Date(),
+            lastLogin: new Date(),
+            preferences: {
+              studyGoal: 20,
+              theme: "system",
+              notifications: true,
+            },
+            stats: {
+              totalStudySessions: 0,
+              currentStreak: 0,
+              longestStreak: 0,
+              totalCardsStudied: 0,
+            },
+          });
+        } else {
+          // Update last login
+          await userRepository.updateLastLogin(dbUser.id);
+        }
+
+        token.id = dbUser.id.toString();
+      } else if (user) {
+        // Credentials login
         token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
       }
+
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
+      if (session.user) {
         session.user.id = token.id as string;
-        session.user.email = token.email as string;
-        session.user.name = token.name as string;
       }
       return session;
     },

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { flashcardRepository, initializeData } from "@/modules/server/database";
-import { authenticateRequest } from "@/modules/server/auth";
+import { authenticateRequest } from "@/modules/server/auth-helpers";
 import { updateFlashcardSchema } from "@/modules/schemas/flashcardSchemas";
 import {
   apiSuccess,
@@ -17,7 +17,7 @@ interface RouteParams {
 // PUT /api/sets/:id/flashcards/:cardId - Update flashcard
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const authResult = await authenticateRequest(request);
+    const authResult = await authenticateRequest();
     if (!authResult.success) {
       return apiError(authResult.error, 401);
     }
@@ -62,7 +62,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/sets/:id/flashcards/:cardId - Delete flashcard
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const authResult = await authenticateRequest(request);
+    const authResult = await authenticateRequest();
     if (!authResult.success) {
       return apiError(authResult.error, 401);
     }
