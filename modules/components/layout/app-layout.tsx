@@ -1,61 +1,49 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useSession } from "next-auth/react";
 import { AppNavigation } from "./app-navigation";
 import { PageTransition } from "../ui/page-transition";
-import { toast } from "sonner";
+import { makeQueryClient } from "@/modules/lib/query-client";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
+const protectedRoutes = [
+  "/dashboard",
+  "/sets",
+  "/cards",
+  "/study",
+  "/calendar",
+  "/settings",
+];
+
 export function AppLayout({ children }: AppLayoutProps) {
-  const { data: session } = useSession();
   const pathname = usePathname();
 
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000,
-        gcTime: 10 * 60 * 1000,
-        retry: (failureCount, error) => {
-          if (error instanceof Error && error.message.includes('4')) return false;
-          return failureCount < 2;
-        },
-        refetchOnWindowFocus: false,
-      },
-      mutations: {
-        onError: (error) => {
-          toast.error(error instanceof Error ? error.message : 'An error occurred');
-        },
-        retry: 1,
-      },
-    },
-  }));
+  const queryClientRef = useRef(makeQueryClient());
+  if (!queryClientRef.current) {
+    queryClientRef.current = makeQueryClient();
+  }
 
-  const content = () => {
-    if (session?.user) {
-      return (
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  return (
+    <QueryClientProvider client={queryClientRef.current}>
+      {isProtectedRoute ? (
         <AppNavigation>
           <PageTransition>{children}</PageTransition>
         </AppNavigation>
-      );
-    }
-
-    return (
-      <div className="min-h-screen">
-        <PageTransition>{children}</PageTransition>
-      </div>
-    );
-  };
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      {content()}
+      ) : (
+        <div className="min-h-screen">
+          <PageTransition>{children}</PageTransition>
+        </div>
+      )}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );

@@ -1,9 +1,7 @@
 "use client";
 
 import { Button } from "@/modules/components/ui/button";
-import {
-  Card
-} from "@/modules/components/ui/card";
+import { Card } from "@/modules/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -16,6 +14,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { Loader } from "@/modules/components/ui/loader";
 
 export function DashboardView() {
   const { data: session } = useSession();
@@ -29,13 +28,15 @@ export function DashboardView() {
     enabled: !!session?.user,
   });
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="flex items-center justify-center">
+        <Loader />
       </div>
     );
   }
+
+  if (!user) return null;
 
   // Provide default values if stats don't exist
   const userStats = user.stats || {
@@ -155,20 +156,27 @@ export function DashboardView() {
                 <Sparkles className="h-5 w-5 text-background" />
               </div>
               <div className="text-right">
-                <div className="font-mono text-xs text-background/60">Daily Goal</div>
+                <div className="font-mono text-xs text-background/60">
+                  Daily Goal
+                </div>
                 <div className="font-mono text-lg font-bold text-background">
                   0 / {userPreferences.studyGoal}
                 </div>
               </div>
             </div>
             <div className="mb-6">
-              <h3 className="font-mono text-xl font-bold mb-2 text-background">Start Studying</h3>
+              <h3 className="font-mono text-xl font-bold mb-2 text-background">
+                Start Studying
+              </h3>
               <p className="text-sm text-background/80">
                 Continue your learning journey
               </p>
             </div>
             <Link href="/sets" className="block">
-              <Button size="sm" className="w-full bg-background text-foreground hover:bg-background/90 border-background">
+              <Button
+                size="sm"
+                className="w-full bg-background text-foreground hover:bg-background/90 border-background"
+              >
                 Start Learning
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -192,9 +200,7 @@ export function DashboardView() {
             </div>
             <div className="text-center py-8 text-muted-foreground">
               <Brain className="h-12 w-12 mx-auto mb-3 opacity-20" />
-              <p className="text-sm">
-                Start studying to see activity
-              </p>
+              <p className="text-sm">Start studying to see activity</p>
             </div>
           </Card>
         </div>

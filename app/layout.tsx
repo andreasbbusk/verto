@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/modules/components/ui/sonner";
 import { AppLayout } from "@/modules/components/layout/app-layout";
 import { SessionProvider } from "next-auth/react";
+import { auth } from "@/auth";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,17 +21,19 @@ export const metadata = {
     "En moderne flashcard applikation til effektiv læring og hukommelse",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+
   return (
     <html lang="da">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>
+        <SessionProvider session={session}>
           <AppLayout>{children}</AppLayout>
           <Toaster />
         </SessionProvider>

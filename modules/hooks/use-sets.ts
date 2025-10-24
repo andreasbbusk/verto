@@ -81,6 +81,7 @@ export function useSets() {
 
   return {
     sets: query.data ?? [],
+    isLoading: query.isLoading,
     error: query.error?.message || null,
     refresh: () => queryClient.invalidateQueries({ queryKey: queryKeys.sets }),
     create: createMutation.mutateAsync,
@@ -103,6 +104,7 @@ export function useSetById(id: number) {
   return {
     set: query.data,
     flashcards: query.data?.flashcards || [],
+    isLoading: query.isLoading,
     error: query.error?.message || null,
     refresh: () => queryClient.invalidateQueries({ queryKey: queryKeys.setById(id) }),
   };
