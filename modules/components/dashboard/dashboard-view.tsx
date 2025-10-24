@@ -12,31 +12,20 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Loader } from "@/modules/components/ui/loader";
+import { getMe } from "@/modules/actions/user";
+import type { User } from "@/modules/types";
 
-export function DashboardView() {
-  const { data: session } = useSession();
-  const { data: user, isLoading } = useQuery({
+interface DashboardViewProps {
+  initialUser: Omit<User, "password">;
+}
+
+export function DashboardView({ initialUser }: DashboardViewProps) {
+  const { data: user } = useQuery({
     queryKey: ["user"],
-    queryFn: async () => {
-      const res = await fetch("/api/user/me");
-      if (!res.ok) throw new Error("Failed to fetch user");
-      return res.json();
-    },
-    enabled: !!session?.user,
+    queryFn: getMe,
+    initialData: initialUser,
   });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
-
-  if (!user) return null;
 
   // Provide default values if stats don't exist
   const userStats = user.stats || {

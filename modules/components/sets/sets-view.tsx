@@ -219,9 +219,13 @@ function SetsGrid({ sets, onEdit, onDelete }: SetsGridProps) {
   );
 }
 
-export function SetsView() {
+interface SetsViewProps {
+  initialSets: FlashcardSet[];
+}
+
+export function SetsView({ initialSets }: SetsViewProps) {
   const searchParams = useSearchParams();
-  const { sets, isLoading, error, create, update, remove } = useSets();
+  const { sets, isLoading, error, create, update, remove } = useSets(initialSets);
   const { setsView, setSetsView } = useViewStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
@@ -380,11 +384,7 @@ export function SetsView() {
 
       {/* Content */}
       <div>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader />
-          </div>
-        ) : error ? (
+        {error ? (
           <Card className="p-8">
             <div className="text-center">
               <div className="w-12 h-12 border border-destructive flex items-center justify-center mx-auto mb-4">

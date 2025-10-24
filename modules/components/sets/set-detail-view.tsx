@@ -38,12 +38,12 @@ import { SetDialog } from "./set-dialog";
 import { Loader } from "@/modules/components/ui/loader";
 
 interface SetDetailViewProps {
-  id: number;
+  initialSet: import("@/modules/types").FlashcardSet;
 }
 
 type FilterType = "all" | "starred" | "due";
 
-export function SetDetailView({ id }: SetDetailViewProps) {
+export function SetDetailView({ initialSet }: SetDetailViewProps) {
   const searchParams = useSearchParams();
   const [setDialogOpen, setSetDialogOpen] = useState(false);
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
@@ -51,8 +51,8 @@ export function SetDetailView({ id }: SetDetailViewProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const router = useRouter();
 
-  const { set, flashcards, isLoading, error } = useSetById(id);
-  const flashcardMutations = useFlashcardMutations(id);
+  const { set, flashcards, error } = useSetById(initialSet.id, initialSet);
+  const flashcardMutations = useFlashcardMutations(initialSet.id);
 
   const { update: updateSet, remove: removeSet } = useSets();
 
@@ -197,14 +197,6 @@ export function SetDetailView({ id }: SetDetailViewProps) {
       await handleCreateCard(data as CreateFlashcardData);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
 
   if (error || !set) {
     return (

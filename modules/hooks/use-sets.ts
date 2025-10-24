@@ -9,7 +9,7 @@ import {
   createSet,
   updateSet,
   deleteSet,
-} from "@/modules/lib/api-client";
+} from "@/modules/actions/sets";
 import type {
   FlashcardSet,
   CreateSetData,
@@ -21,61 +21,56 @@ const queryKeys = {
   setById: (id: number) => ['sets', id] as const,
 };
 
-export function useSets() {
+export function useSets(initialSets?: FlashcardSet[]) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: queryKeys.sets,
     queryFn: getSets,
+    initialData: initialSets,
     enabled: !!session?.user,
   });
 
   const createMutation = useMutation({
     mutationFn: createSet,
-    onSuccess: (response) => {
-      if (response.success && response.data) {
-        queryClient.setQueryData<FlashcardSet[]>(queryKeys.sets, (old) =>
-          old ? [...old, response.data] : [response.data]
-        );
-        toast.success("Set created successfully");
-      }
+    onSuccess: (newSet) => {
+      queryClient.setQueryData<FlashcardSet[]>(queryKeys.sets, (old) =>
+        old ? [...old, newSet] : [newSet]
+      );
+      toast.success("Set created successfully");
     },
-    onError: () => {
-      toast.error("Failed to create set");
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to create set");
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateSetData }) =>
       updateSet(id, data),
-    onSuccess: (response, variables) => {
-      if (response.success && response.data) {
-        queryClient.setQueryData<FlashcardSet[]>(queryKeys.sets, (old) =>
-          old?.map((set) =>
-            set.id === variables.id ? response.data : set
-          ) || []
-        );
-        toast.success("Set updated successfully");
-      }
+    onSuccess: (updatedSet, variables) => {
+      queryClient.setQueryData<FlashcardSet[]>(queryKeys.sets, (old) =>
+        old?.map((set) =>
+          set.id === variables.id ? updatedSet : set
+        ) || []
+      );
+      toast.success("Set updated successfully");
     },
-    onError: () => {
-      toast.error("Failed to update set");
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to update set");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteSet,
-    onSuccess: (response, id) => {
-      if (response.success) {
-        queryClient.setQueryData<FlashcardSet[]>(queryKeys.sets, (old) =>
-          old?.filter((set) => set.id !== id) || []
-        );
-        toast.success("Set deleted successfully");
-      }
+    onSuccess: (deletedSet) => {
+      queryClient.setQueryData<FlashcardSet[]>(queryKeys.sets, (old) =>
+        old?.filter((set) => set.id !== deletedSet.id) || []
+      );
+      toast.success("Set deleted successfully");
     },
-    onError: () => {
-      toast.error("Failed to delete set");
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to delete set");
     },
   });
 
@@ -91,13 +86,14 @@ export function useSets() {
   };
 }
 
-export function useSetById(id: number) {
+export function useSetById(id: number, initialSet?: FlashcardSet) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: queryKeys.setById(id),
     queryFn: () => getSetById(id),
+    initialData: initialSet,
     enabled: !!session?.user && !!id,
   });
 

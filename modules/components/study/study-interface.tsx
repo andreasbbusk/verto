@@ -22,7 +22,7 @@ import {
 } from "@/modules/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type { Flashcard } from "@/modules/types";
-import { updateFlashcard } from "@/modules/lib/api-client";
+import { updateFlashcard } from "@/modules/actions/flashcards";
 import { useStudyProgressStore } from "@/modules/stores/studyProgressStore";
 
 interface StudyInterfaceProps {
@@ -245,16 +245,16 @@ export function StudyInterface({
 
   const handleToggleStar = useCallback(async (flashcard: Flashcard) => {
     try {
-      const response = await updateFlashcard(flashcard.setId, flashcard.id, {
+      const updatedCard = await updateFlashcard(flashcard.setId, flashcard.id, {
         starred: !flashcard.starred,
       });
 
       setStudyCards((prev) =>
-        prev.map((card) => (card.id === flashcard.id ? response.data : card))
+        prev.map((card) => (card.id === flashcard.id ? updatedCard : card))
       );
 
       toast.success(
-        response.data.starred
+        updatedCard.starred
           ? "Tilføjet til favoritter"
           : "Fjernet fra favoritter"
       );
@@ -271,14 +271,14 @@ export function StudyInterface({
   const handleSaveEdit = useCallback(
     async (flashcard: Flashcard, updates: { front: string; back: string }) => {
       try {
-        const response = await updateFlashcard(
+        const updatedCard = await updateFlashcard(
           flashcard.setId,
           flashcard.id,
           updates
         );
 
         setStudyCards((prev) =>
-          prev.map((card) => (card.id === flashcard.id ? response.data : card))
+          prev.map((card) => (card.id === flashcard.id ? updatedCard : card))
         );
 
         toast.success("Flashcard opdateret");

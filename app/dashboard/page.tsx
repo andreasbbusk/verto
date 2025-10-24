@@ -1,5 +1,7 @@
 import { DashboardView } from "@/modules/components/dashboard/dashboard-view";
+import { getMe } from "@/modules/actions/user";
 
-export default function DashboardPage() {
-  return <DashboardView />;
+export default async function DashboardPage() {
+  const user = await getMe();
+  return <DashboardView initialUser={user} />;
 }

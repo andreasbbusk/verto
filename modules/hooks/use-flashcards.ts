@@ -7,7 +7,7 @@ import {
   updateFlashcard,
   deleteFlashcard,
   createFlashcardsBulk,
-} from "@/modules/lib/api-client";
+} from "@/modules/actions/flashcards";
 import type {
   CreateFlashcardData,
   UpdateFlashcardData,
@@ -25,7 +25,7 @@ export function useFlashcardMutations(setId: number) {
       queryClient.invalidateQueries({ queryKey: ['sets'] });
     },
     onError: (error) => {
-      toast.error("Failed to create flashcard");
+      toast.error(error instanceof Error ? error.message : "Failed to create flashcard");
     },
   });
 
@@ -40,7 +40,7 @@ export function useFlashcardMutations(setId: number) {
       queryClient.invalidateQueries({ queryKey: ['sets', setId] });
     },
     onError: (error) => {
-      toast.error("Failed to update flashcard");
+      toast.error(error instanceof Error ? error.message : "Failed to update flashcard");
     },
   });
 
@@ -52,15 +52,14 @@ export function useFlashcardMutations(setId: number) {
       queryClient.invalidateQueries({ queryKey: ['sets'] });
     },
     onError: (error) => {
-      toast.error("Failed to delete flashcard");
+      toast.error(error instanceof Error ? error.message : "Failed to delete flashcard");
     },
   });
 
   const createBulkMutation = useMutation({
     mutationFn: (flashcards: Omit<CreateFlashcardData, 'setId'>[]) =>
       createFlashcardsBulk(setId, flashcards),
-    onSuccess: (response) => {
-      const result = response.data;
+    onSuccess: (result) => {
       if (result.failureCount > 0) {
         toast.warning(
           `Created ${result.successCount} flashcard(s), ${result.failureCount} failed`
@@ -72,7 +71,7 @@ export function useFlashcardMutations(setId: number) {
       queryClient.invalidateQueries({ queryKey: ['sets'] });
     },
     onError: (error) => {
-      toast.error("Failed to create flashcards");
+      toast.error(error instanceof Error ? error.message : "Failed to create flashcards");
     },
   });
 
