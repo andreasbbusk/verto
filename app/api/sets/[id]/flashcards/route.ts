@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { flashcardRepository, setRepository, initializeData } from "@/modules/server/database";
-import { authenticateRequest } from "@/modules/server/auth";
+import { authenticateRequest } from "@/modules/server/auth-helpers";
 import { createFlashcardSchema } from "@/modules/schemas/flashcardSchemas";
 import {
   apiSuccess,
@@ -17,7 +17,7 @@ interface RouteParams {
 // POST /api/sets/:id/flashcards - Create flashcard in set
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const authResult = await authenticateRequest(request);
+    const authResult = await authenticateRequest();
     if (!authResult.success) {
       return apiError(authResult.error, 401);
     }

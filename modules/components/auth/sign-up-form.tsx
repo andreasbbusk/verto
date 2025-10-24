@@ -2,8 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { useAuthStore } from "@/modules/stores/authStore";
-import type { SanitizedUser } from "@/modules/types";
+import { signIn } from "next-auth/react";
 import {
   registerSchema,
   type RegisterFormData,
@@ -22,7 +21,6 @@ import { Alert, AlertDescription } from "@/modules/components/ui/alert";
 import { Eye, EyeOff, Check, X } from "lucide-react";
 
 interface SignUpFormProps {
-  onSuccess?: (user: SanitizedUser) => void;
   onSwitchToSignIn?: () => void;
 }
 
@@ -31,9 +29,10 @@ interface PasswordCheck {
   test: boolean;
 }
 
-export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
+export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const { register, loading, error, clearError } = useAuthStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const form = useForm({
     defaultValues: {
@@ -42,18 +41,37 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
       password: "",
     } as RegisterFormData,
     onSubmit: async ({ value }) => {
+      setError("");
+      const validation = registerSchema.safeParse(value);
+      if (!validation.success) {
+        setError(validation.error.issues[0].message);
+        return;
+      }
+
+      setLoading(true);
       try {
-        clearError();
-        // Validate with Zod
-        const validation = registerSchema.safeParse(value);
-        if (!validation.success) {
-          throw new Error(validation.error.issues[0].message);
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(value),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Registration failed");
+          setLoading(false);
+          return;
         }
-        const user = await register(value.email, value.password, value.name);
-        onSuccess?.(user);
+
+        await signIn("credentials", {
+          email: value.email,
+          password: value.password,
+          callbackUrl: "/dashboard",
+        });
       } catch (err) {
-        // Error is handled by the store
-        console.error("Registration failed:", err);
+        setError("Registration failed");
+        setLoading(false);
       }
     },
   });

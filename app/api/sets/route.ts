@@ -1,13 +1,13 @@
 import { NextRequest } from "next/server";
 import { setRepository, initializeData } from "@/modules/server/database";
-import { authenticateRequest } from "@/modules/server/auth";
+import { authenticateRequest } from "@/modules/server/auth-helpers";
 import { createSetSchema } from "@/modules/schemas/setSchemas";
 import { apiSuccess, apiError, validateBody, handleServerError } from "@/modules/lib/api-utils";
 
 // GET /api/sets - Get user's sets
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await authenticateRequest(request);
+    const authResult = await authenticateRequest();
     if (!authResult.success) {
       return apiError(authResult.error, 401);
     }
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 // POST /api/sets - Create new set
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await authenticateRequest(request);
+    const authResult = await authenticateRequest();
     if (!authResult.success) {
       return apiError(authResult.error, 401);
     }

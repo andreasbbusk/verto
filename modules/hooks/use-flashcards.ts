@@ -7,7 +7,7 @@ import {
   updateFlashcard,
   deleteFlashcard,
   createFlashcardsBulk,
-} from "@/modules/api";
+} from "@/modules/lib/api-client";
 import type {
   CreateFlashcardData,
   UpdateFlashcardData,

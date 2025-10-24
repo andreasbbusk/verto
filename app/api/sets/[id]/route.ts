@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { setRepository, initializeData } from "@/modules/server/database";
-import { authenticateRequest } from "@/modules/server/auth";
+import { authenticateRequest } from "@/modules/server/auth-helpers";
 import { updateSetSchema } from "@/modules/schemas/setSchemas";
 import {
   apiSuccess,
@@ -17,7 +17,7 @@ interface RouteParams {
 // GET /api/sets/:id - Get set with flashcards
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const authResult = await authenticateRequest(request);
+    const authResult = await authenticateRequest();
     if (!authResult.success) {
       return apiError(authResult.error, 401);
     }
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PUT /api/sets/:id - Update set
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const authResult = await authenticateRequest(request);
+    const authResult = await authenticateRequest();
     if (!authResult.success) {
       return apiError(authResult.error, 401);
     }
@@ -94,7 +94,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/sets/:id - Delete set and all flashcards
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const authResult = await authenticateRequest(request);
+    const authResult = await authenticateRequest();
     if (!authResult.success) {
       return apiError(authResult.error, 401);
     }

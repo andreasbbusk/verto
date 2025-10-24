@@ -1,40 +1,28 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { verifyToken } from "@/modules/server/auth";
+import { NextRequest, NextResponse } from "next/server";
 
-// Define protected routes that require authentication
-const protectedRoutes = [
-  "/dashboard",
-  "/sets",
-  "/cards",
-  "/study",
-  "/calendar",
-  "/settings",
-];
-
-// Define public routes that should redirect to dashboard if authenticated
-const publicRoutes = ["/", "/auth"];
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip API route protection in middleware - let API routes handle their own auth
-  // This is because JWT verification doesn't work reliably in edge runtime
+  // Get session token from cookies
+  const sessionToken = request.cookies.get("authjs.session-token") ||
+                       request.cookies.get("__Secure-authjs.session-token");
 
-  // For page routes, we rely on client-side ProtectedRoute component
-  // This allows for proper hydration and user experience
+  const isAuthenticated = !!sessionToken;
+
+  const protectedRoutes = ["/dashboard", "/sets", "/cards", "/study", "/calendar", "/settings"];
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+
+  if (isProtectedRoute && !isAuthenticated) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (pathname === "/" && isAuthenticated) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files
-     */
-    "/((?!_next/static|_next/image|favicon.ico|public).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|public).*)"],
 };

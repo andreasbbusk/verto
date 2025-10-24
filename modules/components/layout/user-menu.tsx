@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/modules/stores/authStore";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/modules/components/ui/button";
 import { Avatar } from "@/modules/components/ui/avatar";
 import {
@@ -14,18 +14,17 @@ import { Settings, LogOut, EllipsisVertical } from "lucide-react";
 import { toast } from "sonner";
 
 export function UserMenu() {
-  const { user, logout } = useAuthStore();
+  const { data: session } = useSession();
   const router = useRouter();
 
-  if (!user) {
+  if (!session?.user) {
     return null;
   }
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut({ callbackUrl: "/" });
       toast.success("Du er nu logget ud");
-      router.push("/");
     } catch (error) {
       toast.error("Fejl ved logout");
     }
@@ -41,11 +40,11 @@ export function UserMenu() {
           <div className="flex items-center gap-3">
             <Avatar className="h-6 w-6">
               <div className="flex items-center justify-center w-full h-full bg-primary text-primary-foreground text-sm font-semibold rounded-full">
-                {user.name.charAt(0).toUpperCase()}
+                {session.user.name?.charAt(0).toUpperCase() || "U"}
               </div>
             </Avatar>
             <span className="text-sm font-medium text-foreground truncate">
-              {user.name}
+              {session.user.name}
             </span>
           </div>
           <div>

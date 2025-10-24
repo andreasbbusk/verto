@@ -1,36 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { userRepository } from "@/modules/server/database";
-import {
-  hashPassword,
-  sanitizeUser,
-  generateToken,
-} from "@/modules/server/auth";
 import { registerSchema } from "@/modules/schemas/authSchemas";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-
-    // Validate request body
     const validation = registerSchema.safeParse(body);
+
     if (!validation.success) {
       return NextResponse.json(
-        {
-          error: "Invalid input data",
-          details: validation.error.issues.map((issue) => issue.message),
-        },
+        { error: "Invalid input", details: validation.error.issues },
         { status: 400 }
       );
     }
 
     const { email, password, name } = validation.data;
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Hash password
-    const hashedPassword = await hashPassword(password);
-
-    // Create user
-    const newUser = await userRepository.create({
+    await userRepository.create({
       email: email.toLowerCase().trim(),
       password: hashedPassword,
       name: name.trim(),
@@ -49,35 +37,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate JWT token
-    const token = generateToken(newUser.id);
-
-    // Return sanitized user data with token
-    const sanitizedUser = sanitizeUser(newUser);
-
     return NextResponse.json(
-      {
-        user: sanitizedUser,
-        token: token,
-        message: "Account created successfully",
-      },
+      { message: "Account created successfully" },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Registration error:", error);
-
-    // Handle specific errors
     if (error instanceof Error && error.message.includes("already exists")) {
       return NextResponse.json(
-        { error: "An account with this email already exists" },
+        { error: "Email already exists" },
         { status: 409 }
       );
     }
-
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
+      { error: "Registration failed" },
       { status: 500 }
     );
   }

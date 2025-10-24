@@ -2,8 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { useAuthStore } from "@/modules/stores/authStore";
-import type { SanitizedUser } from "@/modules/types";
+import { signIn } from "next-auth/react";
 import { loginSchema, type LoginFormData } from "@/modules/schemas/authSchemas";
 import { Button } from "@/modules/components/ui/button";
 import { Input } from "@/modules/components/ui/input";
@@ -18,26 +17,19 @@ import {
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
 import { Separator } from "@/modules/components/ui/separator";
 import { Eye, EyeOff } from "lucide-react";
-import { signIn } from "next-auth/react";
 
 interface SignInFormProps {
-  onSuccess?: (user: SanitizedUser) => void;
   onSwitchToSignUp?: () => void;
 }
 
-export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
+export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState(false);
-  const { login, loading, error, clearError } = useAuthStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleGoogleSignIn = async () => {
-    try {
-      setOauthLoading(true);
-      await signIn("google", { callbackUrl: "/dashboard" });
-    } catch (error) {
-      console.error("Google sign-in failed:", error);
-      setOauthLoading(false);
-    }
+    setLoading(true);
+    await signIn("google", { callbackUrl: "/dashboard" });
   };
 
   const form = useForm({
@@ -46,18 +38,23 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
       password: "",
     } as LoginFormData,
     onSubmit: async ({ value }) => {
-      try {
-        clearError();
-        // Validate with Zod
-        const validation = loginSchema.safeParse(value);
-        if (!validation.success) {
-          throw new Error(validation.error.issues[0].message);
-        }
-        const user = await login(value.email, value.password);
-        onSuccess?.(user);
-      } catch (err) {
-        // Error is handled by the store
-        console.error("Login failed:", err);
+      setError("");
+      const validation = loginSchema.safeParse(value);
+      if (!validation.success) {
+        setError(validation.error.issues[0].message);
+        return;
+      }
+
+      setLoading(true);
+      const result = await signIn("credentials", {
+        email: value.email,
+        password: value.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password");
+        setLoading(false);
       }
     },
   });
@@ -201,7 +198,7 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
           variant="outline"
           className="w-full"
           onClick={handleGoogleSignIn}
-          disabled={loading || oauthLoading}
+          disabled={loading}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
             <path
@@ -221,7 +218,7 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
               fill="#EA4335"
             />
           </svg>
-          {oauthLoading ? "Signing in..." : "Sign in with Google"}
+          {loading ? "Signing in..." : "Sign in with Google"}
         </Button>
 
         <div className="mt-6 text-center">

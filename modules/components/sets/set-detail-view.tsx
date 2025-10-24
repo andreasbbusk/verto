@@ -35,6 +35,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SetDialog } from "./set-dialog";
+import { Loader } from "@/modules/components/ui/loader";
 
 interface SetDetailViewProps {
   id: number;
@@ -50,7 +51,7 @@ export function SetDetailView({ id }: SetDetailViewProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const router = useRouter();
 
-  const { set, flashcards, error } = useSetById(id);
+  const { set, flashcards, isLoading, error } = useSetById(id);
   const flashcardMutations = useFlashcardMutations(id);
 
   const { update: updateSet, remove: removeSet } = useSets();
@@ -196,6 +197,14 @@ export function SetDetailView({ id }: SetDetailViewProps) {
       await handleCreateCard(data as CreateFlashcardData);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
 
   if (error || !set) {
     return (

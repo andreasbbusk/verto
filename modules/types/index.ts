@@ -151,6 +151,7 @@ export interface CardPerformance {
   
   // API Response types
   export interface ApiResponse<T> {
+    success: boolean;
     data: T;
     message?: string;
   }

@@ -45,6 +45,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SetCard } from "./set-card";
 import { SetDialog } from "./set-dialog";
+import { Loader } from "@/modules/components/ui/loader";
 
 interface SetsTableProps {
   sets: FlashcardSet[];
@@ -220,7 +221,7 @@ function SetsGrid({ sets, onEdit, onDelete }: SetsGridProps) {
 
 export function SetsView() {
   const searchParams = useSearchParams();
-  const { sets, error, create, update, remove } = useSets();
+  const { sets, isLoading, error, create, update, remove } = useSets();
   const { setsView, setSetsView } = useViewStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
@@ -379,7 +380,11 @@ export function SetsView() {
 
       {/* Content */}
       <div>
-        {error ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader />
+          </div>
+        ) : error ? (
           <Card className="p-8">
             <div className="text-center">
               <div className="w-12 h-12 border border-destructive flex items-center justify-center mx-auto mb-4">

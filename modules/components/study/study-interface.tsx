@@ -22,7 +22,7 @@ import {
 } from "@/modules/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type { Flashcard } from "@/modules/types";
-import { updateFlashcard } from "@/modules/api/flashcards";
+import { updateFlashcard } from "@/modules/lib/api-client";
 import { useStudyProgressStore } from "@/modules/stores/studyProgressStore";
 
 interface StudyInterfaceProps {
