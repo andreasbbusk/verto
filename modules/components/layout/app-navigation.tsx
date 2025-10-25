@@ -249,7 +249,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                               <SidebarMenuSub className="pr-2">
                                 {isLoading ? (
                                   <div className="py-2 space-y-2">
-                                    {Array.from({ length: 4 }).map((_, i) => (
+                                    {Array.from({ length: 3 }).map((_, i) => (
                                       <div key={i} className="h-6 bg-sidebar-accent/50 rounded animate-pulse" />
                                     ))}
                                   </div>
