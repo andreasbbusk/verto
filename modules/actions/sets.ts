@@ -73,7 +73,6 @@ export async function createSet(data: CreateSetData): Promise<FlashcardSet> {
     });
 
     revalidatePath("/sets");
-    revalidatePath("/dashboard");
 
     return serialize(newSet);
   } catch (error) {
@@ -116,9 +115,7 @@ export async function updateSet(
   try {
     const updatedSet = await setRepository.update(id, validation.data);
 
-    revalidatePath("/sets");
     revalidatePath(`/sets/${id}`);
-    revalidatePath("/dashboard");
 
     return serialize(updatedSet);
   } catch (error) {
@@ -154,7 +151,6 @@ export async function deleteSet(id: number): Promise<FlashcardSet> {
     const deletedSet = await setRepository.delete(id);
 
     revalidatePath("/sets");
-    revalidatePath("/dashboard");
 
     return serialize(deletedSet);
   } catch (error) {

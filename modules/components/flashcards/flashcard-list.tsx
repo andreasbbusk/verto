@@ -1,6 +1,6 @@
 "use client";
 
-import { SearchFilter } from "@/modules/components/layout/client-wrapper";
+import { SearchFilter } from "@/modules/components/ui/search-filter";
 import {
   AlertDialog,
   AlertDialogAction,

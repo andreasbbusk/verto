@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SetCard } from "./set-card";
-import { SearchFilter } from "@/modules/components/layout/client-wrapper";
+import { SearchFilter } from "@/modules/components/ui/search-filter";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import { Button } from "@/modules/components/ui/button";
 import { Badge } from "@/modules/components/ui/badge";

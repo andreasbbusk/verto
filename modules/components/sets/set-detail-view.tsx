@@ -2,7 +2,7 @@
 
 import { FlashcardDialog } from "@/modules/components/flashcards/flashcard-dialog";
 import { FlashcardList } from "@/modules/components/flashcards/flashcard-list";
-import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
+import { AnimatedSection } from "@/modules/components/ui/animated-section";
 import { Breadcrumbs } from "@/modules/components/layout/breadcrumbs";
 import { Badge } from "@/modules/components/ui/badge";
 import { Button } from "@/modules/components/ui/button";
@@ -14,7 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/components/ui/dropdown-menu";
 import { useFlashcardMutations } from "@/modules/hooks/use-flashcards";
-import { useSetById, useSets } from "@/modules/hooks/use-sets";
+import { useSetById } from "@/modules/hooks/use-sets";
+import { useSetMutations } from "@/modules/hooks/use-set-mutations";
 import type {
   CreateFlashcardData,
   CreateSetData,
@@ -53,8 +54,7 @@ export function SetDetailView({ initialSet }: SetDetailViewProps) {
 
   const { set, flashcards, error } = useSetById(initialSet.id, initialSet);
   const flashcardMutations = useFlashcardMutations(initialSet.id);
-
-  const { update: updateSet, remove: removeSet } = useSets();
+  const { update: updateSet, remove: removeSet } = useSetMutations(initialSet.id);
 
   // Filter flashcards based on active filter
   const filteredFlashcards = useMemo(() => {
@@ -92,7 +92,7 @@ export function SetDetailView({ initialSet }: SetDetailViewProps) {
     if (!set) return;
 
     try {
-      await updateSet({ id: set.id, data });
+      await updateSet(data);
     } catch (error) {
       toast.error("Kunne ikke opdatere set");
       throw error;
@@ -111,8 +111,7 @@ export function SetDetailView({ initialSet }: SetDetailViewProps) {
     }
 
     try {
-      await removeSet(set.id);
-      toast.success("Set slettet!");
+      await removeSet();
       router.push("/sets");
     } catch (error) {
       toast.error("Kunne ikke slette set");
