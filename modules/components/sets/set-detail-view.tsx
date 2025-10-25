@@ -2,7 +2,7 @@
 
 import { FlashcardDialog } from "@/modules/components/flashcards/flashcard-dialog";
 import { FlashcardList } from "@/modules/components/flashcards/flashcard-list";
-import { AnimatedSection } from "@/modules/components/layout/client-wrapper";
+import { AnimatedSection } from "@/modules/components/ui/animated-section";
 import { Breadcrumbs } from "@/modules/components/layout/breadcrumbs";
 import { Badge } from "@/modules/components/ui/badge";
 import { Button } from "@/modules/components/ui/button";
@@ -14,7 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/components/ui/dropdown-menu";
 import { useFlashcardMutations } from "@/modules/hooks/use-flashcards";
-import { useSetById, useSets } from "@/modules/hooks/use-sets";
+import { useSetById } from "@/modules/hooks/use-sets";
+import { useSetMutations } from "@/modules/hooks/use-set-mutations";
 import type {
   CreateFlashcardData,
   CreateSetData,
@@ -38,12 +39,12 @@ import { SetDialog } from "./set-dialog";
 import { Loader } from "@/modules/components/ui/loader";
 
 interface SetDetailViewProps {
-  id: number;
+  initialSet: import("@/modules/types").FlashcardSet;
 }
 
 type FilterType = "all" | "starred" | "due";
 
-export function SetDetailView({ id }: SetDetailViewProps) {
+export function SetDetailView({ initialSet }: SetDetailViewProps) {
   const searchParams = useSearchParams();
   const [setDialogOpen, setSetDialogOpen] = useState(false);
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
@@ -51,10 +52,9 @@ export function SetDetailView({ id }: SetDetailViewProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const router = useRouter();
 
-  const { set, flashcards, isLoading, error } = useSetById(id);
-  const flashcardMutations = useFlashcardMutations(id);
-
-  const { update: updateSet, remove: removeSet } = useSets();
+  const { set, flashcards, error } = useSetById(initialSet.id, initialSet);
+  const flashcardMutations = useFlashcardMutations(initialSet.id);
+  const { update: updateSet, remove: removeSet } = useSetMutations(initialSet.id);
 
   // Filter flashcards based on active filter
   const filteredFlashcards = useMemo(() => {
@@ -92,7 +92,7 @@ export function SetDetailView({ id }: SetDetailViewProps) {
     if (!set) return;
 
     try {
-      await updateSet({ id: set.id, data });
+      await updateSet(data);
     } catch (error) {
       toast.error("Kunne ikke opdatere set");
       throw error;
@@ -111,8 +111,7 @@ export function SetDetailView({ id }: SetDetailViewProps) {
     }
 
     try {
-      await removeSet(set.id);
-      toast.success("Set slettet!");
+      await removeSet();
       router.push("/sets");
     } catch (error) {
       toast.error("Kunne ikke slette set");
@@ -197,14 +196,6 @@ export function SetDetailView({ id }: SetDetailViewProps) {
       await handleCreateCard(data as CreateFlashcardData);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
 
   if (error || !set) {
     return (

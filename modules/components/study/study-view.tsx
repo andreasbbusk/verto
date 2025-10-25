@@ -1,24 +1,26 @@
-import { getSetById } from "@/modules/actions/sets";
-import { StudyView } from "@/modules/components/study/study-view";
+"use client";
+
+import { StudyInterface } from "@/modules/components/study/study-interface";
 import { Card, CardContent } from "@/modules/components/ui/card";
+import { useSetById } from "@/modules/hooks/use-sets";
+import type { FlashcardSet } from "@/modules/types";
 import Link from "next/link";
 
-interface StudyPageProps {
-  params: Promise<{ id: string }>;
+interface StudyViewProps {
+  initialSet: FlashcardSet;
 }
 
-export default async function StudyPage({ params }: StudyPageProps) {
-  const { id } = await params;
-  const setId = parseInt(id, 10);
+export function StudyView({ initialSet }: StudyViewProps) {
+  const { set, flashcards, error } = useSetById(initialSet.id, initialSet);
 
-  if (!setId || isNaN(setId)) {
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center space-y-4">
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-                Ugyldigt set ID
+                {error}
               </div>
               <Link
                 href="/sets"
@@ -33,17 +35,14 @@ export default async function StudyPage({ params }: StudyPageProps) {
     );
   }
 
-  try {
-    const set = await getSetById(setId);
-    return <StudyView initialSet={set} />;
-  } catch (error) {
+  if (!set || flashcards.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center space-y-4">
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-                {error instanceof Error ? error.message : "Kunne ikke hente set"}
+              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg">
+                Ingen flashcards fundet i dette set
               </div>
               <Link
                 href="/sets"
@@ -57,4 +56,13 @@ export default async function StudyPage({ params }: StudyPageProps) {
       </div>
     );
   }
+
+  return (
+    <StudyInterface
+      flashcards={flashcards}
+      setName={set.name}
+      setDifficulty={set.difficulty}
+      setId={initialSet.id}
+    />
+  );
 }

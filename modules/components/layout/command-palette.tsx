@@ -27,7 +27,7 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const router = useRouter();
-  const { sets } = useSets();
+  const { sets, isLoading } = useSets();
   const [search, setSearch] = useState("");
 
   // Reset search when dialog closes
@@ -91,22 +91,31 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           })}
         </CommandGroup>
 
-        {sets.length > 0 && (
+        {(isLoading || sets.length > 0) && (
           <>
             <CommandSeparator />
             <CommandGroup heading="Flashcard Sæt">
-              {sets.map((set) => (
-                <CommandItem
-                  key={set.id}
-                  onSelect={() => handleSelect(() => router.push(`/sets/${set.id}`))}
-                >
-                  <Layers className="mr-2 h-4 w-4" />
-                  <span className="flex-1">{set.name}</span>
-                  <span className="text-xs text-muted-foreground ml-2">
-                    {set.cardCount || 0} kort
-                  </span>
-                </CommandItem>
-              ))}
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <CommandItem key={i} disabled>
+                    <div className="h-4 w-4 mr-2 bg-muted rounded animate-pulse" />
+                    <div className="h-4 flex-1 bg-muted rounded animate-pulse" />
+                  </CommandItem>
+                ))
+              ) : (
+                sets.map((set) => (
+                  <CommandItem
+                    key={set.id}
+                    onSelect={() => handleSelect(() => router.push(`/sets/${set.id}`))}
+                  >
+                    <Layers className="mr-2 h-4 w-4" />
+                    <span className="flex-1">{set.name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {set.cardCount || 0} kort
+                    </span>
+                  </CommandItem>
+                ))
+              )}
             </CommandGroup>
           </>
         )}

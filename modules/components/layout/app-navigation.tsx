@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Button } from "@/modules/components/ui/button";
+import { Kbd } from "@/modules/components/ui/kbd";
+import { ScrollArea } from "@/modules/components/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -21,30 +21,29 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/modules/components/ui/sidebar";
-import { ScrollArea } from "@/modules/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/modules/components/ui/tooltip";
-import { Kbd } from "@/modules/components/ui/kbd";
-import { UserMenu } from "./user-menu";
-import { FlashcardDialog } from "../flashcards/flashcard-dialog";
-import { CommandPalette } from "./command-palette";
-import { cn } from "@/modules/lib/utils";
 import { useSets } from "@/modules/hooks/use-sets";
-import { useState, useEffect } from "react";
+import { cn } from "@/modules/lib/utils";
 import { motion } from "framer-motion";
 import {
+  BookOpen,
+  Calendar,
+  ChevronRight,
   Home,
   Library,
-  Calendar,
-  Settings,
   Plus,
-  BookOpen,
-  ChevronRight,
   Search,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FlashcardDialog } from "../flashcards/flashcard-dialog";
+import { CommandPalette } from "./command-palette";
+import { UserMenu } from "./user-menu";
 
 const navigationItems = [
   {
@@ -131,7 +130,7 @@ function SetMenuItem({ set, isActive }: { set: any; isActive: boolean }) {
 
 export function AppNavigation({ children }: AppNavigationProps) {
   const pathname = usePathname();
-  const { sets } = useSets();
+  const { sets, isLoading } = useSets();
   const [setsExpanded, setSetsExpanded] = useState(true);
   const [createCardDialogOpen, setCreateCardDialogOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -248,7 +247,13 @@ export function AppNavigation({ children }: AppNavigationProps) {
                               className={cn(sets.length > 5 && "h-[200px]")}
                             >
                               <SidebarMenuSub className="pr-2">
-                                {sets.length === 0 ? (
+                                {isLoading ? (
+                                  <div className="py-2 space-y-2">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                      <div key={i} className="h-6 bg-sidebar-accent/50 rounded animate-pulse" />
+                                    ))}
+                                  </div>
+                                ) : sets.length === 0 ? (
                                   <p className="px-3 py-2 text-xs text-muted-foreground">
                                     Ingen sæt endnu
                                   </p>
