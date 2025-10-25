@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth } from "@/modules/lib/auth-config";
 import { userRepository } from "./database";
 import type { User } from "@/modules/types";
 

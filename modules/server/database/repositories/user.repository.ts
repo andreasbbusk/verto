@@ -1,4 +1,4 @@
-import { storage, generateId, STORAGE_KEYS } from "../storage";
+import { storage, generateId, STORAGE_KEYS } from "../mongo.storage";
 import type { User, CreateUserData, UpdateUserData } from "@/modules/types";
 
 export class UserRepository {

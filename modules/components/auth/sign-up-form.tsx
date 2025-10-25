@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import {
   registerSchema,
   type RegisterFormData,
-} from "@/modules/schemas/authSchemas";
+} from "@/modules/schemas/auth.schema";
 import { Button } from "@/modules/components/ui/button";
 import { Input } from "@/modules/components/ui/input";
 import { Label } from "@/modules/components/ui/label";

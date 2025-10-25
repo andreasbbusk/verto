@@ -1,7 +1,7 @@
-import { FlashcardRepository } from "./repositories/flashcard-repository";
-import { UserRepository } from "./repositories/user-repository";
-import { SetRepository } from "./repositories/set-repository";
-import { initializeData as initializeMongoDB } from "./storage";
+import { FlashcardRepository } from "./repositories/flashcard.repository";
+import { UserRepository } from "./repositories/user.repository";
+import { SetRepository } from "./repositories/set.repository";
+import { initializeData as initializeMongoDB } from "./mongo.storage";
 
 // Repository instances
 export const flashcardRepository = new FlashcardRepository();
@@ -12,7 +12,7 @@ export const setRepository = new SetRepository();
 export const initializeData = initializeMongoDB;
 
 // Re-export types and utilities
-export * from "./storage";
-export * from "./repositories/flashcard-repository";
-export * from "./repositories/user-repository";
-export * from "./repositories/set-repository";
+export * from "./mongo.storage";
+export * from "./repositories/flashcard.repository";
+export * from "./repositories/user.repository";
+export * from "./repositories/set.repository";

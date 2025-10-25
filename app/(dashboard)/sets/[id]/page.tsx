@@ -1,4 +1,4 @@
-import { SetDetailView } from "@/modules/components/sets/set-detail-view";
+import { SetDetailView } from "@/modules/components/sets/set-detail";
 import { getSetById } from "@/modules/actions/sets";
 
 interface SetDetailPageProps {

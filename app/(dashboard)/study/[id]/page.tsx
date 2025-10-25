@@ -1,5 +1,5 @@
 import { getSetById } from "@/modules/actions/sets";
-import { StudyView } from "@/modules/components/study/study-view";
+import { StudyView } from "@/modules/components/study/study-page";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import Link from "next/link";
 

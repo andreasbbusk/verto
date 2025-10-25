@@ -1,8 +1,8 @@
 "use server";
 
-import { auth } from "@/auth";
+import { auth } from "@/modules/lib/auth-config";
 import { userRepository } from "@/modules/server/database";
-import { serialize } from "@/modules/lib/serialize";
+import { serialize } from "@/modules/lib/serialization";
 import type { User } from "@/modules/types";
 
 /**

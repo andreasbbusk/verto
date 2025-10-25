@@ -1,4 +1,4 @@
-import { DashboardView } from "@/modules/components/dashboard/dashboard-view";
+import { DashboardView } from "@/modules/components/dashboard/dashboard-page";
 import { getMe } from "@/modules/actions/user";
 
 export default async function DashboardPage() {
