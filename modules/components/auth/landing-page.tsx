@@ -1,7 +1,5 @@
 "use client";
 
-import { SignInForm } from "@/modules/components/auth/sign-in-form";
-import { SignUpForm } from "@/modules/components/auth/sign-up-form";
 import { Button } from "@/modules/components/ui/button";
 import {
   Card
@@ -14,7 +12,7 @@ import {
   Target,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
 
 const features = [
   {
@@ -48,34 +46,7 @@ const benefits = [
   "Study anywhere, anytime",
 ];
 
-type AuthMode = "signin" | "signup" | null;
-
 export function LandingView() {
-  const [authMode, setAuthMode] = useState<AuthMode>(null);
-
-  if (authMode) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {authMode === "signin" ? (
-            <SignInForm onSwitchToSignUp={() => setAuthMode("signup")} />
-          ) : (
-            <SignUpForm onSwitchToSignIn={() => setAuthMode("signin")} />
-          )}
-          <div className="mt-6 text-center">
-            <Button
-              variant="ghost"
-              onClick={() => setAuthMode(null)}
-              size="sm"
-              className="text-sm"
-            >
-              ← Back
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,16 +65,16 @@ export function LandingView() {
             <div className="space-x-2">
               <Button
                 variant="ghost"
-                onClick={() => setAuthMode("signin")}
+                asChild
                 size="sm"
               >
-                Sign In
+                <Link href="/login">Sign In</Link>
               </Button>
               <Button
-                onClick={() => setAuthMode("signup")}
+                asChild
                 size="sm"
               >
-                Get Started
+                <Link href="/signup">Get Started</Link>
               </Button>
             </div>
           </div>
@@ -123,17 +94,19 @@ export function LandingView() {
           <div className="flex gap-3">
             <Button
               size="lg"
-              onClick={() => setAuthMode("signup")}
+              asChild
             >
-              Get Started
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <Link href="/signup">
+                Get Started
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
-              onClick={() => setAuthMode("signin")}
+              asChild
             >
-              Sign In
+              <Link href="/login">Sign In</Link>
             </Button>
           </div>
         </div>
@@ -217,10 +190,12 @@ export function LandingView() {
           </p>
           <Button
             size="lg"
-            onClick={() => setAuthMode("signup")}
+            asChild
           >
-            Get Started
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <Link href="/signup">
+              Get Started
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </section>

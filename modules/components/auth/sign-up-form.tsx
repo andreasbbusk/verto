@@ -10,15 +10,9 @@ import {
 import { Button } from "@/modules/components/ui/button";
 import { Input } from "@/modules/components/ui/input";
 import { Label } from "@/modules/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/modules/components/ui/card";
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
-import { Eye, EyeOff, Check, X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import Link from "next/link";
 
 interface SignUpFormProps {
   onSwitchToSignIn?: () => void;
@@ -87,211 +81,256 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Sign Up</CardTitle>
-        <CardDescription>
+    <div className="w-full">
+      <div className="mb-8">
+        <h1 className="text-3xl font-light tracking-tight mb-2 text-zinc-950">
+          Sign Up
+        </h1>
+        <p className="text-sm text-zinc-600">
           Create your account to start learning with flashcards
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
+        </p>
+      </div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          form.handleSubmit();
+        }}
+        className="space-y-4"
+      >
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <form.Field
+          name="name"
+          validators={{
+            onChange: ({ value }) => {
+              const result = registerSchema.shape.name.safeParse(value);
+              return result.success
+                ? undefined
+                : result.error.issues[0].message;
+            },
           }}
-          className="space-y-4"
         >
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <form.Field
-            name="name"
-            validators={{
-              onChange: ({ value }) => {
-                const result = registerSchema.shape.name.safeParse(value);
-                return result.success
-                  ? undefined
-                  : result.error.issues[0].message;
-              },
-            }}
-          >
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Full Name</Label>
-                <Input
-                  id={field.name}
-                  type="text"
-                  placeholder="enter your full name"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  disabled={loading}
-                  className={
-                    field.state.meta.errors.length > 0 ? "border-red-500" : ""
-                  }
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-sm text-red-500">
-                    {field.state.meta.errors[0]}
-                  </p>
-                )}
-              </div>
-            )}
-          </form.Field>
-
-          <form.Field
-            name="email"
-            validators={{
-              onChange: ({ value }) => {
-                const result = registerSchema.shape.email.safeParse(value);
-                return result.success
-                  ? undefined
-                  : result.error.issues[0].message;
-              },
-            }}
-          >
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
-                <Input
-                  id={field.name}
-                  type="email"
-                  placeholder="enter your email"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  disabled={loading}
-                  className={
-                    field.state.meta.errors.length > 0 ? "border-red-500" : ""
-                  }
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-sm text-red-500">
-                    {field.state.meta.errors[0]}
-                  </p>
-                )}
-              </div>
-            )}
-          </form.Field>
-
-          <form.Field
-            name="password"
-            validators={{
-              onChange: ({ value }) => {
-                const result = registerSchema.shape.password.safeParse(value);
-                return result.success
-                  ? undefined
-                  : result.error.issues[0].message;
-              },
-            }}
-          >
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
-                <div className="relative">
-                  <Input
-                    id={field.name}
-                    type={showPassword ? "text" : "password"}
-                    placeholder="create a strong password"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                    disabled={loading}
-                    className={
-                      field.state.meta.errors.length > 0
-                        ? "border-red-500 pr-10"
-                        : "pr-10"
-                    }
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-
-                {/* Password strength indicator */}
-                {field.state.value && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">
-                      Password requirements:
-                    </p>
-                    {getPasswordStrength(field.state.value).map(
-                      (check, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-2"
-                        >
-                          {check.test ? (
-                            <Check className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <X className="h-3 w-3 text-red-500" />
-                          )}
-                          <span
-                            className={`text-xs ${
-                              check.test ? "text-green-600" : "text-red-600"
-                            }`}
-                          >
-                            {check.label}
-                          </span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-sm text-red-500">
-                    {field.state.meta.errors[0]}
-                  </p>
-                )}
-              </div>
-            )}
-          </form.Field>
-
-          <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting]}
-          >
-            {([canSubmit, isSubmitting]) => (
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={!canSubmit || loading || isSubmitting}
+          {(field) => (
+            <div className="space-y-2">
+              <Label
+                htmlFor={field.name}
+                className="text-xs uppercase tracking-wide text-zinc-500"
               >
-                {loading || isSubmitting ? "Creating account..." : "Create Account"}
-              </Button>
-            )}
-          </form.Subscribe>
-        </form>
+                Full Name
+              </Label>
+              <Input
+                id={field.name}
+                type="text"
+                placeholder="enter your full name"
+                autoComplete="name"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onBlur={field.handleBlur}
+                disabled={loading}
+                aria-required="true"
+                aria-invalid={field.state.meta.errors.length > 0}
+                aria-describedby={
+                  field.state.meta.errors.length > 0
+                    ? `${field.name}-error`
+                    : undefined
+                }
+                className={
+                  field.state.meta.errors.length > 0
+                    ? "border-red-500 bg-white text-zinc-950"
+                    : "bg-white text-zinc-950 border-zinc-300"
+                }
+              />
+              {field.state.meta.errors.length > 0 && (
+                <p className="text-sm text-red-500">
+                  {field.state.meta.errors[0]}
+                </p>
+              )}
+            </div>
+          )}
+        </form.Field>
 
-        <div className="mt-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Already have an account?{" "}
+        <form.Field
+          name="email"
+          validators={{
+            onChange: ({ value }) => {
+              const result = registerSchema.shape.email.safeParse(value);
+              return result.success
+                ? undefined
+                : result.error.issues[0].message;
+            },
+          }}
+        >
+          {(field) => (
+            <div className="space-y-2">
+              <Label
+                htmlFor={field.name}
+                className="text-xs uppercase tracking-wide text-zinc-500"
+              >
+                Email
+              </Label>
+              <Input
+                id={field.name}
+                type="email"
+                placeholder="enter your email"
+                autoComplete="email"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onBlur={field.handleBlur}
+                disabled={loading}
+                aria-required="true"
+                aria-invalid={field.state.meta.errors.length > 0}
+                aria-describedby={
+                  field.state.meta.errors.length > 0
+                    ? `${field.name}-error`
+                    : undefined
+                }
+                className={
+                  field.state.meta.errors.length > 0
+                    ? "border-red-500 bg-white text-zinc-950"
+                    : "bg-white text-zinc-950 border-zinc-300"
+                }
+              />
+              {field.state.meta.errors.length > 0 && (
+                <p className="text-sm text-red-500">
+                  {field.state.meta.errors[0]}
+                </p>
+              )}
+            </div>
+          )}
+        </form.Field>
+
+        <form.Field
+          name="password"
+          validators={{
+            onChange: ({ value }) => {
+              const result = registerSchema.shape.password.safeParse(value);
+              return result.success
+                ? undefined
+                : result.error.issues[0].message;
+            },
+          }}
+        >
+          {(field) => (
+            <div className="space-y-2">
+              <Label
+                htmlFor={field.name}
+                className="text-xs uppercase tracking-wide text-zinc-500"
+              >
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id={field.name}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="create a strong password"
+                  autoComplete="new-password"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                  disabled={loading}
+                  aria-required="true"
+                  aria-invalid={field.state.meta.errors.length > 0}
+                  aria-describedby={
+                    field.state.meta.errors.length > 0
+                      ? `${field.name}-error`
+                      : undefined
+                  }
+                  className={
+                    field.state.meta.errors.length > 0
+                      ? "border-red-500 bg-white text-zinc-950"
+                      : "bg-white text-zinc-950 border-zinc-300"
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-950 transition-colors"
+                >
+                  {showPassword ? "Hide password" : "Show password"}
+                </button>
+              </div>
+
+              {/* Password strength indicator */}
+              {field.state.value && (
+                <div className="space-y-1">
+                  <p className="text-xs text-zinc-500">
+                    Password requirements:
+                  </p>
+                  {getPasswordStrength(field.state.value).map(
+                    (check, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        {check.test ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <X className="h-3 w-3 text-red-500" />
+                        )}
+                        <span
+                          className={`text-xs ${
+                            check.test ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {check.label}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+
+              {field.state.meta.errors.length > 0 && (
+                <p className="text-sm text-red-500">
+                  {field.state.meta.errors[0]}
+                </p>
+              )}
+            </div>
+          )}
+        </form.Field>
+
+        <form.Subscribe
+          selector={(state) => [state.canSubmit, state.isSubmitting]}
+        >
+          {([canSubmit, isSubmitting]) => (
             <Button
-              variant="link"
-              className="p-0 h-auto font-normal"
+              type="submit"
+              className="w-full bg-zinc-950 text-white hover:bg-zinc-800"
+              disabled={!canSubmit || loading || isSubmitting}
+            >
+              {loading || isSubmitting
+                ? "Creating account..."
+                : "Create Account"}
+            </Button>
+          )}
+        </form.Subscribe>
+      </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-sm text-zinc-600">
+          Already have an account?{" "}
+          {onSwitchToSignIn ? (
+            <button
               onClick={onSwitchToSignIn}
               disabled={loading}
+              className="text-zinc-950 hover:underline underline-offset-4 font-medium"
             >
               Sign in here
-            </Button>
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="text-zinc-950 hover:underline underline-offset-4 font-medium"
+            >
+              Sign in here
+            </Link>
+          )}
+        </p>
+      </div>
+    </div>
   );
 }

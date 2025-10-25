@@ -12,11 +12,16 @@ export async function middleware(request: NextRequest) {
   const protectedRoutes = ["/dashboard", "/sets", "/cards", "/study", "/calendar", "/settings"];
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
+  const authRoutes = ["/login", "/signup"];
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+
+  // Redirect unauthenticated users trying to access protected routes
   if (isProtectedRoute && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (pathname === "/" && isAuthenticated) {
+  // Redirect authenticated users away from auth pages and landing
+  if ((pathname === "/" || isAuthRoute) && isAuthenticated) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
