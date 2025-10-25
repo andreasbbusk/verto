@@ -3,7 +3,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { loginSchema, type LoginFormData } from "@/modules/schemas/authSchemas";
+import { loginSchema, type LoginFormData } from "@/modules/schemas/auth.schema";
 import { Button } from "@/modules/components/ui/button";
 import { Input } from "@/modules/components/ui/input";
 import { Label } from "@/modules/components/ui/label";

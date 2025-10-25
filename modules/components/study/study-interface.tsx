@@ -23,7 +23,7 @@ import {
 import { toast } from "sonner";
 import type { Flashcard } from "@/modules/types";
 import { updateFlashcard } from "@/modules/actions/flashcards";
-import { useStudyProgressStore } from "@/modules/stores/studyProgressStore";
+import { useStudyProgressStore } from "@/modules/stores/study-progress.store";
 
 interface StudyInterfaceProps {
   flashcards: Flashcard[];

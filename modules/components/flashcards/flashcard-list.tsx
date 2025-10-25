@@ -14,8 +14,8 @@ import {
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import { cn } from "@/modules/lib/utils";
-import { useViewStore } from "@/modules/stores/viewStore";
-import { useCardOrderStore } from "@/modules/stores/cardOrderStore";
+import { useViewStore } from "@/modules/stores/view.store";
+import { useCardOrderStore } from "@/modules/stores/card-order.store";
 import type { Flashcard } from "@/modules/types";
 import { LayoutGrid, LayoutList, ArrowUpDown } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";

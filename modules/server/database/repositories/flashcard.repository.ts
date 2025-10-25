@@ -1,4 +1,4 @@
-import { storage, generateId, STORAGE_KEYS } from "../storage";
+import { storage, generateId, STORAGE_KEYS } from "../mongo.storage";
 import type {
   Flashcard,
   CreateFlashcardDataInternal,

@@ -23,7 +23,7 @@ import {
 } from "@/modules/components/ui/table";
 import { useSets } from "@/modules/hooks/use-sets";
 import { cn } from "@/modules/lib/utils";
-import { useViewStore } from "@/modules/stores/viewStore";
+import { useViewStore } from "@/modules/stores/view.store";
 import type {
   CreateSetData,
   FlashcardSet,

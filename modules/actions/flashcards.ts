@@ -9,9 +9,9 @@ import {
 import {
   createFlashcardSchema,
   updateFlashcardSchema,
-} from "@/modules/schemas/flashcardSchemas";
+} from "@/modules/schemas/flashcard.schema";
 import { revalidatePath } from "next/cache";
-import { serialize } from "@/modules/lib/serialize";
+import { serialize } from "@/modules/lib/serialization";
 import { z } from "zod";
 import type {
   Flashcard,

@@ -1,4 +1,4 @@
-import clientPromise from "./mongodb-client";
+import clientPromise from "./client";
 import { Collection, Document, WithId } from "mongodb";
 import type { Counters } from "@/modules/types";
 

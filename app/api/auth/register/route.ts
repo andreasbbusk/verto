@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userRepository } from "@/modules/server/database";
-import { registerSchema } from "@/modules/schemas/authSchemas";
+import { registerSchema } from "@/modules/schemas/auth.schema";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {

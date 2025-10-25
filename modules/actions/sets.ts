@@ -2,9 +2,9 @@
 
 import { authenticateRequest } from "@/modules/server/auth-helpers";
 import { setRepository, initializeData } from "@/modules/server/database";
-import { createSetSchema, updateSetSchema } from "@/modules/schemas/setSchemas";
+import { createSetSchema, updateSetSchema } from "@/modules/schemas/set.schema";
 import { revalidatePath } from "next/cache";
-import { serialize } from "@/modules/lib/serialize";
+import { serialize } from "@/modules/lib/serialization";
 import type { CreateSetData, UpdateSetData, FlashcardSet } from "@/modules/types";
 
 /**

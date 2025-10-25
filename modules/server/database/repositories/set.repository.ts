@@ -1,4 +1,4 @@
-import { generateId, storage, STORAGE_KEYS } from "../storage";
+import { generateId, storage, STORAGE_KEYS } from "../mongo.storage";
 import type { FlashcardSet, CreateSetDataInternal, UpdateSetData, Flashcard } from "@/modules/types";
 
 export class SetRepository {

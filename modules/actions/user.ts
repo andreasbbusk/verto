@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { userRepository } from "@/modules/server/database";
-import { serialize } from "@/modules/lib/serialize";
+import { serialize } from "@/modules/lib/serialization";
 import type { User } from "@/modules/types";
 
 /**

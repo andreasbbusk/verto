@@ -28,7 +28,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { MiniCardPreview } from "./mini-card-preview";
-import { useCardOrderStore } from "@/modules/stores/cardOrderStore";
+import { useCardOrderStore } from "@/modules/stores/card-order.store";
 
 interface CardReorderDialogProps {
   open: boolean;

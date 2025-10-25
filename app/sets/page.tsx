@@ -1,4 +1,4 @@
-import { SetsView } from "@/modules/components/sets/sets-view";
+import { SetsView } from "@/modules/components/sets/sets-page";
 import { getSets } from "@/modules/actions/sets";
 
 export default async function SetsPage() {
