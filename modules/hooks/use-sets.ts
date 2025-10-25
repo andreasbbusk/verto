@@ -99,6 +99,7 @@ export function useSetById(id: number, initialSet?: FlashcardSet) {
     queryFn: () => getSetById(id),
     initialData: initialSet,
     enabled: !!session?.user && !!id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes to prevent duplicate fetches
   });
 
   return {
