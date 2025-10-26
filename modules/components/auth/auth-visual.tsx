@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
 
 const flashcards = [
   {
@@ -20,13 +21,87 @@ const flashcards = [
 export function AuthVisual() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
+  const cardRef = useRef<HTMLDivElement>(null);
+  const frontRef = useRef<HTMLDivElement>(null);
+  const backRef = useRef<HTMLDivElement>(null);
+  const flipIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const cardIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const currentCard = flashcards[currentIndex];
+
+  // Handle flip animation with GSAP
+  const performFlip = (shouldFlip: boolean) => {
+    if (!cardRef.current || !frontRef.current || !backRef.current) return;
+
+    const card = cardRef.current;
+    const front = frontRef.current;
+    const back = backRef.current;
+
+    // Create flip timeline
+    const tl = gsap.timeline();
+
+    if (shouldFlip) {
+      // Flip front to back
+      tl.to(card, {
+        rotationY: 180,
+        duration: 0.7,
+        ease: "power2.inOut",
+        transformPerspective: 1500,
+      })
+      .to(front, {
+        opacity: 0,
+        duration: 0.1,
+        ease: "none",
+      }, 0.3) // Fade out at 90° (mid-point)
+      .to(back, {
+        opacity: 1,
+        duration: 0.1,
+        ease: "none",
+      }, 0.4); // Fade in after 90°
+    } else {
+      // Flip back to front
+      tl.to(card, {
+        rotationY: 0,
+        duration: 0.7,
+        ease: "power2.inOut",
+        transformPerspective: 1500,
+      })
+      .to(back, {
+        opacity: 0,
+        duration: 0.1,
+        ease: "none",
+      }, 0.3) // Fade out at 90° (mid-point)
+      .to(front, {
+        opacity: 1,
+        duration: 0.1,
+        ease: "none",
+      }, 0.4); // Fade in after 90°
+    }
+  };
+
+  // Watch for flip state changes and trigger animation
   useEffect(() => {
-    const flipInterval = setInterval(() => {
+    performFlip(isFlipped);
+  }, [isFlipped]);
+
+  // Auto-flip and card change intervals
+  useEffect(() => {
+    if (isPaused) {
+      // Clear intervals when paused
+      if (flipIntervalRef.current) clearInterval(flipIntervalRef.current);
+      if (cardIntervalRef.current) clearInterval(cardIntervalRef.current);
+      return;
+    }
+
+    // Flip the card every 4 seconds
+    flipIntervalRef.current = setInterval(() => {
       setIsFlipped((prev) => !prev);
     }, 3000);
 
-    const cardInterval = setInterval(() => {
+    // Change to next card every 8 seconds
+    cardIntervalRef.current = setInterval(() => {
       setIsFlipped(false);
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % flashcards.length);
@@ -34,33 +109,88 @@ export function AuthVisual() {
     }, 6000);
 
     return () => {
-      clearInterval(flipInterval);
-      clearInterval(cardInterval);
+      if (flipIntervalRef.current) clearInterval(flipIntervalRef.current);
+      if (cardIntervalRef.current) clearInterval(cardIntervalRef.current);
     };
+  }, [isPaused]);
+
+  // Add entrance animation for background cards
+  useEffect(() => {
+    const backCards = document.querySelectorAll('.bg-stack-card');
+
+    gsap.fromTo(
+      backCards,
+      {
+        opacity: 0,
+        y: -20,
+        scale: 0.95,
+      },
+      {
+        opacity: 0.2,
+        y: 0,
+        scale: 1,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: "power2.out",
+      }
+    );
   }, []);
 
-  const currentCard = flashcards[currentIndex];
+  // Handle pause on hover
+  const handleMouseEnter = () => {
+    setIsPaused(true);
+    if (cardRef.current) {
+      gsap.to(cardRef.current, {
+        scale: 1.05,
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsPaused(false);
+    if (cardRef.current) {
+      gsap.to(cardRef.current, {
+        scale: 1,
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    }
+  };
 
   return (
-    <div className="relative w-full max-w-lg">
+    <div
+      className="relative w-full max-w-lg"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Gradient Glow Effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent blur-3xl" />
 
       {/* Card Stack Background Cards */}
       <div className="relative">
-        <div className="absolute inset-0 bg-card border border-border rounded-xl transform translate-x-7 translate-y-7 opacity-20" />
-        <div className="absolute inset-0 bg-card border border-border rounded-xl transform translate-x-3.5 translate-y-3.5 opacity-40" />
+        <div className="bg-stack-card absolute inset-0 bg-card border border-border rounded-xl transform translate-x-7 translate-y-7 shadow-3d-sm" />
+        <div className="bg-stack-card absolute inset-0 bg-card border border-border rounded-xl transform translate-x-3.5 translate-y-3.5 shadow-3d-sm" />
 
         {/* Main Animated Card */}
-        <div className="perspective-1000 relative z-10">
+        <div className="perspective-2000 relative z-10">
           <div
-            className={`transform-style-preserve-3d transition-transform duration-700 ${
-              isFlipped ? "rotate-x-180" : "rotate-x-0"
-            }`}
-            style={{ transformStyle: "preserve-3d" }}
+            ref={cardRef}
+            className="transform-style-preserve-3d relative"
+            style={{
+              transformStyle: "preserve-3d",
+            }}
           >
             {/* Front of Card */}
-            <div className="backface-hidden w-full h-80 bg-card border border-primary/30 rounded-xl p-8 flex flex-col items-center justify-center shadow-2xl">
+            <div
+              ref={frontRef}
+              className="backface-hidden w-full h-80 bg-card border border-primary/30 rounded-xl p-8 flex flex-col items-center justify-center shadow-3d-lg transition-shadow duration-300 hover:shadow-3d-lg"
+              style={{
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+              }}
+            >
               <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
                 <span className="text-xs font-medium text-primary">
                   {currentIndex + 1}
@@ -76,8 +206,14 @@ export function AuthVisual() {
 
             {/* Back of Card */}
             <div
-              className="backface-hidden absolute inset-0 w-full h-80 bg-card border border-primary/30 rounded-xl p-8 flex flex-col items-center justify-center shadow-2xl rotate-x-180"
-              style={{ transform: "rotateX(180deg)" }}
+              ref={backRef}
+              className="backface-hidden absolute inset-0 w-full h-80 bg-card border border-primary/30 rounded-xl p-8 flex flex-col items-center justify-center shadow-3d-lg"
+              style={{
+                transform: "rotateY(180deg)",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                opacity: 0,
+              }}
             >
               <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
                 <span className="text-xs font-medium text-primary">
@@ -91,6 +227,13 @@ export function AuthVisual() {
           </div>
         </div>
       </div>
+
+      {/* Pause Indicator */}
+      {isPaused && (
+        <p className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-primary/80 font-mono uppercase text-md tracking-wide transition-all duration-700">
+          Paused
+        </p>
+      )}
     </div>
   );
 }
