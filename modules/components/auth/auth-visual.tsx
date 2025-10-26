@@ -212,18 +212,26 @@ export function AuthVisual() {
             {/* Front of Card */}
             <div
               ref={frontRef}
-              className="backface-hidden w-full h-80 bg-card border border-primary/30 rounded-xl p-8 flex flex-col items-center justify-center shadow-3d-lg transition-shadow duration-300 hover:shadow-3d-lg"
+              className="backface-hidden w-full h-80 bg-card border border-primary/30 rounded-xl p-8 flex flex-col items-center justify-center shadow-3d-lg transition-shadow duration-300 hover:shadow-3d-lg relative overflow-hidden"
               style={{
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
               }}
             >
+              {/* Subtle grain overlay */}
+              <div
+                className="absolute inset-0 opacity-[1] pointer-events-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='cardNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cardNoise)' opacity='0.5'/%3E%3C/svg%3E")`,
+                  mixBlendMode: "overlay",
+                }}
+              />
               <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
                 <span className="text-xs font-medium text-primary">
                   {currentIndex + 1}
                 </span>
               </div>
-              <p className="text-2xl font-mono text-center text-foreground font-light px-4">
+              <p className="text-2xl font-mono text-center text-foreground font-light px-4 relative z-10">
                 {currentCard.front}
               </p>
             </div>
@@ -231,7 +239,7 @@ export function AuthVisual() {
             {/* Back of Card */}
             <div
               ref={backRef}
-              className="backface-hidden absolute inset-0 w-full h-80 bg-card border border-primary/30 rounded-xl p-8 flex flex-col items-center justify-center shadow-3d-lg"
+              className="backface-hidden absolute inset-0 w-full h-80 bg-card border border-primary/30 rounded-xl p-8 flex flex-col items-center justify-center shadow-3d-lg overflow-hidden"
               style={{
                 transform: "rotateY(180deg)",
                 backfaceVisibility: "hidden",
@@ -239,12 +247,20 @@ export function AuthVisual() {
                 opacity: 0,
               }}
             >
+              {/* Subtle grain overlay */}
+              <div
+                className="absolute inset-0 opacity-[1] pointer-events-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='cardNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cardNoise)' opacity='0.5'/%3E%3C/svg%3E")`,
+                  mixBlendMode: "overlay",
+                }}
+              />
               <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
                 <span className="text-xs font-medium text-primary">
                   {currentIndex + 1}
                 </span>
               </div>
-              <p className="text-lg font-mono text-center text-foreground/90 leading-relaxed px-4">
+              <p className="text-lg font-mono text-center text-foreground/90 leading-relaxed px-4 relative z-10">
                 {currentCard.back}
               </p>
             </div>
