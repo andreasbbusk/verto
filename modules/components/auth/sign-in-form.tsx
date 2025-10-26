@@ -7,16 +7,9 @@ import { loginSchema, type LoginFormData } from "@/modules/schemas/auth.schema";
 import { Button } from "@/modules/components/ui/button";
 import { Input } from "@/modules/components/ui/input";
 import { Label } from "@/modules/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/modules/components/ui/card";
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
 import { Separator } from "@/modules/components/ui/separator";
-import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
 
 interface SignInFormProps {
   onSwitchToSignUp?: () => void;
@@ -60,15 +53,15 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
   });
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-        <CardDescription>
+    <div className="w-full">
+      <div className="mb-8">
+        <h1 className="text-3xl font-light tracking-tight mb-2 text-zinc-950">Sign In</h1>
+        <p className="text-sm text-zinc-600">
           Enter your email and password to access your flashcards
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form
+        </p>
+      </div>
+
+      <form
           onSubmit={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -95,17 +88,23 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
           >
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
+                <Label htmlFor={field.name} className="text-xs uppercase tracking-wide text-zinc-500">
+                  Email
+                </Label>
                 <Input
                   id={field.name}
                   type="email"
                   placeholder="enter your email"
+                  autoComplete="email"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
                   disabled={loading}
+                  aria-required="true"
+                  aria-invalid={field.state.meta.errors.length > 0}
+                  aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
                   className={
-                    field.state.meta.errors.length > 0 ? "border-red-500" : ""
+                    field.state.meta.errors.length > 0 ? "border-red-500 bg-white text-zinc-950" : "bg-white text-zinc-950 border-zinc-300"
                   }
                 />
                 {field.state.meta.errors.length > 0 && (
@@ -130,36 +129,36 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
           >
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
+                <Label htmlFor={field.name} className="text-xs uppercase tracking-wide text-zinc-500">
+                  Password
+                </Label>
                 <div className="relative">
                   <Input
                     id={field.name}
                     type={showPassword ? "text" : "password"}
                     placeholder="enter your password"
+                    autoComplete="current-password"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
                     disabled={loading}
+                    aria-required="true"
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
                     className={
                       field.state.meta.errors.length > 0
-                        ? "border-red-500 pr-10"
-                        : "pr-10"
+                        ? "border-red-500 bg-white text-zinc-950"
+                        : "bg-white text-zinc-950 border-zinc-300"
                     }
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-950 transition-colors"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
+                    {showPassword ? "Hide password" : "Show password"}
+                  </button>
                 </div>
                 {field.state.meta.errors.length > 0 && (
                   <p className="text-sm text-red-500">
@@ -176,7 +175,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
             {([canSubmit, isSubmitting]) => (
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-zinc-950 text-white hover:bg-zinc-800"
                 disabled={!canSubmit || loading || isSubmitting}
               >
                 {loading || isSubmitting ? "Signing in..." : "Sign In"}
@@ -186,8 +185,8 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
         </form>
 
         <div className="my-6">
-          <Separator className="relative">
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+          <Separator className="relative bg-zinc-300">
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-stone-100 px-2 text-xs text-zinc-500">
               or continue with
             </span>
           </Separator>
@@ -196,7 +195,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
         <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full border-zinc-300 bg-white text-zinc-950 hover:bg-zinc-50 hover:text-zinc-950"
           onClick={handleGoogleSignIn}
           disabled={loading}
         >
@@ -222,19 +221,26 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
         </Button>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-zinc-600">
             Don&apos;t have an account?{" "}
-            <Button
-              variant="link"
-              className="p-0 h-auto font-normal"
-              onClick={onSwitchToSignUp}
-              disabled={loading}
-            >
-              Sign up here
-            </Button>
+            {onSwitchToSignUp ? (
+              <button
+                onClick={onSwitchToSignUp}
+                disabled={loading}
+                className="text-zinc-950 hover:underline underline-offset-4 font-medium"
+              >
+                Sign up here
+              </button>
+            ) : (
+              <Link
+                href="/signup"
+                className="text-zinc-950 hover:underline underline-offset-4 font-medium"
+              >
+                Sign up here
+              </Link>
+            )}
           </p>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
