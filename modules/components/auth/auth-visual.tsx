@@ -22,6 +22,7 @@ export function AuthVisual() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isPageVisible, setIsPageVisible] = useState(true);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const frontRef = useRef<HTMLDivElement>(null);
@@ -41,7 +42,7 @@ export function AuthVisual() {
 
     // Create flip timeline
     const tl = gsap.timeline();
-
+    
     if (shouldFlip) {
       // Flip front to back
       tl.to(card, {
@@ -50,16 +51,24 @@ export function AuthVisual() {
         ease: "power2.inOut",
         transformPerspective: 1500,
       })
-      .to(front, {
-        opacity: 0,
-        duration: 0.1,
-        ease: "none",
-      }, 0.3) // Fade out at 90° (mid-point)
-      .to(back, {
-        opacity: 1,
-        duration: 0.1,
-        ease: "none",
-      }, 0.4); // Fade in after 90°
+        .to(
+          front,
+          {
+            opacity: 0,
+            duration: 0.05,
+            ease: "none",
+          },
+          0.3
+        ) // Fade out at 90° (mid-point)
+        .to(
+          back,
+          {
+            opacity: 1,
+            duration: 0.05,
+            ease: "none",
+          },
+          0.4
+        ); // Fade in after 90°
     } else {
       // Flip back to front
       tl.to(card, {
@@ -68,16 +77,24 @@ export function AuthVisual() {
         ease: "power2.inOut",
         transformPerspective: 1500,
       })
-      .to(back, {
-        opacity: 0,
-        duration: 0.1,
-        ease: "none",
-      }, 0.3) // Fade out at 90° (mid-point)
-      .to(front, {
-        opacity: 1,
-        duration: 0.1,
-        ease: "none",
-      }, 0.4); // Fade in after 90°
+        .to(
+          back,
+          {
+            opacity: 0,
+            duration: 0.05,
+            ease: "none",
+          },
+          0.3
+        ) // Fade out at 90° (mid-point)
+        .to(
+          front,
+          {
+            opacity: 1,
+            duration: 0.05,
+            ease: "none",
+          },
+          0.4
+        ); // Fade in after 90°
     }
   };
 
@@ -86,10 +103,23 @@ export function AuthVisual() {
     performFlip(isFlipped);
   }, [isFlipped]);
 
+  // Listen for page visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   // Auto-flip and card change intervals
   useEffect(() => {
-    if (isPaused) {
-      // Clear intervals when paused
+    if (isPaused || !isPageVisible) {
+      // Clear intervals when paused or tab is hidden
       if (flipIntervalRef.current) clearInterval(flipIntervalRef.current);
       if (cardIntervalRef.current) clearInterval(cardIntervalRef.current);
       return;
@@ -105,18 +135,18 @@ export function AuthVisual() {
       setIsFlipped(false);
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % flashcards.length);
-      }, 300);
+      }, 400);
     }, 6000);
 
     return () => {
       if (flipIntervalRef.current) clearInterval(flipIntervalRef.current);
       if (cardIntervalRef.current) clearInterval(cardIntervalRef.current);
     };
-  }, [isPaused]);
+  }, [isPaused, isPageVisible]);
 
   // Add entrance animation for background cards
   useEffect(() => {
-    const backCards = document.querySelectorAll('.bg-stack-card');
+    const backCards = document.querySelectorAll(".bg-stack-card");
 
     gsap.fromTo(
       backCards,
@@ -165,13 +195,10 @@ export function AuthVisual() {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Gradient Glow Effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent blur-3xl" />
-
       {/* Card Stack Background Cards */}
       <div className="relative">
-        <div className="bg-stack-card absolute inset-0 bg-card border border-border rounded-xl transform translate-x-7 translate-y-7 shadow-3d-sm" />
-        <div className="bg-stack-card absolute inset-0 bg-card border border-border rounded-xl transform translate-x-3.5 translate-y-3.5 shadow-3d-sm" />
+        {/* <div className="bg-stack-card absolute inset-0 bg-card border border-border rounded-xl transform translate-x-7 translate-y-7 shadow-3d-sm" />
+        <div className="bg-stack-card absolute inset-0 bg-card border border-border rounded-xl transform translate-x-3.5 translate-y-3.5 shadow-3d-sm" /> */}
 
         {/* Main Animated Card */}
         <div className="perspective-2000 relative z-10">
@@ -199,9 +226,6 @@ export function AuthVisual() {
               <p className="text-2xl font-mono text-center text-foreground font-light px-4">
                 {currentCard.front}
               </p>
-              <div className="absolute bottom-8 text-sm text-muted-foreground">
-                Tap to reveal
-              </div>
             </div>
 
             {/* Back of Card */}

@@ -47,6 +47,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.12",
     "geist": "^1.5.1",
+    "gsap": "^3.13.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.544.0",
     "mongodb": "^6.20.0",
