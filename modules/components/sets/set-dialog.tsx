@@ -34,7 +34,7 @@ export function SetDialog({
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    difficulty: 3,
+    difficulty: 1,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -44,13 +44,13 @@ export function SetDialog({
       setFormData({
         name: set.name,
         description: set.description || "",
-        difficulty: set.difficulty || 3,
+        difficulty: set.difficulty || 1,
       });
     } else if (open && !set) {
       setFormData({
         name: "",
         description: "",
-        difficulty: 3,
+        difficulty: 1,
       });
     }
   }, [open, set]);
@@ -63,7 +63,7 @@ export function SetDialog({
         setFormData({
           name: "",
           description: "",
-          difficulty: 3,
+          difficulty: 1,
         });
         setErrors({});
       }, 200);
@@ -193,21 +193,21 @@ export function SetDialog({
               type="single"
               value={formData.difficulty.toString()}
               onValueChange={handleDifficultyChange}
-              className="justify-start gap-1"
+              className="justify-start gap-2"
             >
-              <ToggleGroupItem value="1" className="font-mono w-16">
+              <ToggleGroupItem value="1" className="font-mono w-16 border">
                 1
               </ToggleGroupItem>
-              <ToggleGroupItem value="2" className="font-mono w-16">
+              <ToggleGroupItem value="2" className="font-mono w-16 border">
                 2
               </ToggleGroupItem>
-              <ToggleGroupItem value="3" className="font-mono w-16">
+              <ToggleGroupItem value="3" className="font-mono w-16 border">
                 3
               </ToggleGroupItem>
-              <ToggleGroupItem value="4" className="font-mono w-16">
+              <ToggleGroupItem value="4" className="font-mono w-16 border">
                 4
               </ToggleGroupItem>
-              <ToggleGroupItem value="5" className="font-mono w-16">
+              <ToggleGroupItem value="5" className="font-mono w-16 border">
                 5
               </ToggleGroupItem>
             </ToggleGroup>
