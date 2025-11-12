@@ -27,11 +27,12 @@ interface PasswordCheck {
 
 export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleGoogleSignUp = async () => {
-    setLoading(true);
+    setGoogleLoading(true);
     setError("");
     try {
       const supabase = createClient();
@@ -44,11 +45,11 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
 
       if (error) {
         setError(error.message);
-        setLoading(false);
+        setGoogleLoading(false);
       }
     } catch (err) {
       setError("Failed to sign up with Google");
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
@@ -66,17 +67,17 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
         return;
       }
 
-      setLoading(true);
+      setEmailLoading(true);
       try {
         const result = await signUp(value.email, value.password, value.name);
         
         if (result?.error) {
           setError(result.error);
-          setLoading(false);
+          setEmailLoading(false);
         }
       } catch (err) {
         setError("Registration failed");
-        setLoading(false);
+        setEmailLoading(false);
       }
     },
   });
@@ -143,7 +144,7 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
-                disabled={loading}
+                disabled={emailLoading || googleLoading}
                 aria-required="true"
                 aria-invalid={field.state.meta.errors.length > 0}
                 aria-describedby={
@@ -193,7 +194,7 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
-                disabled={loading}
+                disabled={emailLoading || googleLoading}
                 aria-required="true"
                 aria-invalid={field.state.meta.errors.length > 0}
                 aria-describedby={
@@ -244,7 +245,7 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
-                  disabled={loading}
+                  disabled={emailLoading || googleLoading}
                   aria-required="true"
                   aria-invalid={field.state.meta.errors.length > 0}
                   aria-describedby={
@@ -261,7 +262,7 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
+                  disabled={emailLoading || googleLoading}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-950 transition-colors"
                 >
                   {showPassword ? "Hide password" : "Show password"}
@@ -311,9 +312,9 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
             <Button
               type="submit"
               className="w-full bg-zinc-950 text-white hover:bg-zinc-800"
-              disabled={!canSubmit || loading || isSubmitting}
+              disabled={!canSubmit || emailLoading || googleLoading || isSubmitting}
             >
-              {loading || isSubmitting
+              {emailLoading || isSubmitting
                 ? "Creating account..."
                 : "Create Account"}
             </Button>
@@ -334,7 +335,7 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
         variant="outline"
         className="w-full border-zinc-300 bg-white text-zinc-950 hover:bg-zinc-50 hover:text-zinc-950"
         onClick={handleGoogleSignUp}
-        disabled={loading}
+        disabled={emailLoading || googleLoading}
       >
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
           <path
@@ -354,7 +355,7 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
             fill="#EA4335"
           />
         </svg>
-        {loading ? "Signing up..." : "Sign up with Google"}
+        {googleLoading ? "Signing up..." : "Sign up with Google"}
       </Button>
 
       <div className="mt-6 text-center">
@@ -363,7 +364,7 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
           {onSwitchToSignIn ? (
             <button
               onClick={onSwitchToSignIn}
-              disabled={loading}
+              disabled={emailLoading || googleLoading}
               className="text-zinc-950 hover:underline underline-offset-4 font-medium"
             >
               Sign in here

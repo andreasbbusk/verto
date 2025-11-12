@@ -22,7 +22,7 @@ interface DashboardViewProps {
 
 export function DashboardView({ initialUser }: DashboardViewProps) {
   const { data: user } = useQuery({
-    queryKey: ["user"],
+    queryKey: ["user", initialUser.id],
     queryFn: getMe,
     initialData: initialUser,
   });

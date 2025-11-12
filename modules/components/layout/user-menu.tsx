@@ -22,7 +22,7 @@ export function UserMenu() {
 
   useEffect(() => {
     const supabase = createClient();
-    
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
     });
@@ -43,9 +43,10 @@ export function UserMenu() {
   const handleLogout = async () => {
     try {
       await signOut();
-      toast.success("Du er nu logget ud");
     } catch (error) {
-      toast.error("Fejl ved logout");
+      if (error instanceof Error && !error.message.includes("NEXT_REDIRECT")) {
+        toast.error("Fejl ved logout");
+      }
     }
   };
 
@@ -59,7 +60,9 @@ export function UserMenu() {
           <div className="flex items-center gap-3">
             <Avatar className="h-6 w-6">
               <div className="flex items-center justify-center w-full h-full bg-primary text-primary-foreground text-sm font-semibold rounded-full">
-                {user.user_metadata?.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
+                {user.user_metadata?.name?.charAt(0).toUpperCase() ||
+                  user.email?.charAt(0).toUpperCase() ||
+                  "U"}
               </div>
             </Avatar>
             <span className="text-sm font-medium text-foreground truncate">
