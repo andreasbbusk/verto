@@ -29,7 +29,7 @@ interface StudyInterfaceProps {
   flashcards: Flashcard[];
   setName: string;
   setDifficulty?: number; // Set-level difficulty (1-5)
-  setId: number;
+  setId: string;
   onFlashcardUpdate?: (flashcard: Flashcard) => void;
 }
 

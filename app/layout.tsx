@@ -1,8 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/modules/components/ui/sonner";
 import { AppLayout } from "@/modules/components/layout/app-layout";
-import { SessionProvider } from "next-auth/react";
-import { auth } from "@/modules/lib/auth-config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,17 +24,13 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-
   return (
     <html lang="da">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider session={session}>
-          <AppLayout>{children}</AppLayout>
-          <Toaster />
-        </SessionProvider>
+        <AppLayout>{children}</AppLayout>
+        <Toaster />
       </body>
     </html>
   );

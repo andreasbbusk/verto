@@ -1,72 +1,153 @@
-import { storage, generateId, STORAGE_KEYS } from "../mongo.storage";
-import type {
-  Flashcard,
-  CreateFlashcardDataInternal,
-  UpdateFlashcardData
-} from "@/modules/types";
+import { createClient } from "@/modules/lib/supabase/server";
+import type { Flashcard, CreateFlashcardDataInternal, UpdateFlashcardData } from "@/modules/types";
 
 export class FlashcardRepository {
   async getAll(): Promise<Flashcard[]> {
-    return await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS);
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("flashcards")
+      .select("*");
+
+    if (error) {
+      console.error("Error fetching flashcards:", error);
+      return [];
+    }
+
+    return data.map(this.mapToFlashcard);
   }
 
-  async getById(id: number): Promise<Flashcard | undefined> {
-    const flashcard = await storage.findOne<Flashcard>(STORAGE_KEYS.FLASHCARDS, { id });
-    return flashcard || undefined;
+  async getById(id: string): Promise<Flashcard | null> {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("flashcards")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching flashcard:", error);
+      return null;
+    }
+
+    return this.mapToFlashcard(data);
   }
 
-  async getBySetId(setId: number): Promise<Flashcard[]> {
-    return await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS, { setId });
+  async getBySetId(setId: string): Promise<Flashcard[]> {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("flashcards")
+      .select("*")
+      .eq("set_id", setId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching flashcards by set:", error);
+      return [];
+    }
+
+    return data.map(this.mapToFlashcard);
   }
 
-  async getByUserId(userId: number): Promise<Flashcard[]> {
-    return await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS, { userId });
+  async getByUserId(userId: string): Promise<Flashcard[]> {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("flashcards")
+      .select("*")
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error fetching user flashcards:", error);
+      return [];
+    }
+
+    return data.map(this.mapToFlashcard);
   }
 
   async create(data: CreateFlashcardDataInternal): Promise<Flashcard> {
-    const newFlashcard: Flashcard = {
-      id: await generateId("flashcard"),
-      setId: data.setId,
-      front: data.front.trim(),
-      back: data.back.trim(),
-      starred: data.starred || false,
-      userId: data.userId,
-      createdAt: new Date().toISOString(),
-      reviewCount: 0,
-    };
+    const supabase = await createClient();
+    
+    const { data: newFlashcard, error } = await supabase
+      .from("flashcards")
+      .insert({
+        set_id: data.setId,
+        user_id: data.userId,
+        front: data.front.trim(),
+        back: data.back.trim(),
+        starred: data.starred || false,
+        review_count: 0,
+      })
+      .select()
+      .single();
 
-    await storage.insertOne(STORAGE_KEYS.FLASHCARDS, newFlashcard);
-    return newFlashcard;
+    if (error) {
+      console.error("Error creating flashcard:", error);
+      throw new Error("Failed to create flashcard");
+    }
+
+    return this.mapToFlashcard(newFlashcard);
   }
 
-  async update(id: number, data: UpdateFlashcardData): Promise<Flashcard> {
-    const updateData: any = {
-      ...(data.front !== undefined && { front: data.front.trim() }),
-      ...(data.back !== undefined && { back: data.back.trim() }),
-      ...(data.starred !== undefined && { starred: data.starred }),
-      updatedAt: new Date().toISOString(),
-    };
+  async update(id: string, data: UpdateFlashcardData): Promise<Flashcard> {
+    const supabase = await createClient();
+    
+    const updateData: any = {};
+    
+    if (data.front !== undefined) updateData.front = data.front.trim();
+    if (data.back !== undefined) updateData.back = data.back.trim();
+    if (data.starred !== undefined) updateData.starred = data.starred;
 
-    const updatedFlashcard = await storage.updateOne<Flashcard>(
-      STORAGE_KEYS.FLASHCARDS,
-      { id },
-      { $set: updateData }
-    );
+    const { data: updatedFlashcard, error } = await supabase
+      .from("flashcards")
+      .update(updateData)
+      .eq("id", id)
+      .select()
+      .single();
 
-    if (!updatedFlashcard) {
+    if (error) {
+      console.error("Error updating flashcard:", error);
       throw new Error("Flashcard not found");
     }
 
-    return updatedFlashcard;
+    return this.mapToFlashcard(updatedFlashcard);
   }
 
-  async delete(id: number): Promise<Flashcard> {
+  async delete(id: string): Promise<Flashcard> {
+    const supabase = await createClient();
+    
     const flashcardToDelete = await this.getById(id);
     if (!flashcardToDelete) {
       throw new Error("Flashcard not found");
     }
 
-    await storage.deleteOne(STORAGE_KEYS.FLASHCARDS, { id });
+    const { error } = await supabase
+      .from("flashcards")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting flashcard:", error);
+      throw new Error("Failed to delete flashcard");
+    }
+
     return flashcardToDelete;
+  }
+
+  private mapToFlashcard(data: any): Flashcard {
+    return {
+      id: data.id,
+      setId: data.set_id,
+      userId: data.user_id,
+      front: data.front,
+      back: data.back,
+      starred: data.starred,
+      reviewCount: data.review_count,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      performance: data.performance,
+    };
   }
 }

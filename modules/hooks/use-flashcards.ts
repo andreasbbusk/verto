@@ -13,7 +13,7 @@ import type {
   UpdateFlashcardData,
 } from "@/modules/types";
 
-export function useFlashcardMutations(setId: number) {
+export function useFlashcardMutations(setId: string) {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
@@ -30,7 +30,7 @@ export function useFlashcardMutations(setId: number) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ cardId, data }: { cardId: number; data: UpdateFlashcardData }) =>
+    mutationFn: ({ cardId, data }: { cardId: string; data: UpdateFlashcardData }) =>
       updateFlashcard(setId, cardId, data),
     onSuccess: (_, variables) => {
       // Only show toast if it's not just a star toggle
@@ -45,7 +45,7 @@ export function useFlashcardMutations(setId: number) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (cardId: number) => deleteFlashcard(setId, cardId),
+    mutationFn: (cardId: string) => deleteFlashcard(setId, cardId),
     onSuccess: () => {
       toast.success("Flashcard deleted successfully");
       queryClient.invalidateQueries({ queryKey: ['sets', setId] });
@@ -77,7 +77,7 @@ export function useFlashcardMutations(setId: number) {
 
   return {
     create: createMutation.mutateAsync,
-    update: ({ cardId, data }: { cardId: number; data: UpdateFlashcardData }) =>
+    update: ({ cardId, data }: { cardId: string; data: UpdateFlashcardData }) =>
       updateMutation.mutateAsync({ cardId, data }),
     remove: deleteMutation.mutateAsync,
     createBulk: createBulkMutation.mutateAsync,

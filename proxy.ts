@@ -1,19 +1,59 @@
-import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get session token from cookies
-  const sessionToken = request.cookies.get("authjs.session-token") ||
-                       request.cookies.get("__Secure-authjs.session-token");
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
 
-  const isAuthenticated = !!sessionToken;
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
-  const protectedRoutes = ["/dashboard", "/sets", "/cards", "/study", "/calendar", "/settings"];
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  // Refresh the session if expired
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
+  const isAuthenticated = !!user;
+
+  // Define protected routes
+  const protectedRoutes = [
+    "/dashboard",
+    "/sets",
+    "/cards",
+    "/study",
+    "/calendar",
+    "/settings",
+  ];
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  // Define auth routes
   const authRoutes = ["/login", "/signup"];
-  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
   // Redirect unauthenticated users trying to access protected routes
   if (isProtectedRoute && !isAuthenticated) {
@@ -25,9 +65,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

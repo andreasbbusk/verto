@@ -1,29 +1,38 @@
 "use server";
 
-import { auth } from "@/modules/lib/auth-config";
-import { userRepository } from "@/modules/server/database";
+import { authenticateRequest } from "@/modules/server/auth-helpers";
+import { profileRepository } from "@/modules/server/database";
 import { serialize } from "@/modules/lib/serialization";
-import type { User } from "@/modules/types";
+import type { Profile, UpdateProfileData } from "@/modules/types";
 
 /**
  * Get the current authenticated user's profile
- * Returns user data without password field
  */
-export async function getMe(): Promise<Omit<User, "password">> {
-  const session = await auth();
+export async function getMe(): Promise<Profile> {
+  const authResult = await authenticateRequest();
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
+  if (!authResult.success) {
+    throw new Error(authResult.error);
   }
 
-  const user = await userRepository.getById(parseInt(session.user.id));
+  return serialize(authResult.user);
+}
 
-  if (!user) {
-    throw new Error("User not found");
+/**
+ * Update the current user's profile
+ */
+export async function updateProfile(data: UpdateProfileData): Promise<Profile> {
+  const authResult = await authenticateRequest();
+
+  if (!authResult.success) {
+    throw new Error(authResult.error);
   }
 
-  // Remove password from response
-  const { password, ...userWithoutPassword } = user;
+  const updatedProfile = await profileRepository.update(authResult.user.id, data);
 
-  return serialize(userWithoutPassword);
+  if (!updatedProfile) {
+    throw new Error("Failed to update profile");
+  }
+
+  return serialize(updatedProfile);
 }

@@ -2,7 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signUp } from "@/modules/actions/auth";
 import {
   registerSchema,
   type RegisterFormData,
@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/modules/components/ui/alert";
 import { Separator } from "@/modules/components/ui/separator";
 import { Check, X } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/modules/lib/supabase/client";
 
 interface SignUpFormProps {
   onSwitchToSignIn?: () => void;
@@ -31,7 +32,24 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
 
   const handleGoogleSignUp = async () => {
     setLoading(true);
-    await signIn("google", { callbackUrl: "/dashboard" });
+    setError("");
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      }
+    } catch (err) {
+      setError("Failed to sign up with Google");
+      setLoading(false);
+    }
   };
 
   const form = useForm({
@@ -50,25 +68,12 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
 
       setLoading(true);
       try {
-        const response = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(value),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setError(data.error || "Registration failed");
+        const result = await signUp(value.email, value.password, value.name);
+        
+        if (result?.error) {
+          setError(result.error);
           setLoading(false);
-          return;
         }
-
-        await signIn("credentials", {
-          email: value.email,
-          password: value.password,
-          callbackUrl: "/dashboard",
-        });
       } catch (err) {
         setError("Registration failed");
         setLoading(false);

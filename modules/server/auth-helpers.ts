@@ -1,21 +1,26 @@
-import { auth } from "@/modules/lib/auth-config";
-import { userRepository } from "./database";
-import type { User } from "@/modules/types";
+import { createClient } from "@/modules/lib/supabase/server";
+import { profileRepository } from "./database";
+import type { Profile } from "@/modules/types";
 
 export async function authenticateRequest(): Promise<
-  { success: true; user: User } | { success: false; error: string }
+  { success: true; user: Profile } | { success: false; error: string }
 > {
-  const session = await auth();
+  const supabase = await createClient();
+  
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session?.user?.id) {
+  if (error || !user) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const user = await userRepository.getById(parseInt(session.user.id));
+  const profile = await profileRepository.getById(user.id);
 
-  if (!user) {
-    return { success: false, error: "User not found" };
+  if (!profile) {
+    return { success: false, error: "User profile not found" };
   }
 
-  return { success: true, user };
+  return { success: true, user: profile };
 }

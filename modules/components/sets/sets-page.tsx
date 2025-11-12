@@ -56,7 +56,7 @@ interface SetsTableProps {
 function SetsTable({ sets, onEdit, onDelete }: SetsTableProps) {
   const router = useRouter();
 
-  const handleRowClick = (setId: number) => {
+  const handleRowClick = (setId: string) => {
     router.push(`/sets/${setId}`);
   };
 

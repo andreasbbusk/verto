@@ -3,10 +3,10 @@ import { persist } from "zustand/middleware";
 
 interface CardOrderStore {
   // Map of setId to array of card IDs in desired order
-  cardOrders: Record<number, number[]>;
-  setCardOrder: (setId: number, cardIds: number[]) => void;
-  getCardOrder: (setId: number) => number[] | undefined;
-  clearCardOrder: (setId: number) => void;
+  cardOrders: Record<string, string[]>;
+  setCardOrder: (setId: string, cardIds: string[]) => void;
+  getCardOrder: (setId: string) => string[] | undefined;
+  clearCardOrder: (setId: string) => void;
 }
 
 export const useCardOrderStore = create<CardOrderStore>()(

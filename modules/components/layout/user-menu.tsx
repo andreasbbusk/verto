@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { signOut } from "@/modules/actions/auth";
+import { createClient } from "@/modules/lib/supabase/client";
 import { Button } from "@/modules/components/ui/button";
 import { Avatar } from "@/modules/components/ui/avatar";
 import {
@@ -12,18 +14,35 @@ import {
 } from "@/modules/components/ui/popover";
 import { Settings, LogOut, EllipsisVertical } from "lucide-react";
 import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 
 export function UserMenu() {
-  const { data: session } = useSession();
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
 
-  if (!session?.user) {
+  useEffect(() => {
+    const supabase = createClient();
+    
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (!user) {
     return null;
   }
 
   const handleLogout = async () => {
     try {
-      await signOut({ callbackUrl: "/" });
+      await signOut();
       toast.success("Du er nu logget ud");
     } catch (error) {
       toast.error("Fejl ved logout");
@@ -40,11 +59,11 @@ export function UserMenu() {
           <div className="flex items-center gap-3">
             <Avatar className="h-6 w-6">
               <div className="flex items-center justify-center w-full h-full bg-primary text-primary-foreground text-sm font-semibold rounded-full">
-                {session.user.name?.charAt(0).toUpperCase() || "U"}
+                {user.user_metadata?.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
               </div>
             </Avatar>
             <span className="text-sm font-medium text-foreground truncate">
-              {session.user.name}
+              {user.user_metadata?.name || user.email}
             </span>
           </div>
           <div>

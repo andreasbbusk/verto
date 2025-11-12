@@ -9,9 +9,8 @@ interface StudyPageProps {
 
 export default async function StudyPage({ params }: StudyPageProps) {
   const { id } = await params;
-  const setId = parseInt(id, 10);
 
-  if (!setId || isNaN(setId)) {
+  if (!id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -34,7 +33,7 @@ export default async function StudyPage({ params }: StudyPageProps) {
   }
 
   try {
-    const set = await getSetById(setId);
+    const set = await getSetById(id);
     return <StudyView initialSet={set} />;
   } catch (error) {
     return (

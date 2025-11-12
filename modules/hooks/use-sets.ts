@@ -9,23 +9,20 @@ import {
 } from "@/modules/actions/sets";
 import type { FlashcardSet, UpdateSetData } from "@/modules/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
 const queryKeys = {
   sets: ["sets"] as const,
-  setById: (id: number) => ["sets", id] as const,
+  setById: (id: string) => ["sets", id] as const,
 };
 
 export function useSets(initialSets?: FlashcardSet[]) {
-  const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: queryKeys.sets,
     queryFn: getSets,
     initialData: initialSets,
-    enabled: !!session?.user,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes to prevent duplicate fetches
   });
 
@@ -45,7 +42,7 @@ export function useSets(initialSets?: FlashcardSet[]) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateSetData }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateSetData }) =>
       updateSet(id, data),
     onSuccess: (updatedSet, variables) => {
       queryClient.setQueryData<FlashcardSet[]>(
@@ -84,21 +81,20 @@ export function useSets(initialSets?: FlashcardSet[]) {
     error: query.error?.message || null,
     refresh: () => queryClient.invalidateQueries({ queryKey: queryKeys.sets }),
     create: createMutation.mutateAsync,
-    update: ({ id, data }: { id: number; data: UpdateSetData }) =>
+    update: ({ id, data }: { id: string; data: UpdateSetData }) =>
       updateMutation.mutateAsync({ id, data }),
     remove: deleteMutation.mutateAsync,
   };
 }
 
-export function useSetById(id: number, initialSet?: FlashcardSet) {
-  const { data: session } = useSession();
+export function useSetById(id: string, initialSet?: FlashcardSet) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: queryKeys.setById(id),
     queryFn: () => getSetById(id),
     initialData: initialSet,
-    enabled: !!session?.user && !!id,
+    enabled: !!id,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes to prevent duplicate fetches
   });
 

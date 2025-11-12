@@ -1,11 +1,15 @@
 "use server";
 
 import { authenticateRequest } from "@/modules/server/auth-helpers";
-import { setRepository, initializeData } from "@/modules/server/database";
+import { setRepository } from "@/modules/server/database";
 import { createSetSchema, updateSetSchema } from "@/modules/schemas/set.schema";
 import { revalidatePath } from "next/cache";
 import { serialize } from "@/modules/lib/serialization";
-import type { CreateSetData, UpdateSetData, FlashcardSet } from "@/modules/types";
+import type {
+  CreateSetData,
+  UpdateSetData,
+  FlashcardSet,
+} from "@/modules/types";
 
 /**
  * Get all sets for the authenticated user
@@ -16,7 +20,6 @@ export async function getSets(): Promise<FlashcardSet[]> {
     throw new Error(authResult.error);
   }
 
-  await initializeData();
   const sets = await setRepository.getByUserId(authResult.user.id);
 
   return serialize(sets);
@@ -25,17 +28,16 @@ export async function getSets(): Promise<FlashcardSet[]> {
 /**
  * Get a single set by ID with all flashcards
  */
-export async function getSetById(id: number): Promise<FlashcardSet> {
+export async function getSetById(id: string): Promise<FlashcardSet> {
   const authResult = await authenticateRequest();
   if (!authResult.success) {
     throw new Error(authResult.error);
   }
 
-  if (!id || isNaN(id)) {
+  if (!id) {
     throw new Error("Invalid set ID");
   }
 
-  await initializeData();
   const set = await setRepository.getByIdWithFlashcards(id);
 
   if (!set) {
@@ -64,8 +66,6 @@ export async function createSet(data: CreateSetData): Promise<FlashcardSet> {
     throw new Error(validation.error.issues[0].message);
   }
 
-  await initializeData();
-
   try {
     const newSet = await setRepository.create({
       ...validation.data,
@@ -87,7 +87,7 @@ export async function createSet(data: CreateSetData): Promise<FlashcardSet> {
  * Update an existing flashcard set
  */
 export async function updateSet(
-  id: number,
+  id: string,
   data: UpdateSetData
 ): Promise<FlashcardSet> {
   const authResult = await authenticateRequest();
@@ -95,7 +95,7 @@ export async function updateSet(
     throw new Error(authResult.error);
   }
 
-  if (!id || isNaN(id)) {
+  if (!id) {
     throw new Error("Invalid set ID");
   }
 
@@ -103,8 +103,6 @@ export async function updateSet(
   if (!validation.success) {
     throw new Error(validation.error.issues[0].message);
   }
-
-  await initializeData();
 
   // Check if set exists and user owns it
   const existingSet = await setRepository.getById(id);
@@ -129,17 +127,15 @@ export async function updateSet(
 /**
  * Delete a flashcard set and all its flashcards
  */
-export async function deleteSet(id: number): Promise<FlashcardSet> {
+export async function deleteSet(id: string): Promise<FlashcardSet> {
   const authResult = await authenticateRequest();
   if (!authResult.success) {
     throw new Error(authResult.error);
   }
 
-  if (!id || isNaN(id)) {
+  if (!id) {
     throw new Error("Invalid set ID");
   }
-
-  await initializeData();
 
   // Check if set exists and user owns it
   const existingSet = await setRepository.getById(id);

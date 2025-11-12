@@ -4,7 +4,6 @@ import { authenticateRequest } from "@/modules/server/auth-helpers";
 import {
   flashcardRepository,
   setRepository,
-  initializeData,
 } from "@/modules/server/database";
 import {
   createFlashcardSchema,
@@ -37,7 +36,7 @@ const bulkFlashcardSchema = z.object({
  * Create a new flashcard in a set
  */
 export async function createFlashcard(
-  setId: number,
+  setId: string,
   data: Omit<CreateFlashcardData, "setId">
 ): Promise<Flashcard> {
   const authResult = await authenticateRequest();
@@ -45,11 +44,9 @@ export async function createFlashcard(
     throw new Error(authResult.error);
   }
 
-  if (!setId || isNaN(setId)) {
+  if (!setId) {
     throw new Error("Invalid set ID");
   }
-
-  await initializeData();
 
   // Check if set exists and user owns it
   const set = await setRepository.getById(setId);
@@ -82,8 +79,8 @@ export async function createFlashcard(
  * Update an existing flashcard
  */
 export async function updateFlashcard(
-  setId: number,
-  cardId: number,
+  setId: string,
+  cardId: string,
   data: UpdateFlashcardData
 ): Promise<Flashcard> {
   const authResult = await authenticateRequest();
@@ -91,7 +88,7 @@ export async function updateFlashcard(
     throw new Error(authResult.error);
   }
 
-  if (!setId || isNaN(setId) || !cardId || isNaN(cardId)) {
+  if (!setId || !cardId) {
     throw new Error("Invalid ID");
   }
 
@@ -99,8 +96,6 @@ export async function updateFlashcard(
   if (!validation.success) {
     throw new Error(validation.error.issues[0].message);
   }
-
-  await initializeData();
 
   // Check if flashcard exists and user owns it
   const existingCard = await flashcardRepository.getById(cardId);
@@ -134,19 +129,17 @@ export async function updateFlashcard(
  * Delete a flashcard
  */
 export async function deleteFlashcard(
-  setId: number,
-  cardId: number
+  setId: string,
+  cardId: string
 ): Promise<Flashcard> {
   const authResult = await authenticateRequest();
   if (!authResult.success) {
     throw new Error(authResult.error);
   }
 
-  if (!setId || isNaN(setId) || !cardId || isNaN(cardId)) {
+  if (!setId || !cardId) {
     throw new Error("Invalid ID");
   }
-
-  await initializeData();
 
   // Check if flashcard exists and user owns it
   const existingCard = await flashcardRepository.getById(cardId);
@@ -177,7 +170,7 @@ export async function deleteFlashcard(
  * Create multiple flashcards in a set at once
  */
 export async function createFlashcardsBulk(
-  setId: number,
+  setId: string,
   flashcards: Omit<CreateFlashcardData, "setId">[]
 ): Promise<BulkCreateResult> {
   const authResult = await authenticateRequest();
@@ -185,11 +178,9 @@ export async function createFlashcardsBulk(
     throw new Error(authResult.error);
   }
 
-  if (!setId || isNaN(setId)) {
+  if (!setId) {
     throw new Error("Invalid set ID");
   }
-
-  await initializeData();
 
   // Check if set exists and user owns it
   const set = await setRepository.getById(setId);
