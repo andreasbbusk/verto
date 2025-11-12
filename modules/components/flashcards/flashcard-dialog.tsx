@@ -59,7 +59,7 @@ export function FlashcardDialog({
   const jsonParsedCards = jsonParsedResult.cards;
   const jsonParseError = jsonParsedResult.error;
 
-  const handleSelectSet = (setId: number) => {
+  const handleSelectSet = (setId: string) => {
     router.push(`/sets/${setId}?createCard=true`);
     onOpenChange(false);
   };

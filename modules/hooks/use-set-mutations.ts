@@ -9,7 +9,7 @@ import { toast } from "sonner";
  * Hook for set-level mutations (update, delete)
  * Used when working with a specific set (e.g., in SetDetailView)
  */
-export function useSetMutations(setId: number) {
+export function useSetMutations(setId: string) {
   const queryClient = useQueryClient();
 
   const updateMutation = useMutation({

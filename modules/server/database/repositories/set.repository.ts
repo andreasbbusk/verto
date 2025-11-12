@@ -1,37 +1,98 @@
-import { generateId, storage, STORAGE_KEYS } from "../mongo.storage";
-import type { FlashcardSet, CreateSetDataInternal, UpdateSetData, Flashcard } from "@/modules/types";
+import { createClient } from "@/modules/lib/supabase/server";
+import type { FlashcardSet, CreateSetDataInternal, UpdateSetData } from "@/modules/types";
 
 export class SetRepository {
   async getAll(): Promise<FlashcardSet[]> {
-    return await storage.find<FlashcardSet>(STORAGE_KEYS.SETS);
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("sets")
+      .select("*");
+
+    if (error) {
+      console.error("Error fetching sets:", error);
+      return [];
+    }
+
+    return data.map(this.mapToSet);
   }
 
-  async getById(id: number): Promise<FlashcardSet | undefined> {
-    const set = await storage.findOne<FlashcardSet>(STORAGE_KEYS.SETS, { id });
-    return set || undefined;
+  async getById(id: string): Promise<FlashcardSet | null> {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("sets")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching set:", error);
+      return null;
+    }
+
+    return this.mapToSet(data);
   }
 
-  async getByIdWithFlashcards(id: number): Promise<FlashcardSet | undefined> {
-    const set = await this.getById(id);
-    if (!set) return undefined;
+  async getByIdWithFlashcards(id: string): Promise<FlashcardSet | null> {
+    const supabase = await createClient();
+    
+    const { data: setData, error: setError } = await supabase
+      .from("sets")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-    const flashcards = await storage.find<Flashcard>(STORAGE_KEYS.FLASHCARDS, { setId: id });
+    if (setError) {
+      console.error("Error fetching set:", setError);
+      return null;
+    }
+
+    const { data: flashcardsData, error: flashcardsError } = await supabase
+      .from("flashcards")
+      .select("*")
+      .eq("set_id", id)
+      .order("created_at", { ascending: true });
+
+    if (flashcardsError) {
+      console.error("Error fetching flashcards:", flashcardsError);
+    }
+
+    const flashcards = (flashcardsData || []).map(this.mapToFlashcard);
 
     return {
-      ...set,
+      ...this.mapToSet(setData),
       flashcards,
       cardCount: flashcards.length,
     };
   }
 
-  async getByUserId(userId: number): Promise<FlashcardSet[]> {
-    const sets = await storage.find<FlashcardSet>(STORAGE_KEYS.SETS, { userId });
+  async getByUserId(userId: string): Promise<FlashcardSet[]> {
+    const supabase = await createClient();
+    
+    const { data: setsData, error: setsError } = await supabase
+      .from("sets")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-    // Add card counts
+    if (setsError) {
+      console.error("Error fetching user sets:", setsError);
+      return [];
+    }
+
+    // Get card counts for each set
     const setsWithCounts = await Promise.all(
-      sets.map(async (set) => {
-        const cardCount = await storage.count(STORAGE_KEYS.FLASHCARDS, { setId: set.id });
-        return { ...set, cardCount };
+      setsData.map(async (setData) => {
+        const { count, error } = await supabase
+          .from("flashcards")
+          .select("*", { count: "exact", head: true })
+          .eq("set_id", setData.id);
+
+        return {
+          ...this.mapToSet(setData),
+          cardCount: error ? 0 : (count || 0),
+        };
       })
     );
 
@@ -39,64 +100,122 @@ export class SetRepository {
   }
 
   async create(data: CreateSetDataInternal): Promise<FlashcardSet> {
-    const existingSets = await storage.find<FlashcardSet>(STORAGE_KEYS.SETS, {
-      userId: data.userId,
-      name: new RegExp(`^${data.name.trim()}$`, 'i')
-    });
+    const supabase = await createClient();
 
-    if (existingSets.length > 0) {
+    // Check if set with same name exists for this user
+    const { data: existingSets, error: checkError } = await supabase
+      .from("sets")
+      .select("id")
+      .eq("user_id", data.userId)
+      .ilike("name", data.name.trim());
+
+    if (checkError) {
+      console.error("Error checking existing sets:", checkError);
+      throw new Error("Failed to check existing sets");
+    }
+
+    if (existingSets && existingSets.length > 0) {
       throw new Error("Set already exists");
     }
 
-    const newSet: FlashcardSet = {
-      id: await generateId("set"),
-      name: data.name.trim(),
-      description: data.description?.trim() || "",
-      difficulty: data.difficulty || 3,
-      starred: data.starred || false,
-      userId: data.userId,
-      createdAt: new Date().toISOString(),
-    };
+    const { data: newSet, error } = await supabase
+      .from("sets")
+      .insert({
+        user_id: data.userId,
+        name: data.name.trim(),
+        description: data.description?.trim() || "",
+        difficulty: data.difficulty || 3,
+        starred: data.starred || false,
+      })
+      .select()
+      .single();
 
-    await storage.insertOne(STORAGE_KEYS.SETS, newSet);
-    return { ...newSet, cardCount: 0 };
+    if (error) {
+      console.error("Error creating set:", error);
+      throw new Error("Failed to create set");
+    }
+
+    return { ...this.mapToSet(newSet), cardCount: 0 };
   }
 
-  async update(id: number, data: UpdateSetData): Promise<FlashcardSet> {
-    const updateData: any = {
-      ...(data.name && { name: data.name.trim() }),
-      ...(data.description !== undefined && { description: data.description.trim() }),
-      ...(data.difficulty !== undefined && { difficulty: data.difficulty }),
-      ...(data.starred !== undefined && { starred: data.starred }),
-      updatedAt: new Date().toISOString(),
-    };
+  async update(id: string, data: UpdateSetData): Promise<FlashcardSet> {
+    const supabase = await createClient();
+    
+    const updateData: any = {};
+    
+    if (data.name !== undefined) updateData.name = data.name.trim();
+    if (data.description !== undefined) updateData.description = data.description.trim();
+    if (data.difficulty !== undefined) updateData.difficulty = data.difficulty;
+    if (data.starred !== undefined) updateData.starred = data.starred;
 
-    const updatedSet = await storage.updateOne<FlashcardSet>(
-      STORAGE_KEYS.SETS,
-      { id },
-      { $set: updateData }
-    );
+    const { data: updatedSet, error } = await supabase
+      .from("sets")
+      .update(updateData)
+      .eq("id", id)
+      .select()
+      .single();
 
-    if (!updatedSet) {
+    if (error) {
+      console.error("Error updating set:", error);
       throw new Error("Set not found");
     }
 
-    const cardCount = await storage.count(STORAGE_KEYS.FLASHCARDS, { setId: id });
-    return { ...updatedSet, cardCount };
+    // Get card count
+    const { count } = await supabase
+      .from("flashcards")
+      .select("*", { count: "exact", head: true })
+      .eq("set_id", id);
+
+    return { ...this.mapToSet(updatedSet), cardCount: count || 0 };
   }
 
-  async delete(id: number): Promise<FlashcardSet> {
+  async delete(id: string): Promise<FlashcardSet> {
+    const supabase = await createClient();
+    
     const setToDelete = await this.getById(id);
     if (!setToDelete) {
       throw new Error("Set not found");
     }
 
-    // Delete all flashcards in this set (cascade delete)
-    await storage.deleteMany(STORAGE_KEYS.FLASHCARDS, { setId: id });
+    // Flashcards will be automatically deleted due to cascade delete in database
+    const { error } = await supabase
+      .from("sets")
+      .delete()
+      .eq("id", id);
 
-    // Delete the set
-    await storage.deleteOne(STORAGE_KEYS.SETS, { id });
+    if (error) {
+      console.error("Error deleting set:", error);
+      throw new Error("Failed to delete set");
+    }
 
     return setToDelete;
+  }
+
+  private mapToSet(data: any): FlashcardSet {
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || "",
+      difficulty: data.difficulty,
+      starred: data.starred,
+      userId: data.user_id,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  }
+
+  private mapToFlashcard(data: any): any {
+    return {
+      id: data.id,
+      setId: data.set_id,
+      userId: data.user_id,
+      front: data.front,
+      back: data.back,
+      starred: data.starred,
+      reviewCount: data.review_count,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      performance: data.performance,
+    };
   }
 }

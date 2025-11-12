@@ -7,7 +7,7 @@ interface SetDetailPageProps {
 
 export default async function SetDetailPage({ params }: SetDetailPageProps) {
   const { id } = await params;
-  const set = await getSetById(parseInt(id, 10));
+  const set = await getSetById(id);
 
   return <SetDetailView initialSet={set} />;
 }

@@ -6,9 +6,8 @@ const sanitizeString = (str: string) =>
 
 export const createFlashcardSchema = z.object({
   setId: z
-    .number()
-    .int()
-    .positive('Set ID must be a positive number'),
+    .string()
+    .uuid('Set ID must be a valid UUID'),
   front: z
     .string()
     .min(1, 'Front content is required')

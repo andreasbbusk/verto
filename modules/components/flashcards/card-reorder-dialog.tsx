@@ -34,7 +34,7 @@ interface CardReorderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   flashcards: Flashcard[];
-  setId: number;
+  setId: string;
 }
 
 export function CardReorderDialog({

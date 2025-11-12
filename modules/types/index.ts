@@ -1,11 +1,11 @@
 // Core domain types
 export interface Flashcard {
-    id: number;
-    setId: number;
+    id: string;
+    setId: string;
     front: string;
     back: string;
     starred: boolean;
-    userId: number;
+    userId: string;
     createdAt: string;
     updatedAt?: string;
     reviewCount: number;
@@ -16,34 +16,51 @@ export interface CardPerformance {
     easeFactor: number;
     interval: number;
     repetitions: number;
-    nextReview: Date;
-    lastReviewed: Date;
+    nextReview: string;
+    lastReviewed: string;
     difficulty?: number;
     correctStreak?: number;
     totalReviews?: number;
   }
   
   export interface FlashcardSet {
-    id: number;
+    id: string;
     name: string;
     description: string;
     difficulty: number; // 1-5 scale (1=very easy, 5=very hard)
     starred: boolean;
-    userId: number;
+    userId: string;
     createdAt: string;
     updatedAt?: string;
     cardCount?: number; // Optional, computed on-the-fly
     flashcards?: Flashcard[]; // Optional, populated when fetching details
   }
   
-  export interface User {
-    id: number;
+  // Profile represents the extended user data in profiles table
+  export interface Profile {
+    id: string;
     email: string;
     name: string;
-    password: string;
-    createdAt: Date;
-    lastLogin: Date;
-    updatedAt?: Date;
+    createdAt: string;
+    lastLogin: string;
+    updatedAt?: string;
+    studyGoal: number;
+    theme: "system" | "light" | "dark";
+    notifications: boolean;
+    totalStudySessions: number;
+    currentStreak: number;
+    longestStreak: number;
+    totalCardsStudied: number;
+  }
+
+  // Legacy User type - deprecated, use Profile instead
+  export interface User {
+    id: string;
+    email: string;
+    name: string;
+    createdAt: string;
+    lastLogin: string;
+    updatedAt?: string;
     preferences: UserPreferences;
     stats: UserStats;
   }
@@ -63,7 +80,7 @@ export interface CardPerformance {
   
   // API Data Transfer Objects
   export interface CreateFlashcardData {
-    setId: number;
+    setId: string;
     front: string;
     back: string;
     starred?: boolean;
@@ -71,12 +88,12 @@ export interface CardPerformance {
 
   // Internal data type for server operations
   export interface CreateFlashcardDataInternal extends CreateFlashcardData {
-    userId: number;
+    userId: string;
   }
 
   // Bulk flashcard creation
   export interface BulkCreateFlashcardData {
-    setId: number;
+    setId: string;
     flashcards: Array<Omit<CreateFlashcardData, 'setId'>>;
   }
 
@@ -113,7 +130,7 @@ export interface CardPerformance {
 
   // Internal data type for server operations
   export interface CreateSetDataInternal extends CreateSetData {
-    userId: number;
+    userId: string;
   }
 
   export interface UpdateSetData {
@@ -123,12 +140,32 @@ export interface CardPerformance {
     starred?: boolean;
   }
   
+  export interface CreateProfileData {
+    email: string;
+    name: string;
+    studyGoal?: number;
+    theme?: "system" | "light" | "dark";
+    notifications?: boolean;
+  }
+  
+  export interface UpdateProfileData {
+    name?: string;
+    studyGoal?: number;
+    theme?: "system" | "light" | "dark";
+    notifications?: boolean;
+    totalStudySessions?: number;
+    currentStreak?: number;
+    longestStreak?: number;
+    totalCardsStudied?: number;
+    lastLogin?: string;
+  }
+  
+  // Legacy types for backwards compatibility
   export interface CreateUserData {
     email: string;
     name: string;
-    password: string;
-    createdAt?: Date;
-    lastLogin?: Date;
+    createdAt?: string;
+    lastLogin?: string;
     preferences?: Partial<UserPreferences>;
     stats?: Partial<UserStats>;
   }
@@ -137,17 +174,8 @@ export interface CardPerformance {
     name?: string;
     preferences?: Partial<UserPreferences>;
     stats?: Partial<UserStats>;
-    lastLogin?: Date;
+    lastLogin?: string;
   }
-  
-  // Auth types
-  export interface TokenPayload {
-    userId: number;
-    iat?: number;
-    exp?: number;
-  }
-  
-  export type SanitizedUser = Omit<User, "password">;
   
   // API Response types
   export interface ApiResponse<T> {
@@ -157,13 +185,5 @@ export interface CardPerformance {
   }
   
   export interface AuthResponse {
-    user: SanitizedUser;
-    token: string;
-  }
-  
-  // Internal storage types
-  export interface Counters {
-    flashcardId: number;
-    setId: number;
-    userId: number;
+    user: Profile;
   }

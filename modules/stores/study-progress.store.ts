@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface StudyProgress {
-  [setId: number]: {
+  [setId: string]: {
     currentIndex: number;
     lastStudied: string; // ISO date string
     totalCards: number;
@@ -11,9 +11,9 @@ interface StudyProgress {
 
 interface StudyProgressStore {
   progress: StudyProgress;
-  getProgress: (setId: number) => number | null;
-  saveProgress: (setId: number, currentIndex: number, totalCards: number) => void;
-  clearProgress: (setId: number) => void;
+  getProgress: (setId: string) => number | null;
+  saveProgress: (setId: string, currentIndex: number, totalCards: number) => void;
+  clearProgress: (setId: string) => void;
 }
 
 export const useStudyProgressStore = create<StudyProgressStore>()(
@@ -21,7 +21,7 @@ export const useStudyProgressStore = create<StudyProgressStore>()(
     (set, get) => ({
       progress: {},
 
-      getProgress: (setId: number) => {
+      getProgress: (setId: string) => {
         const { progress } = get();
         const setProgress = progress[setId];
 
@@ -33,7 +33,7 @@ export const useStudyProgressStore = create<StudyProgressStore>()(
         return setProgress.currentIndex;
       },
 
-      saveProgress: (setId: number, currentIndex: number, totalCards: number) => {
+      saveProgress: (setId: string, currentIndex: number, totalCards: number) => {
         set((state) => ({
           progress: {
             ...state.progress,
@@ -46,7 +46,7 @@ export const useStudyProgressStore = create<StudyProgressStore>()(
         }));
       },
 
-      clearProgress: (setId: number) => {
+      clearProgress: (setId: string) => {
         set((state) => {
           const newProgress = { ...state.progress };
           delete newProgress[setId];

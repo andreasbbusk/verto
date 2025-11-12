@@ -2,7 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn } from "@/modules/actions/auth";
 import { loginSchema, type LoginFormData } from "@/modules/schemas/auth.schema";
 import { Button } from "@/modules/components/ui/button";
 import { Input } from "@/modules/components/ui/input";
@@ -10,6 +10,7 @@ import { Label } from "@/modules/components/ui/label";
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
 import { Separator } from "@/modules/components/ui/separator";
 import Link from "next/link";
+import { createClient } from "@/modules/lib/supabase/client";
 
 interface SignInFormProps {
   onSwitchToSignUp?: () => void;
@@ -22,7 +23,24 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    await signIn("google", { callbackUrl: "/dashboard" });
+    setError("");
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      }
+    } catch (err) {
+      setError("Failed to sign in with Google");
+      setLoading(false);
+    }
   };
 
   const form = useForm({
@@ -39,13 +57,14 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
       }
 
       setLoading(true);
-      const result = await signIn("credentials", {
-        email: value.email,
-        password: value.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
+      try {
+        const result = await signIn(value.email, value.password);
+        
+        if (result?.error) {
+          setError(result.error);
+          setLoading(false);
+        }
+      } catch (err) {
         setError("Invalid email or password");
         setLoading(false);
       }

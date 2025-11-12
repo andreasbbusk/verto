@@ -1,18 +1,16 @@
 import { FlashcardRepository } from "./repositories/flashcard.repository";
-import { UserRepository } from "./repositories/user.repository";
+import { ProfileRepository } from "./repositories/profile.repository";
 import { SetRepository } from "./repositories/set.repository";
-import { initializeData as initializeMongoDB } from "./mongo.storage";
 
 // Repository instances
 export const flashcardRepository = new FlashcardRepository();
-export const userRepository = new UserRepository();
+export const profileRepository = new ProfileRepository();
 export const setRepository = new SetRepository();
 
-// Initialize MongoDB database with indexes and setup
-export const initializeData = initializeMongoDB;
+// Legacy alias for backwards compatibility
+export const userRepository = profileRepository;
 
-// Re-export types and utilities
-export * from "./mongo.storage";
+// Re-export repositories
 export * from "./repositories/flashcard.repository";
-export * from "./repositories/user.repository";
+export * from "./repositories/profile.repository";
 export * from "./repositories/set.repository";
