@@ -18,11 +18,12 @@ interface SignInFormProps {
 
 export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
+    setGoogleLoading(true);
     setError("");
     try {
       const supabase = createClient();
@@ -35,11 +36,11 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
 
       if (error) {
         setError(error.message);
-        setLoading(false);
+        setGoogleLoading(false);
       }
     } catch (err) {
       setError("Failed to sign in with Google");
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
@@ -56,17 +57,17 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
         return;
       }
 
-      setLoading(true);
+      setEmailLoading(true);
       try {
         const result = await signIn(value.email, value.password);
         
         if (result?.error) {
           setError(result.error);
-          setLoading(false);
+          setEmailLoading(false);
         }
       } catch (err) {
         setError("Invalid email or password");
-        setLoading(false);
+        setEmailLoading(false);
       }
     },
   });
@@ -110,22 +111,22 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
                 <Label htmlFor={field.name} className="text-xs uppercase tracking-wide text-zinc-500">
                   Email
                 </Label>
-                <Input
-                  id={field.name}
-                  type="email"
-                  placeholder="enter your email"
-                  autoComplete="email"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  disabled={loading}
-                  aria-required="true"
-                  aria-invalid={field.state.meta.errors.length > 0}
-                  aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
-                  className={
-                    field.state.meta.errors.length > 0 ? "border-red-500 bg-white text-zinc-950" : "bg-white text-zinc-950 border-zinc-300"
-                  }
-                />
+                  <Input
+                    id={field.name}
+                    type="email"
+                    placeholder="enter your email"
+                    autoComplete="email"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    disabled={emailLoading || googleLoading}
+                    aria-required="true"
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
+                    className={
+                      field.state.meta.errors.length > 0 ? "border-red-500 bg-white text-zinc-950" : "bg-white text-zinc-950 border-zinc-300"
+                    }
+                  />
                 {field.state.meta.errors.length > 0 && (
                   <p className="text-sm text-red-500">
                     {field.state.meta.errors[0]}
@@ -160,7 +161,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
-                    disabled={loading}
+                    disabled={emailLoading || googleLoading}
                     aria-required="true"
                     aria-invalid={field.state.meta.errors.length > 0}
                     aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
@@ -173,7 +174,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
+                    disabled={emailLoading || googleLoading}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-950 transition-colors"
                   >
                     {showPassword ? "Hide password" : "Show password"}
@@ -195,9 +196,9 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
               <Button
                 type="submit"
                 className="w-full bg-zinc-950 text-white hover:bg-zinc-800"
-                disabled={!canSubmit || loading || isSubmitting}
+                disabled={!canSubmit || emailLoading || googleLoading || isSubmitting}
               >
-                {loading || isSubmitting ? "Signing in..." : "Sign In"}
+                {emailLoading || isSubmitting ? "Signing in..." : "Sign In"}
               </Button>
             )}
           </form.Subscribe>
@@ -216,7 +217,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
           variant="outline"
           className="w-full border-zinc-300 bg-white text-zinc-950 hover:bg-zinc-50 hover:text-zinc-950"
           onClick={handleGoogleSignIn}
-          disabled={loading}
+          disabled={emailLoading || googleLoading}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
             <path
@@ -236,7 +237,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
               fill="#EA4335"
             />
           </svg>
-          {loading ? "Signing in..." : "Sign in with Google"}
+          {googleLoading ? "Signing in..." : "Sign in with Google"}
         </Button>
 
         <div className="mt-6 text-center">
@@ -245,7 +246,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
             {onSwitchToSignUp ? (
               <button
                 onClick={onSwitchToSignUp}
-                disabled={loading}
+                disabled={emailLoading || googleLoading}
                 className="text-zinc-950 hover:underline underline-offset-4 font-medium"
               >
                 Sign up here
