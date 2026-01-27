@@ -1,12 +1,12 @@
 "use client";
 
-import { ReactNode, useRef } from "react";
+import { ReactNode, useState } from "react";
 import { usePathname } from "next/navigation";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { makeQueryClient } from "@/modules/data/client/queryClient.client";
 import { AppNavigation } from "./app-nav";
 import { PageTransition } from "../ui/page-transition";
-import { makeQueryClient } from "@/modules/lib/query-client";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -24,17 +24,14 @@ const protectedRoutes = [
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
 
-  const queryClientRef = useRef(makeQueryClient());
-  if (!queryClientRef.current) {
-    queryClientRef.current = makeQueryClient();
-  }
+  const [queryClient] = useState(() => makeQueryClient());
 
   const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
+    pathname.startsWith(route),
   );
 
   return (
-    <QueryClientProvider client={queryClientRef.current}>
+    <QueryClientProvider client={queryClient}>
       {isProtectedRoute ? (
         <AppNavigation>
           <PageTransition>{children}</PageTransition>

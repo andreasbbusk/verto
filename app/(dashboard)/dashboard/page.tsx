@@ -1,7 +1,14 @@
+import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { DashboardView } from "@/modules/components/dashboard/dashboard-page";
-import { getMe } from "@/modules/actions/user";
+import { profileQuery } from "@/modules/data/shared/profileQueryOptions";
 
 export default async function DashboardPage() {
-  const user = await getMe();
-  return <DashboardView initialUser={user} />;
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery(profileQuery());
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <DashboardView />
+    </HydrationBoundary>
+  );
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface SearchFilterProps<T> {
   items: T[];
   onFiltered: (items: T[]) => void;
   searchKey?: keyof T;
   placeholder?: string;
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 /**
@@ -18,19 +20,29 @@ export function SearchFilter<T extends Record<string, any>>({
   onFiltered,
   searchKey = "name" as keyof T,
   placeholder = "Search...",
+  value,
+  onChange,
 }: SearchFilterProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
+  const effectiveValue = value ?? searchTerm;
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    if (!value) {
+  useEffect(() => {
+    if (!effectiveValue) {
       onFiltered(items);
-    } else {
-      const filtered = items.filter((item) =>
-        String(item[searchKey])?.toLowerCase().includes(value.toLowerCase())
-      );
-      onFiltered(filtered);
+      return;
     }
+
+    const filtered = items.filter((item) =>
+      String(item[searchKey])?.toLowerCase().includes(effectiveValue.toLowerCase())
+    );
+    onFiltered(filtered);
+  }, [effectiveValue, items, onFiltered, searchKey]);
+
+  const handleSearch = (nextValue: string) => {
+    if (value === undefined) {
+      setSearchTerm(nextValue);
+    }
+    onChange?.(nextValue);
   };
 
   return (
@@ -38,7 +50,7 @@ export function SearchFilter<T extends Record<string, any>>({
       <input
         type="text"
         placeholder={placeholder}
-        value={searchTerm}
+        value={effectiveValue}
         onChange={(e) => handleSearch(e.target.value)}
         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       />

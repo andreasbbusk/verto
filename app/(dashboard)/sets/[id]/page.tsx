@@ -1,5 +1,7 @@
+import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
+import { notFound } from "next/navigation";
 import { SetDetailView } from "@/modules/components/sets/set-detail";
-import { getSetById } from "@/modules/actions/sets";
+import { setByIdQuery } from "@/modules/data/shared/setsQueryOptions";
 
 interface SetDetailPageProps {
   params: Promise<{ id: string }>;
@@ -7,7 +9,22 @@ interface SetDetailPageProps {
 
 export default async function SetDetailPage({ params }: SetDetailPageProps) {
   const { id } = await params;
-  const set = await getSetById(id);
 
-  return <SetDetailView initialSet={set} />;
+  if (!id) {
+    notFound();
+  }
+
+  const queryClient = new QueryClient();
+
+  try {
+    await queryClient.prefetchQuery(setByIdQuery(id));
+  } catch (error) {
+    notFound();
+  }
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <SetDetailView setId={id} />
+    </HydrationBoundary>
+  );
 }

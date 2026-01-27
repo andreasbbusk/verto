@@ -10,8 +10,8 @@ import {
 } from "@/modules/components/ui/dialog";
 import { Button } from "@/modules/components/ui/button";
 import { ScrollArea } from "@/modules/components/ui/scroll-area";
-import type { Flashcard } from "@/modules/types";
-import { useState, useEffect } from "react";
+import type { Flashcard } from "@/modules/types/types";
+import { useCallback, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -44,31 +44,37 @@ export function CardReorderDialog({
   setId,
 }: CardReorderDialogProps) {
   const { getCardOrder, setCardOrder } = useCardOrderStore();
-  const [orderedCards, setOrderedCards] = useState<Flashcard[]>(flashcards);
+  const getInitialOrder = useCallback(() => {
+    const savedOrder = getCardOrder(setId);
+    if (savedOrder && savedOrder.length > 0) {
+      const cardMap = new Map(flashcards.map((card) => [card.id, card]));
+      const validOrder = savedOrder.filter((id) => cardMap.has(id));
+      const orderedCards = validOrder.map((id) => cardMap.get(id)!);
+      const newCards = flashcards.filter((card) => !validOrder.includes(card.id));
+      return [...orderedCards, ...newCards];
+    }
+
+    return flashcards;
+  }, [flashcards, setId, getCardOrder]);
+
+  const [orderedCards, setOrderedCards] = useState<Flashcard[]>(() =>
+    getInitialOrder(),
+  );
 
   // Setup dnd-kit sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
-  // Initialize ordered cards when dialog opens
-  useEffect(() => {
-    if (open) {
-      const savedOrder = getCardOrder(setId);
-      if (savedOrder && savedOrder.length > 0) {
-        const cardMap = new Map(flashcards.map(card => [card.id, card]));
-        const validOrder = savedOrder.filter(id => cardMap.has(id));
-        const orderedCards = validOrder.map(id => cardMap.get(id)!);
-        const newCards = flashcards.filter(card => !validOrder.includes(card.id));
-        setOrderedCards([...orderedCards, ...newCards]);
-      } else {
-        setOrderedCards(flashcards);
-      }
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setOrderedCards(getInitialOrder());
     }
-  }, [open, flashcards, setId, getCardOrder]);
+    onOpenChange(nextOpen);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -84,7 +90,10 @@ export function CardReorderDialog({
   };
 
   const handleSave = () => {
-    setCardOrder(setId, orderedCards.map(card => card.id));
+    setCardOrder(
+      setId,
+      orderedCards.map((card) => card.id),
+    );
     onOpenChange(false);
   };
 
@@ -93,12 +102,12 @@ export function CardReorderDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Omarranger kort</DialogTitle>
+          <DialogTitle>Reorder cards</DialogTitle>
           <DialogDescription>
-            Træk og slip kortene for at ændre deres rækkefølge
+            Drag and drop cards to change their order
           </DialogDescription>
         </DialogHeader>
 
@@ -109,10 +118,10 @@ export function CardReorderDialog({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={orderedCards.map(card => card.id)}
+              items={orderedCards.map((card) => card.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-2">
+              <div className="space-y-2 max-w-md overflow-hidden">
                 {orderedCards.map((flashcard, index) => (
                   <MiniCardPreview
                     key={flashcard.id}
@@ -131,18 +140,13 @@ export function CardReorderDialog({
             onClick={handleReset}
             className="flex-1 sm:flex-none"
           >
-            Nulstil
+            Reset
           </Button>
           <div className="flex gap-2 flex-1 justify-end">
-            <Button
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
-              Annuller
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancel
             </Button>
-            <Button onClick={handleSave}>
-              Gem
-            </Button>
+            <Button onClick={handleSave}>Save</Button>
           </div>
         </DialogFooter>
       </DialogContent>

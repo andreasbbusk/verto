@@ -3,181 +3,65 @@
 import { FlashcardDialog } from "@/modules/components/flashcards/flashcard-dialog";
 import { FlashcardList } from "@/modules/components/flashcards/flashcard-list";
 import { AnimatedSection } from "@/modules/components/ui/animated-section";
-import { Breadcrumbs } from "@/modules/components/layout/breadcrumbs";
-import { Badge } from "@/modules/components/ui/badge";
 import { Button } from "@/modules/components/ui/button";
-import { Card, CardContent } from "@/modules/components/ui/card";
+import { Card } from "@/modules/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/components/ui/dropdown-menu";
-import { useFlashcardMutations } from "@/modules/hooks/use-flashcards";
-import { useSetById } from "@/modules/hooks/use-sets";
-import { useSetMutations } from "@/modules/hooks/use-set-mutations";
-import type {
-  CreateFlashcardData,
-  CreateSetData,
-  Flashcard,
-  UpdateFlashcardData,
-} from "@/modules/types";
 import {
-  ArrowLeft,
-  BarChart3,
-  BookOpen,
-  Calendar,
-  ChevronDown,
-  Play,
-  PlusCircle,
-} from "lucide-react";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/modules/components/ui/tooltip";
+import { useSetDetailActions } from "@/modules/data/client/hooks/useSetDetailActions.client";
+import { useSetById } from "@/modules/data/client/hooks/queries/useSets.client";
+import type { Flashcard } from "@/modules/types/types";
+import { ChevronDown, Play, PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useMemo, useState } from "react";
 import { SetDialog } from "./set-dialog";
-import { Loader } from "@/modules/components/ui/loader";
 
 interface SetDetailViewProps {
-  initialSet: import("@/modules/types").FlashcardSet;
+  setId: string;
 }
 
-type FilterType = "all" | "starred" | "due";
-
-export function SetDetailView({ initialSet }: SetDetailViewProps) {
-  const searchParams = useSearchParams();
+export function SetDetailView({ setId }: SetDetailViewProps) {
   const [setDialogOpen, setSetDialogOpen] = useState(false);
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const router = useRouter();
 
-  const { set, flashcards, error } = useSetById(initialSet.id, initialSet);
-  const flashcardMutations = useFlashcardMutations(initialSet.id);
-  const { update: updateSet, remove: removeSet } = useSetMutations(initialSet.id);
+  const handleOpenCardDialog = useCallback(() => {
+    setCardDialogOpen(true);
+  }, []);
+  const { set, flashcards, error } = useSetById(setId);
+  const {
+    flashcardMutations,
+    handleUpdateSet,
+    handleDeleteSet,
+    handleBulkCreateCards,
+    handleCardFormSubmit,
+    handleDeleteCard,
+    handleToggleStar,
+  } = useSetDetailActions({
+    setId,
+    set,
+    editingCard,
+    onOpenCreateCard: handleOpenCardDialog,
+  });
 
-  // Filter flashcards based on active filter
-  const filteredFlashcards = useMemo(() => {
-    return flashcards.filter((card) => {
-      if (activeFilter === "all") return true;
-      if (activeFilter === "starred") return card.starred;
-      if (activeFilter === "due") {
-        if (!card.performance?.nextReview) return false;
-        return new Date(card.performance.nextReview) <= new Date();
-      }
-      return true;
-    });
-  }, [flashcards, activeFilter]);
-
-  // Calculate counts for each filter
-  const starredCount = useMemo(
-    () => flashcards.filter((card) => card.starred).length,
-    [flashcards]
-  );
-  const dueCount = useMemo(() => {
-    return flashcards.filter((card) => {
-      if (!card.performance?.nextReview) return false;
-      return new Date(card.performance.nextReview) <= new Date();
-    }).length;
+  const totalReviews = useMemo(() => {
+    return flashcards.reduce((sum, card) => sum + card.reviewCount, 0);
   }, [flashcards]);
 
-  // Check for createCard URL param and auto-open dialog
-  useEffect(() => {
-    if (searchParams.get("createCard") === "true") {
-      setCardDialogOpen(true);
-    }
-  }, [searchParams]);
-
-  const handleUpdateSet = async (data: CreateSetData) => {
-    if (!set) return;
-
-    try {
-      await updateSet(data);
-    } catch (error) {
-      toast.error("Kunne ikke opdatere set");
-      throw error;
-    }
-  };
-
-  const handleDeleteSet = async () => {
-    if (!set) return;
-
-    if (
-      !confirm(
-        `Er du sikker på du vil slette set "${set.name}" og alle dets flashcards?`
-      )
-    ) {
-      return;
-    }
-
-    try {
-      await removeSet();
-      router.push("/sets");
-    } catch (error) {
-      toast.error("Kunne ikke slette set");
-    }
-  };
-
-  const handleCreateCard = async (data: CreateFlashcardData) => {
-    if (!set) return;
-
-    try {
-      await flashcardMutations.create(data);
-    } catch (error) {
-      // Error toast is handled in the mutation
-      throw error;
-    }
-  };
-
-  const handleBulkCreateCards = async (
-    cards: Omit<CreateFlashcardData, "setId">[]
-  ) => {
-    if (!set) return;
-
-    try {
-      await flashcardMutations.createBulk(cards);
-    } catch (error) {
-      // Error toast is handled in the mutation
-      throw error;
-    }
-  };
-
-  const handleUpdateCard = async (data: UpdateFlashcardData) => {
-    if (!editingCard) return;
-
-    try {
-      await flashcardMutations.update({ cardId: editingCard.id, data });
-    } catch (error) {
-      // Error toast is handled in the mutation
-      throw error;
-    }
-  };
-
-  const handleDeleteCard = async (flashcard: Flashcard) => {
-    try {
-      await flashcardMutations.remove(flashcard.id);
-    } catch (error) {
-      // Error toast is handled in the mutation
-    }
-  };
-
-  const handleToggleStar = async (flashcard: Flashcard) => {
-    try {
-      await flashcardMutations.update({
-        cardId: flashcard.id,
-        data: { starred: !flashcard.starred },
-      });
-    } catch (error) {
-      // Error toast is handled in the mutation
-    }
-  };
-
-  const handleEditCard = (flashcard: Flashcard) => {
+  const handleEditCard = useCallback((flashcard: Flashcard) => {
     setEditingCard(flashcard);
     setCardDialogOpen(true);
-  };
+  }, []);
 
-  const handleCardDialogChange = (open: boolean) => {
+  const handleCardDialogChange = useCallback((open: boolean) => {
     setCardDialogOpen(open);
     if (!open) {
       // Delay clearing editingCard to prevent flickering during close animation
@@ -185,43 +69,25 @@ export function SetDetailView({ initialSet }: SetDetailViewProps) {
         setEditingCard(null);
       }, 200);
     }
-  };
-
-  const handleCardFormSubmit = async (
-    data: CreateFlashcardData | UpdateFlashcardData
-  ) => {
-    if (editingCard) {
-      await handleUpdateCard(data as UpdateFlashcardData);
-    } else {
-      await handleCreateCard(data as CreateFlashcardData);
-    }
-  };
+  }, []);
 
   if (error || !set) {
     return (
       <div className="space-y-6">
-        <Breadcrumbs
-          items={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Flashcard Sæt", href: "/sets" },
-            { label: "Set ikke fundet" },
-          ]}
-        />
-
         <Card className="p-8">
           <div className="text-center">
             <div className="w-12 h-12 border border-destructive flex items-center justify-center mx-auto mb-4">
               <div className="text-destructive text-lg">!</div>
             </div>
             <div className="text-destructive font-mono text-sm mb-2">
-              {error || "Set ikke fundet"}
+              {error || "Set not found"}
             </div>
             <p className="text-muted-foreground text-sm mb-4">
-              Settet eksisterer ikke eller du har ikke adgang til det
+              The set does not exist or you do not have access
             </p>
             <Link href="/sets">
               <Button variant="outline" size="sm">
-                Tilbage til sets
+                Back to sets
               </Button>
             </Link>
           </div>
@@ -234,60 +100,59 @@ export function SetDetailView({ initialSet }: SetDetailViewProps) {
     <div className="space-y-8">
       {/* Header */}
       <AnimatedSection>
-        <div className="mb-6">
-          <Breadcrumbs
-            items={[
-              { label: "Dashboard", href: "/dashboard" },
-              { label: "Flashcard Sæt", href: "/sets" },
-              { label: set.name },
-            ]}
-          />
-        </div>
         <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
           <div>
-            <div className="flex flex-col gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-2">
               <h1 className="font-mono text-4xl font-bold text-foreground tracking-tight">
                 {set.name}
               </h1>
-              <Badge variant="default" className="font-mono text-xs">
-                Sværhedsgrad: {set.difficulty}/5
-              </Badge>
+              {set.difficulty && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-sm font-mono text-primary/60 bg-primary/10 px-2 py-1 rounded cursor-pointer">
+                      {set.difficulty}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Difficulty: {set.difficulty}/5 - Indicates the difficulty
+                      of flashcards in this set
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
             <p className="text-muted-foreground mt-2 text-lg">
-              {set.description || "Administrer flashcards i dette set"}
+              {set.description || "Manage flashcards in this set"}
             </p>
           </div>
           <div className="flex gap-2">
             <Link href={`/study/${set.id}`}>
               <Button size="sm">
                 <Play className="h-4 w-4 mr-2" />
-                Start Studie
+                Start Study
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCardDialogOpen(true)}
-            >
+            <Button variant="outline" size="sm" onClick={handleOpenCardDialog}>
               <PlusCircle className="h-4 w-4 mr-2" />
-              Tilføj Kort
+              Add Card
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  Indstillinger
+                  Settings
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setSetDialogOpen(true)}>
-                  Rediger Set
+                  Edit Set
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDeleteSet}
                   className="text-destructive"
                 >
-                  Slet Set
+                  Delete Set
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -297,61 +162,25 @@ export function SetDetailView({ initialSet }: SetDetailViewProps) {
 
       {/* Statistics */}
       <AnimatedSection delay={0.1}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 border border-border flex items-center justify-center">
-                  <BookOpen className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-                    Antal Kort
-                  </p>
-                  <p className="text-2xl font-mono font-bold text-foreground">
-                    {flashcards.length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 border border-border flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-                    Oprettet
-                  </p>
-                  <p className="text-sm font-mono font-bold text-foreground">
-                    {new Date(set.createdAt).toLocaleDateString("da-DK")}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 border border-border flex items-center justify-center">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-                    Total Reviews
-                  </p>
-                  <p className="text-2xl font-mono font-bold text-foreground">
-                    {flashcards.reduce(
-                      (sum, card) => sum + card.reviewCount,
-                      0
-                    )}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          <span>
+            <span className="text-foreground font-mono">
+              {flashcards.length}
+            </span>
+            <span className="ml-1">cards</span>
+          </span>
+          <span className="text-muted-foreground/60">·</span>
+          <span>
+            Created{" "}
+            <span className="text-foreground font-mono">
+              {new Date(set.createdAt).toLocaleDateString("en-US")}
+            </span>
+          </span>
+          <span className="text-muted-foreground/60">·</span>
+          <span>
+            <span className="text-foreground font-mono">{totalReviews}</span>
+            <span className="ml-1">reviews</span>
+          </span>
         </div>
       </AnimatedSection>
 
@@ -379,95 +208,13 @@ export function SetDetailView({ initialSet }: SetDetailViewProps) {
 
       {/* Flashcards */}
       <AnimatedSection delay={0.2}>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-mono font-bold text-foreground">
-              Flashcards
-            </h2>
-            <Badge variant="secondary">
-              {activeFilter === "all"
-                ? `${flashcards.length} kort`
-                : `${filteredFlashcards.length} af ${flashcards.length} kort`}
-            </Badge>
-          </div>
-
-          {/* Filter buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant={activeFilter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter("all")}
-            >
-              Alle ({flashcards.length})
-            </Button>
-            <Button
-              variant={activeFilter === "starred" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter("starred")}
-            >
-              Stjernet ({starredCount})
-            </Button>
-            <Button
-              variant={activeFilter === "due" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter("due")}
-            >
-              Til Gennemgang ({dueCount})
-            </Button>
-          </div>
-
-          {flashcards.length === 0 ? (
-            <Card className="p-12">
-              <div className="text-center space-y-6">
-                <div className="w-16 h-16 border border-border flex items-center justify-center mx-auto">
-                  <BookOpen className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-mono font-bold text-lg text-foreground mb-2">
-                    Ingen flashcards
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Tilføj dit første flashcard til dette set
-                  </p>
-                </div>
-                <Button onClick={() => setCardDialogOpen(true)} size="sm">
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Tilføj Flashcard
-                </Button>
-              </div>
-            </Card>
-          ) : filteredFlashcards.length === 0 ? (
-            <Card className="p-12">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 border border-border flex items-center justify-center mx-auto">
-                  <BookOpen className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-mono font-bold text-lg text-foreground mb-2">
-                    Ingen kort matcher filteret
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Prøv et andet filter eller tilføj flere flashcards
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setActiveFilter("all")}
-                  variant="outline"
-                  size="sm"
-                >
-                  Vis Alle Kort
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            <FlashcardList
-              flashcards={filteredFlashcards}
-              onEdit={handleEditCard}
-              onDelete={handleDeleteCard}
-              onToggleStar={handleToggleStar}
-            />
-          )}
-        </div>
+        <FlashcardList
+          flashcards={flashcards}
+          onEdit={handleEditCard}
+          onDelete={handleDeleteCard}
+          onToggleStar={handleToggleStar}
+          onCreate={handleOpenCardDialog}
+        />
       </AnimatedSection>
     </div>
   );

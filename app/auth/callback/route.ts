@@ -1,5 +1,4 @@
-import { createClient } from "@/modules/lib/supabase/server";
-import { profileRepository } from "@/modules/server/database";
+import { createClient } from "@/modules/server/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -11,25 +10,28 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { data } = await supabase.auth.exchangeCodeForSession(code);
 
-    // Ensure profile exists for OAuth users
     if (data.user) {
       try {
-        const existingProfile = await profileRepository.getById(data.user.id);
-        
-        // Create profile if it doesn't exist (OAuth signup)
-        if (!existingProfile) {
-          await profileRepository.create(data.user.id, {
+        const { data: existingProfile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        if (!existingProfile && !profileError) {
+          await supabase.from("profiles").insert({
+            id: data.user.id,
             email: data.user.email!,
-            name: data.user.user_metadata?.name || data.user.email!.split('@')[0],
+            name:
+              data.user.user_metadata?.name ||
+              data.user.email!.split("@")[0],
           });
         }
       } catch (error) {
         console.error("Error ensuring profile exists:", error);
-        // Don't fail the auth flow - trigger might handle it
       }
     }
   }
 
-  // URL to redirect to after sign in process completes
   return NextResponse.redirect(`${origin}/dashboard`);
 }

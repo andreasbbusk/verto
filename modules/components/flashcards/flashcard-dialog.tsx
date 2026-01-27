@@ -10,14 +10,19 @@ import {
 } from "@/modules/components/ui/dialog";
 import { Label } from "@/modules/components/ui/label";
 import { ScrollArea } from "@/modules/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/modules/components/ui/tabs";
 import { Textarea } from "@/modules/components/ui/textarea";
-import { useSets } from "@/modules/hooks/use-sets";
+import { useSets } from "@/modules/data/client/hooks/queries/useSets.client";
 import type {
   CreateFlashcardData,
   Flashcard,
-  UpdateFlashcardData
-} from "@/modules/types";
+  UpdateFlashcardData,
+} from "@/modules/types/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -53,9 +58,14 @@ export function FlashcardDialog({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [jsonText, setJsonText] = useState("");
-  const [batchCards, setBatchCards] = useState<Omit<CreateFlashcardData, "setId">[]>([]);
+  const [batchCards, setBatchCards] = useState<
+    Omit<CreateFlashcardData, "setId">[]
+  >([]);
 
-  const jsonParsedResult = useMemo(() => parseJsonFlashcards(jsonText), [jsonText]);
+  const jsonParsedResult = useMemo(
+    () => parseJsonFlashcards(jsonText),
+    [jsonText],
+  );
   const jsonParsedCards = jsonParsedResult.cards;
   const jsonParseError = jsonParsedResult.error;
 
@@ -100,15 +110,16 @@ export function FlashcardDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Vælg et sæt</DialogTitle>
+            <DialogTitle>Select a set</DialogTitle>
             <DialogDescription>
-              Vælg hvilket sæt du vil tilføje et nyt kort til
+              Choose which set you want to add a new card to
             </DialogDescription>
           </DialogHeader>
+
           <div className="py-4">
             {sets.length === 0 ? (
               <div className="text-center p-8 text-sm text-muted-foreground">
-                Ingen sæt fundet. Opret først et sæt.
+                No sets found. Create a set first.
               </div>
             ) : (
               <ScrollArea className="h-[300px] pr-4">
@@ -123,7 +134,7 @@ export function FlashcardDialog({
                       <div className="flex flex-col items-start gap-1">
                         <span className="font-medium text-sm">{set.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {set.cardCount || 0} kort
+                          {set.cardCount || 0} cards
                         </span>
                       </div>
                     </Button>
@@ -153,11 +164,11 @@ export function FlashcardDialog({
     const newErrors: Record<string, string> = {};
 
     if (!formData.front.trim()) {
-      newErrors.front = "Forsiden er påkrævet";
+      newErrors.front = "Front is required";
     }
 
     if (!formData.back.trim()) {
-      newErrors.back = "Bagsiden er påkrævet";
+      newErrors.back = "Back is required";
     }
 
     setErrors(newErrors);
@@ -168,7 +179,6 @@ export function FlashcardDialog({
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Ret venligst fejlene og prøv igen");
       return;
     }
 
@@ -187,8 +197,6 @@ export function FlashcardDialog({
       starred: false,
     });
     setErrors({});
-
-    toast.success("Kort tilføjet til batch");
   };
 
   const handleRemoveBatchCard = (index: number) => {
@@ -197,12 +205,12 @@ export function FlashcardDialog({
 
   const handleSubmitBatch = async () => {
     if (batchCards.length === 0) {
-      toast.error("Ingen kort i batch");
+      toast.error("No cards in batch");
       return;
     }
 
     if (!onBulkSubmit) {
-      toast.error("Bulk submit ikke understøttet");
+      toast.error("Bulk submit not supported");
       return;
     }
 
@@ -212,7 +220,7 @@ export function FlashcardDialog({
       handleOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Kunne ikke oprette kort"
+        error instanceof Error ? error.message : "Kunne ikke oprette kort",
       );
     }
   };
@@ -221,7 +229,7 @@ export function FlashcardDialog({
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Ret venligst fejlene og prøv igen");
+      toast.error("Please fix the errors and try again");
       return;
     }
 
@@ -239,7 +247,7 @@ export function FlashcardDialog({
       handleOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Kunne ikke gemme flashcard"
+        error instanceof Error ? error.message : "Kunne ikke gemme flashcard",
       );
     }
   };
@@ -253,7 +261,7 @@ export function FlashcardDialog({
     }
 
     if (!onBulkSubmit) {
-      toast.error("Bulk submit ikke understøttet");
+      toast.error("Bulk submit not supported");
       return;
     }
 
@@ -263,13 +271,12 @@ export function FlashcardDialog({
           front: c.front,
           back: c.back,
           starred: c.starred || false,
-        }))
+        })),
       );
-      toast.success(`${validCards.length} kort oprettet!`);
       handleOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Kunne ikke oprette kort"
+        error instanceof Error ? error.message : "Kunne ikke oprette kort",
       );
     }
   };
@@ -293,20 +300,18 @@ export function FlashcardDialog({
             <DialogTitle className="text-heading-3">
               Rediger Flashcard
             </DialogTitle>
-            <DialogDescription>
-              Opdater dit flashcard
-            </DialogDescription>
+            <DialogDescription>Opdater dit flashcard</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="front" className="text-body-sm font-medium">
-                Forside *
+                Front *
               </Label>
               <Textarea
                 id="front"
                 value={formData.front}
                 onChange={handleInputChange("front")}
-                placeholder="Indtast spørgsmål eller udtryk for forsiden"
+                placeholder="Enter a question or prompt for the front"
                 rows={3}
                 className={errors.front ? "border-destructive" : ""}
               />
@@ -317,13 +322,13 @@ export function FlashcardDialog({
 
             <div className="space-y-2">
               <Label htmlFor="back" className="text-body-sm font-medium">
-                Bagside *
+                Back *
               </Label>
               <Textarea
                 id="back"
                 value={formData.back}
                 onChange={handleInputChange("back")}
-                placeholder="Indtast svar eller forklaring for bagsiden"
+                placeholder="Enter the answer or explanation for the back"
                 rows={3}
                 className={errors.back ? "border-destructive" : ""}
               />
@@ -340,10 +345,10 @@ export function FlashcardDialog({
                 disabled={isLoading}
                 className="flex-1"
               >
-                Annuller
+                Cancel
               </Button>
               <Button type="submit" disabled={isLoading} className="flex-1">
-                {isLoading ? "Gemmer..." : "Opdater Flashcard"}
+                {isLoading ? "Saving..." : "Update Flashcard"}
               </Button>
             </div>
           </form>
@@ -358,17 +363,21 @@ export function FlashcardDialog({
       <DialogContent className="sm:max-w-[1000px] max-h-[95vh]">
         <DialogHeader>
           <DialogTitle className="text-heading-3">
-            Opret Nye Flashcards
+            Create New Flashcards
           </DialogTitle>
           <DialogDescription>
-            Vælg hvordan du vil tilføje flashcards til dit set
+            Choose how you want to add flashcards to your set
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(95vh-180px)] pr-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="single">Enkelt</TabsTrigger>
+              <TabsTrigger value="single">Single</TabsTrigger>
               <TabsTrigger value="json">JSON</TabsTrigger>
             </TabsList>
 
@@ -378,44 +387,54 @@ export function FlashcardDialog({
                 <form onSubmit={handleAddToBatch} className="space-y-4">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="front" className="text-body-sm font-medium">
-                        Forside *
+                      <Label
+                        htmlFor="front"
+                        className="text-body-sm font-medium"
+                      >
+                        Front *
                       </Label>
                       <Textarea
                         id="front"
                         value={formData.front}
                         onChange={handleInputChange("front")}
                         style={{ resize: "none", minHeight: "100px" }}
-                        placeholder="Indtast spørgsmål eller udtryk for forsiden"
+                        placeholder="Enter a question or prompt for the front"
                         rows={5}
                         className={errors.front ? "border-destructive" : ""}
                       />
                       {errors.front && (
-                        <p className="text-xs text-destructive">{errors.front}</p>
+                        <p className="text-xs text-destructive">
+                          {errors.front}
+                        </p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="back" className="text-body-sm font-medium">
-                        Bagside *
+                      <Label
+                        htmlFor="back"
+                        className="text-body-sm font-medium"
+                      >
+                        Back *
                       </Label>
                       <Textarea
                         id="back"
                         value={formData.back}
                         onChange={handleInputChange("back")}
-                        placeholder="Indtast svar eller forklaring for bagsiden"
+                        placeholder="Enter the answer or explanation for the back"
                         style={{ resize: "none", minHeight: "200px" }}
                         rows={5}
                         className={errors.back ? "border-destructive" : ""}
                       />
                       {errors.back && (
-                        <p className="text-xs text-destructive">{errors.back}</p>
+                        <p className="text-xs text-destructive">
+                          {errors.back}
+                        </p>
                       )}
                     </div>
                   </div>
 
                   <Button variant="secondary" type="submit" className="w-full">
-                    Tilføj til visning +
+                    Add to preview +
                   </Button>
                 </form>
 
@@ -441,14 +460,16 @@ export function FlashcardDialog({
                   disabled={isLoading}
                   className="flex-1"
                 >
-                  Annuller
+                  Cancel
                 </Button>
                 <Button
                   onClick={handleSubmitBatch}
                   disabled={isLoading || batchCards.length === 0}
                   className="flex-1"
                 >
-                  {isLoading ? "Opretter..." : `Opret ${batchCards.length} kort`}
+                  {isLoading
+                    ? "Creating..."
+                    : `Create ${batchCards.length} cards`}
                 </Button>
               </div>
             </TabsContent>
@@ -471,7 +492,7 @@ export function FlashcardDialog({
                     disabled={isLoading}
                     className="flex-1"
                   >
-                    Annuller
+                    Cancel
                   </Button>
                   <Button
                     onClick={handleBulkSubmit}
@@ -483,8 +504,8 @@ export function FlashcardDialog({
                     className="flex-1"
                   >
                     {isLoading
-                      ? "Opretter..."
-                      : `Opret ${jsonParsedCards.filter((c) => !c.error).length} Kort`}
+                      ? "Creating..."
+                      : `Create ${jsonParsedCards.filter((c) => !c.error).length} cards`}
                   </Button>
                 </div>
               </div>

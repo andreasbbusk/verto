@@ -1,17 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { StudyInterface } from "@/modules/components/study/study-interface";
 import { Card, CardContent } from "@/modules/components/ui/card";
-import { useSetById } from "@/modules/hooks/use-sets";
-import type { FlashcardSet } from "@/modules/types";
-import Link from "next/link";
+import { useSetById } from "@/modules/data/client/hooks/queries/useSets.client";
 
 interface StudyViewProps {
-  initialSet: FlashcardSet;
+  setId: string;
 }
 
-export function StudyView({ initialSet }: StudyViewProps) {
-  const { set, flashcards, error } = useSetById(initialSet.id, initialSet);
+export function StudyView({ setId }: StudyViewProps) {
+  const { set, flashcards, error } = useSetById(setId);
 
   if (error) {
     return (
@@ -62,7 +61,7 @@ export function StudyView({ initialSet }: StudyViewProps) {
       flashcards={flashcards}
       setName={set.name}
       setDifficulty={set.difficulty}
-      setId={initialSet.id}
+      setId={setId}
     />
   );
 }

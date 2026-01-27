@@ -18,7 +18,7 @@ export default function AuthLayout({
               <BookOpen className="h-4 w-4 text-accent group-hover:text-accent-foreground transition-colors" />
             </div>
             <span className="font-mono text-lg tracking-tight text-accent">
-              Flashcards
+              Verto
             </span>
           </Link>
         </header>

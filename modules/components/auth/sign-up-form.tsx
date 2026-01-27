@@ -1,8 +1,11 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { signUp } from "@/modules/actions/auth";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "@tanstack/react-form";
+import { Check, X } from "lucide-react";
+import { signUp, startGoogleAuth } from "@/modules/server/actions/auth";
 import {
   registerSchema,
   type RegisterFormData,
@@ -12,9 +15,6 @@ import { Input } from "@/modules/components/ui/input";
 import { Label } from "@/modules/components/ui/label";
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
 import { Separator } from "@/modules/components/ui/separator";
-import { Check, X } from "lucide-react";
-import Link from "next/link";
-import { createClient } from "@/modules/lib/supabase/client";
 
 interface SignUpFormProps {
   onSwitchToSignIn?: () => void;
@@ -26,29 +26,30 @@ interface PasswordCheck {
 }
 
 export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [serverError, setServerError] = useState<{
+    field?: "name" | "email" | "password";
+    message: string;
+  } | null>(null);
 
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
-    setError("");
+    setServerError(null);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
+      const result = await startGoogleAuth();
 
-      if (error) {
-        setError(error.message);
+      if (!result.ok) {
+        setServerError({ message: result.message });
         setGoogleLoading(false);
+        return;
       }
+
+      window.location.href = result.url;
     } catch (err) {
-      setError("Failed to sign up with Google");
+      setServerError({ message: "Failed to sign up with Google" });
       setGoogleLoading(false);
     }
   };
@@ -60,27 +61,36 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
       password: "",
     } as RegisterFormData,
     onSubmit: async ({ value }) => {
-      setError("");
+      setServerError(null);
       const validation = registerSchema.safeParse(value);
       if (!validation.success) {
-        setError(validation.error.issues[0].message);
+        const issue = validation.error.issues[0];
+        const field = issue.path[0] as "name" | "email" | "password";
+
+        setServerError({ message: issue.message, field });
         return;
       }
 
       setEmailLoading(true);
       try {
         const result = await signUp(value.email, value.password, value.name);
-        
-        if (result?.error) {
-          setError(result.error);
+
+        if (!result.ok) {
+          setServerError({ message: result.message, field: result.field });
           setEmailLoading(false);
+          return;
         }
+
+        setEmailLoading(false);
+        router.push("/dashboard");
       } catch (err) {
-        setError("Registration failed");
+        setServerError({ message: "Registration failed" });
         setEmailLoading(false);
       }
     },
   });
+
+  const generalError = serverError && !serverError.field ? serverError : null;
 
   // Password strength indicator
   const getPasswordStrength = (password: string): PasswordCheck[] => {
@@ -99,7 +109,7 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
           Sign Up
         </h1>
         <p className="text-sm text-zinc-600">
-          Create your account to start learning with flashcards
+          Create your account to start learning with Verto
         </p>
       </div>
 
@@ -111,9 +121,9 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
         }}
         className="space-y-4"
       >
-        {error && (
+        {generalError && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{generalError.message}</AlertDescription>
           </Alert>
         )}
 
@@ -136,33 +146,46 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
               >
                 Full Name
               </Label>
-              <Input
-                id={field.name}
-                type="text"
-                placeholder="enter your full name"
-                autoComplete="name"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-                disabled={emailLoading || googleLoading}
-                aria-required="true"
-                aria-invalid={field.state.meta.errors.length > 0}
-                aria-describedby={
-                  field.state.meta.errors.length > 0
-                    ? `${field.name}-error`
-                    : undefined
-                }
-                className={
-                  field.state.meta.errors.length > 0
-                    ? "border-red-500 bg-white text-zinc-950"
-                    : "bg-white text-zinc-950 border-zinc-300"
-                }
-              />
-              {field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-red-500">
-                  {field.state.meta.errors[0]}
-                </p>
-              )}
+              {(() => {
+                const inlineError =
+                  field.state.meta.errors[0] ??
+                  (serverError?.field === "name"
+                    ? serverError.message
+                    : undefined);
+
+                return (
+                  <>
+                    <Input
+                      id={field.name}
+                      type="text"
+                      placeholder="enter your full name"
+                      autoComplete="name"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      disabled={emailLoading || googleLoading}
+                      aria-required="true"
+                      aria-invalid={Boolean(inlineError)}
+                      aria-describedby={
+                        inlineError ? `${field.name}-error` : undefined
+                      }
+                      className={
+                        inlineError
+                          ? "border-red-500 bg-white text-zinc-950"
+                          : "bg-white text-zinc-950 border-zinc-300"
+                      }
+                    />
+                    {inlineError && (
+                      <p
+                        id={`${field.name}-error`}
+                        className="text-sm text-red-500"
+                      >
+                        {inlineError}
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </form.Field>
@@ -186,33 +209,46 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
               >
                 Email
               </Label>
-              <Input
-                id={field.name}
-                type="email"
-                placeholder="enter your email"
-                autoComplete="email"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-                disabled={emailLoading || googleLoading}
-                aria-required="true"
-                aria-invalid={field.state.meta.errors.length > 0}
-                aria-describedby={
-                  field.state.meta.errors.length > 0
-                    ? `${field.name}-error`
-                    : undefined
-                }
-                className={
-                  field.state.meta.errors.length > 0
-                    ? "border-red-500 bg-white text-zinc-950"
-                    : "bg-white text-zinc-950 border-zinc-300"
-                }
-              />
-              {field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-red-500">
-                  {field.state.meta.errors[0]}
-                </p>
-              )}
+              {(() => {
+                const inlineError =
+                  field.state.meta.errors[0] ??
+                  (serverError?.field === "email"
+                    ? serverError.message
+                    : undefined);
+
+                return (
+                  <>
+                    <Input
+                      id={field.name}
+                      type="email"
+                      placeholder="enter your email"
+                      autoComplete="email"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      disabled={emailLoading || googleLoading}
+                      aria-required="true"
+                      aria-invalid={Boolean(inlineError)}
+                      aria-describedby={
+                        inlineError ? `${field.name}-error` : undefined
+                      }
+                      className={
+                        inlineError
+                          ? "border-red-500 bg-white text-zinc-950"
+                          : "bg-white text-zinc-950 border-zinc-300"
+                      }
+                    />
+                    {inlineError && (
+                      <p
+                        id={`${field.name}-error`}
+                        className="text-sm text-red-500"
+                      >
+                        {inlineError}
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </form.Field>
@@ -236,71 +272,87 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
               >
                 Password
               </Label>
-              <div className="relative">
-                <Input
-                  id={field.name}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="create a strong password"
-                  autoComplete="new-password"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  disabled={emailLoading || googleLoading}
-                  aria-required="true"
-                  aria-invalid={field.state.meta.errors.length > 0}
-                  aria-describedby={
-                    field.state.meta.errors.length > 0
-                      ? `${field.name}-error`
-                      : undefined
-                  }
-                  className={
-                    field.state.meta.errors.length > 0
-                      ? "border-red-500 bg-white text-zinc-950"
-                      : "bg-white text-zinc-950 border-zinc-300"
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={emailLoading || googleLoading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-950 transition-colors"
-                >
-                  {showPassword ? "Hide password" : "Show password"}
-                </button>
-              </div>
+              {(() => {
+                const inlineError =
+                  field.state.meta.errors[0] ??
+                  (serverError?.field === "password"
+                    ? serverError.message
+                    : undefined);
 
-              {/* Password strength indicator */}
-              {field.state.value && (
-                <div className="space-y-1">
-                  <p className="text-xs text-zinc-500">
-                    Password requirements:
-                  </p>
-                  {getPasswordStrength(field.state.value).map(
-                    (check, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        {check.test ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <X className="h-3 w-3 text-red-500" />
+                return (
+                  <>
+                    <div className="relative">
+                      <Input
+                        id={field.name}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="create a strong password"
+                        autoComplete="new-password"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        disabled={emailLoading || googleLoading}
+                        aria-required="true"
+                        aria-invalid={Boolean(inlineError)}
+                        aria-describedby={
+                          inlineError ? `${field.name}-error` : undefined
+                        }
+                        className={
+                          inlineError
+                            ? "border-red-500 bg-white text-zinc-950"
+                            : "bg-white text-zinc-950 border-zinc-300"
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        disabled={emailLoading || googleLoading}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-950 transition-colors"
+                      >
+                        {showPassword ? "Hide password" : "Show password"}
+                      </button>
+                    </div>
+
+                    {/* Password strength indicator */}
+                    {field.state.value && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-zinc-500">
+                          Password requirements:
+                        </p>
+                        {getPasswordStrength(field.state.value).map(
+                          (check, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center space-x-2"
+                            >
+                              {check.test ? (
+                                <Check className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <X className="h-3 w-3 text-red-500" />
+                              )}
+                              <span
+                                className={`text-xs ${
+                                  check.test ? "text-green-600" : "text-red-600"
+                                }`}
+                              >
+                                {check.label}
+                              </span>
+                            </div>
+                          ),
                         )}
-                        <span
-                          className={`text-xs ${
-                            check.test ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {check.label}
-                        </span>
                       </div>
-                    )
-                  )}
-                </div>
-              )}
+                    )}
 
-              {field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-red-500">
-                  {field.state.meta.errors[0]}
-                </p>
-              )}
+                    {inlineError && (
+                      <p
+                        id={`${field.name}-error`}
+                        className="text-sm text-red-500"
+                      >
+                        {inlineError}
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </form.Field>
@@ -312,7 +364,9 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
             <Button
               type="submit"
               className="w-full bg-zinc-950 text-white hover:bg-zinc-800"
-              disabled={!canSubmit || emailLoading || googleLoading || isSubmitting}
+              disabled={
+                !canSubmit || emailLoading || googleLoading || isSubmitting
+              }
             >
               {emailLoading || isSubmitting
                 ? "Creating account..."

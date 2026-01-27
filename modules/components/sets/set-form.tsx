@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/modules/components/ui/card";
 import { toast } from "sonner";
-import type { FlashcardSet, CreateSetData } from "@/modules/types";
+import type { FlashcardSet, CreateSetData } from "@/modules/types/types";
 
 interface SetFormProps {
   set?: FlashcardSet;
@@ -38,11 +38,11 @@ export function SetForm({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Set navn er påkrævet";
+      newErrors.name = "Set name is required";
     } else if (formData.name.trim().length < 2) {
-      newErrors.name = "Set navn skal være mindst 2 tegn";
+      newErrors.name = "Set name must be at least 2 characters";
     } else if (formData.name.trim().length > 50) {
-      newErrors.name = "Set navn må ikke være længere end 50 tegn";
+      newErrors.name = "Set name must be at most 50 characters";
     }
 
     setErrors(newErrors);
@@ -53,7 +53,7 @@ export function SetForm({
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Ret venligst fejlene og prøv igen");
+      toast.error("Please fix the errors and try again");
       return;
     }
 
@@ -65,7 +65,7 @@ export function SetForm({
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Kunne ikke gemme set"
+        error instanceof Error ? error.message : "Could not save set"
       );
     }
   };
@@ -84,18 +84,19 @@ export function SetForm({
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>{set ? "Rediger Set" : "Opret Nyt Set"}</CardTitle>
+        <CardTitle>{set ? "Edit Set" : "Create New Set"}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name">Set Navn *</Label>
+            <Label htmlFor="name">Set Name *</Label>
             <Input
               id="name"
               type="text"
               value={formData.name}
               onChange={handleInputChange("name")}
-              placeholder="Indtast et beskrivende navn for dit set"
+               placeholder="Enter a descriptive name for your set"
+
               className={errors.name ? "border-red-500" : ""}
               maxLength={50}
             />
@@ -103,17 +104,18 @@ export function SetForm({
               <p className="text-sm text-red-600">{errors.name}</p>
             )}
             <p className="text-xs text-gray-500">
-              {formData.name.length}/50 tegn
+              {formData.name.length}/50 characters
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Beskrivelse (valgfri)</Label>
+            <Label htmlFor="description">Description (optional)</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={handleInputChange("description")}
-              placeholder="Tilføj en beskrivelse af hvad dette set indeholder"
+               placeholder="Add a description of what this set contains"
+
               rows={3}
               className={errors.description ? "border-red-500" : ""}
               maxLength={200}
@@ -122,14 +124,14 @@ export function SetForm({
               <p className="text-sm text-red-600">{errors.description}</p>
             )}
             <p className="text-xs text-gray-500">
-              {formData.description.length}/200 tegn
+              {formData.description.length}/200 characters
             </p>
           </div>
 
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Gemmer..." : set ? "Opdater Set" : "Opret Set"}
+              {isLoading ? "Saving..." : set ? "Update Set" : "Create Set"}
             </Button>
             <Button
               type="button"
@@ -138,7 +140,7 @@ export function SetForm({
               disabled={isLoading}
               className="flex-1"
             >
-              Annuller
+              Cancel
             </Button>
           </div>
         </form>

@@ -1,14 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/modules/components/ui/card";
-import { Button } from "@/modules/components/ui/button";
-import { Badge } from "@/modules/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,10 +10,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/modules/components/ui/alert-dialog";
-import type { FlashcardSet } from "@/modules/types";
-import { BookOpen, Play, Edit, Trash2 } from "lucide-react";
+import { Badge } from "@/modules/components/ui/badge";
+import { Button } from "@/modules/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/modules/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/modules/components/ui/tooltip";
+import type { FlashcardSet } from "@/modules/types/types";
+import { BookOpen, Edit, Play, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface SetCardProps {
   set: FlashcardSet;
@@ -68,9 +73,23 @@ export function SetCard({
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h3 className="font-mono text-lg font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                {set.name}
-              </h3>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-mono text-lg font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                  {set.name}
+                </h3>
+                {set.difficulty && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-xs font-mono text-primary/60 bg-primary/10 px-1.5 py-0.5 rounded flex-shrink-0 cursor-pointer">
+                        {set.difficulty}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Difficulty: {set.difficulty}/5</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             </div>
             <div className="w-10 h-10 border border-border flex items-center justify-center flex-shrink-0">
               <BookOpen className="h-5 w-5 text-primary" />
@@ -84,14 +103,9 @@ export function SetCard({
               <Badge variant="secondary" className="font-mono text-xs">
                 {set.cardCount} kort
               </Badge>
-              {set.difficulty && (
-                <Badge variant="outline" className="font-mono text-xs">
-                  Lvl {set.difficulty}
-                </Badge>
-              )}
             </div>
             <div className="text-xs text-muted-foreground font-mono">
-              Oprettet: {new Date(set.createdAt).toLocaleDateString("da-DK")}
+              Created: {new Date(set.createdAt).toLocaleDateString("en-US")}
             </div>
           </div>
         </CardContent>
@@ -134,11 +148,11 @@ export function SetCard({
           <AlertDialogHeader>
             <AlertDialogTitle className="font-mono">Slet set?</AlertDialogTitle>
             <AlertDialogDescription>
-              Er du sikker på du vil slette set &quot;{set.name}&quot;? Denne handling kan ikke fortrydes.
+              Are you sure you want to delete the set &quot;{set.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuller</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

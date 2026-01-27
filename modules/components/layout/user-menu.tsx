@@ -1,39 +1,34 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { signOut } from "@/modules/actions/auth";
-import { createClient } from "@/modules/lib/supabase/client";
-import { Button } from "@/modules/components/ui/button";
+import { getUser, signOut } from "@/modules/server/actions/auth";
 import { Avatar } from "@/modules/components/ui/avatar";
+import { Button } from "@/modules/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/modules/components/ui/popover";
-import { Settings, LogOut, EllipsisVertical } from "lucide-react";
-import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
+import { EllipsisVertical, LogOut, Settings } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function UserMenu() {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
+    let isMounted = true;
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+    getUser().then((user) => {
+      if (isMounted) {
+        setUser(user);
+      }
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (!user) {

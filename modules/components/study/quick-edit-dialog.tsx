@@ -12,7 +12,7 @@ import {
 import { Button } from "@/modules/components/ui/button";
 import { Textarea } from "@/modules/components/ui/textarea";
 import { Label } from "@/modules/components/ui/label";
-import type { Flashcard } from "@/modules/types";
+import type { Flashcard } from "@/modules/types/types";
 
 interface QuickEditDialogProps {
   open: boolean;
@@ -63,50 +63,52 @@ export function QuickEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Rediger Flashcard</DialogTitle>
+          <DialogTitle>Edit Flashcard</DialogTitle>
           <DialogDescription>
-            Foretag ændringer i dit flashcard. Tryk på Gem når du er færdig.
+            Make changes to your flashcard. Press Save when you are done.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="front">Forside</Label>
+            <Label htmlFor="front">Front</Label>
             <Textarea
               id="front"
               value={front}
               onChange={(e) => setFront(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Spørgsmål eller term"
+              placeholder="Question or term"
               className="min-h-[80px] resize-none"
               autoFocus
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="back">Bagside</Label>
+            <Label htmlFor="back">Back</Label>
             <Textarea
               id="back"
               value={back}
               onChange={(e) => setBack(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Svar eller definition"
+              placeholder="Answer or definition"
               className="min-h-[80px] resize-none"
             />
           </div>
         </div>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSaving}
-          >
-            Annuller
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !front.trim() || !back.trim()}
-          >
-            {isSaving ? "Gemmer..." : "Gem"}
-          </Button>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !front.trim() || !back.trim()}
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+
         </DialogFooter>
       </DialogContent>
     </Dialog>

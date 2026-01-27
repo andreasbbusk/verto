@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@/modules/components/ui/button";
-import { Card } from "@/modules/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -13,38 +11,21 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { getMe } from "@/modules/actions/user";
-import type { User } from "@/modules/types";
+import { Button } from "@/modules/components/ui/button";
+import { Card } from "@/modules/components/ui/card";
+import { profileQuery } from "@/modules/data/shared/profileQueryOptions";
 
-interface DashboardViewProps {
-  initialUser: Omit<User, "password">;
-}
+export function DashboardView() {
+  const { data: user } = useQuery(profileQuery());
 
-export function DashboardView({ initialUser }: DashboardViewProps) {
-  const { data: user } = useQuery({
-    queryKey: ["user", initialUser.id],
-    queryFn: getMe,
-    initialData: initialUser,
-  });
-
-  // Provide default values if stats don't exist
-  const userStats = user.stats || {
-    totalCardsStudied: 0,
-    currentStreak: 0,
-    totalStudySessions: 0,
-    longestStreak: 0,
-  };
-
-  const userPreferences = user.preferences || {
-    studyGoal: 20,
-    theme: "system",
-    notifications: true,
-  };
+  if (!user) {
+    return null;
+  }
 
   const stats = [
     {
       title: "Cards Studied",
-      value: userStats.totalCardsStudied,
+      value: user.totalCardsStudied,
       icon: BookOpen,
       description: "Total cards reviewed",
       color: "bg-brand",
@@ -52,7 +33,7 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
     },
     {
       title: "Current Streak",
-      value: userStats.currentStreak,
+      value: user.currentStreak,
       icon: TrendingUp,
       description: "Days in a row",
       color: "bg-brand-yellow",
@@ -60,7 +41,7 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
     },
     {
       title: "Study Sessions",
-      value: userStats.totalStudySessions,
+      value: user.totalStudySessions,
       icon: Brain,
       description: "Total sessions completed",
       color: "bg-brand-gray",
@@ -68,7 +49,7 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
     },
     {
       title: "Longest Streak",
-      value: userStats.longestStreak,
+      value: user.longestStreak,
       icon: Target,
       description: "Personal best",
       color: "bg-brand-teal",
@@ -76,9 +57,10 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
     },
   ];
 
+  const studyGoal = user.studyGoal ?? 20;
+
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <div className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
@@ -108,9 +90,7 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="p-6">
@@ -136,9 +116,7 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
           ))}
         </div>
 
-        {/* Main Action Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Start Studying Card */}
           <Card className="p-8 bg-primary border-primary">
             <div className="flex items-start justify-between mb-6">
               <div className="w-10 h-10 border border-background flex items-center justify-center">
@@ -149,7 +127,7 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
                   Daily Goal
                 </div>
                 <div className="font-mono text-lg font-bold text-background">
-                  0 / {userPreferences.studyGoal}
+                  0 / {studyGoal}
                 </div>
               </div>
             </div>
@@ -172,7 +150,6 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
             </Link>
           </Card>
 
-          {/* Recent Activity Card */}
           <Card className="p-8">
             <div className="flex items-start justify-between mb-6">
               <div className="w-10 h-10 border border-border flex items-center justify-center">
@@ -194,7 +171,6 @@ export function DashboardView({ initialUser }: DashboardViewProps) {
           </Card>
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-6 hover:border-foreground/30 transition-colors">
             <div className="mb-4">

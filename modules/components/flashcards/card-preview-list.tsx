@@ -3,7 +3,7 @@
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import { ScrollArea } from "@/modules/components/ui/scroll-area";
-import type { ParsedFlashcard } from "@/modules/types";
+import type { ParsedFlashcard } from "@/modules/types/types";
 import { AlertCircle, X } from "lucide-react";
 
 interface CardPreviewListProps {

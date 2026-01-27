@@ -4,7 +4,7 @@ import { Label } from "@/modules/components/ui/label";
 import { Textarea } from "@/modules/components/ui/textarea";
 import { CardPreviewList } from "./card-preview-list";
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
-import type { ParsedFlashcard } from "@/modules/types";
+import type { ParsedFlashcard } from "@/modules/types/types";
 import { AlertCircle } from "lucide-react";
 
 interface JsonImportInputProps {

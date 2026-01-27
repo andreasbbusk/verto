@@ -14,9 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Flashcards App - Lær med flashcards",
-  description:
-    "En moderne flashcard applikation til effektiv læring og hukommelse",
+  title: "Verto - Learn with flashcards",
+  description: "A modern flashcard application for efficient learning and recall",
 };
 
 export default async function RootLayout({
@@ -25,7 +24,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="da">
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

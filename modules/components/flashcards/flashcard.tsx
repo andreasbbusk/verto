@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/modules/components/ui/alert-dialog";
 import { cn } from "@/modules/lib/utils";
-import type { Flashcard } from "@/modules/types";
+import type { Flashcard } from "@/modules/types/types";
 
 interface FlashcardProps {
   flashcard: Flashcard | null;
@@ -64,7 +64,7 @@ const FlashcardComponent = ({
         )}
       >
         <p className="text-muted-foreground text-center font-medium">
-          Ingen flashcard data tilgængelig
+          No flashcard data available
         </p>
       </motion.div>
     );
@@ -141,7 +141,7 @@ const FlashcardComponent = ({
                 }}
                 className="h-7 text-xs px-3"
               >
-                Rediger
+                Edit
               </Button>
             )}
             {onDelete && (
@@ -155,7 +155,8 @@ const FlashcardComponent = ({
                   }}
                   className="h-7 text-xs px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
-                  Slet
+                        Delete
+
                 </Button>
                 <AlertDialog
                   open={deleteDialogOpen}
@@ -163,14 +164,14 @@ const FlashcardComponent = ({
                 >
                   <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Slet flashcard?</AlertDialogTitle>
+                      <AlertDialogTitle>Delete flashcard?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Er du sikker på du vil slette dette flashcard. Denne handling kan ikke
-                        fortrydes.
+                        Are you sure you want to delete this flashcard? This action cannot
+                        be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Annuller</AlertDialogCancel>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => {
                           onDelete(flashcard);
@@ -178,7 +179,8 @@ const FlashcardComponent = ({
                         }}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        Slet
+                  Delete
+
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -192,21 +194,29 @@ const FlashcardComponent = ({
   }
 
   return (
-    <div className={cn("perspective-1000 w-full max-w-md mx-auto", className)}>
+    <div className={cn("perspective-1500 w-full max-w-md mx-auto", className)}>
       <motion.div
         onClick={handleClick}
-        animate={{ rotateX: flipped ? 180 : 0 }}
-        transition={{ duration: 0.6, ease: "easeInOut" }}
+        animate={{ 
+          rotateY: flipped ? 180 : 0,
+          scale: flipped ? [1, 1.02, 1] : [1, 1.02, 1],
+        }}
+        transition={{ 
+          duration: 0.8, 
+          ease: [0.4, 0.0, 0.2, 1],
+          scale: { duration: 0.8, ease: [0.4, 0.0, 0.2, 1] }
+        }}
         style={{ transformStyle: "preserve-3d" }}
         className={cn(
-          "relative w-full h-80 rounded-xl",
-          !editMode && "cursor-pointer"
+          "relative w-full h-80 rounded-xl transition-shadow duration-300",
+          !editMode && "cursor-pointer",
+          flipped ? "shadow-3d-lg" : "shadow-3d-md"
         )}
       >
         {/* Front Side */}
         <motion.div
-          style={{ backfaceVisibility: "hidden", transform: "rotateX(0deg)" }}
-          className="absolute inset-0 w-full h-full rounded-2xl bg-primary shadow-modern-lg p-8 flex flex-col justify-between"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(0deg)" }}
+          className="absolute inset-0 w-full h-full rounded-2xl bg-primary shadow-3d-md p-8 flex flex-col justify-between"
         >
           {/* Action buttons */}
           {(showEditButton || onEdit || onToggleStar) && (
@@ -221,7 +231,7 @@ const FlashcardComponent = ({
                     onEdit(flashcard);
                   }}
                   className="h-8 w-8 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
-                  title="Rediger kort (E)"
+                  title="Edit card (E)"
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -236,7 +246,7 @@ const FlashcardComponent = ({
                     onToggleStar(flashcard);
                   }}
                   className="h-8 w-8 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
-                  title="Tilføj til favoritter (F)"
+                  title="Add to favorites (F)"
                 >
                   <Star
                     className="h-4 w-4"
@@ -272,12 +282,12 @@ const FlashcardComponent = ({
 
         {/* Back Side */}
         <motion.div
-          style={{ backfaceVisibility: "hidden", transform: "rotateX(180deg)" }}
-          className="absolute inset-0 w-full h-full rounded-2xl bg-primary shadow-modern-lg p-8 flex flex-col justify-between"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          className="absolute inset-0 w-full h-full rounded-2xl bg-primary shadow-3d-md p-8 flex flex-col justify-between"
         >
           {/* Action buttons */}
           {(showEditButton || onEdit || onToggleStar) && (
-            <div className="absolute top-3 right-3 flex gap-2" style={{ transform: "rotateX(180deg)" }}>
+            <div className="absolute top-3 right-3 flex gap-2">
               {onEdit && (
                 <Button
                   variant="ghost"
@@ -288,7 +298,7 @@ const FlashcardComponent = ({
                     onEdit(flashcard);
                   }}
                   className="h-8 w-8 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
-                  title="Rediger kort (E)"
+                  title="Edit card (E)"
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -303,7 +313,7 @@ const FlashcardComponent = ({
                     onToggleStar(flashcard);
                   }}
                   className="h-8 w-8 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
-                  title="Tilføj til favoritter (F)"
+                  title="Add to favorites (F)"
                 >
                   <Star
                     className="h-4 w-4"

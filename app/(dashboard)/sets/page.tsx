@@ -1,7 +1,15 @@
+import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { SetsView } from "@/modules/components/sets/sets-page";
-import { getSets } from "@/modules/actions/sets";
+import { setsQuery } from "@/modules/data/shared/setsQueryOptions";
 
 export default async function SetsPage() {
-  const sets = await getSets();
-  return <SetsView initialSets={sets} />;
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery(setsQuery());
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <SetsView />
+    </HydrationBoundary>
+  );
 }

@@ -1,199 +1,127 @@
 "use client";
 
 import { Button } from "@/modules/components/ui/button";
-import {
-  Card
-} from "@/modules/components/ui/card";
-import {
-  ArrowRight,
-  BookOpen,
-  Brain,
-  Check,
-  Target,
-  Users,
-} from "lucide-react";
+import { Card } from "@/modules/components/ui/card";
+import { ArrowRight, BookOpen, Check } from "lucide-react";
 import Link from "next/link";
-
-const features = [
-  {
-    icon: Brain,
-    title: "Smart Learning",
-    description:
-      "Spaced repetition algorithm helps you remember more effectively",
-  },
-  {
-    icon: Target,
-    title: "Track Progress",
-    description: "Monitor your learning progress with detailed analytics",
-  },
-  {
-    icon: BookOpen,
-    title: "Organize Sets",
-    description: "Create and manage your flashcard sets with ease",
-  },
-  {
-    icon: Users,
-    title: "Study Together",
-    description: "Share sets and learn with friends and classmates",
-  },
-];
+import { AnimatedHeadline } from "@/modules/components/marketing/hero/animated-headline";
+import { AnimatedGradientOrbs } from "@/modules/components/marketing/hero/animated-gradient-orbs";
+import { AnimatedCTA } from "@/modules/components/marketing/hero/animated-cta";
+import { AnimatedFeaturesSection } from "@/modules/components/marketing/features/animated-features-section";
+import { MarketingHeader } from "@/modules/components/marketing/marketing-header";
 
 const benefits = [
-  "Create unlimited flashcard sets",
-  "Track your study progress",
-  "Spaced repetition learning",
-  "Mobile responsive design",
-  "Study anywhere, anytime",
+  {
+    title: "Faster Learning",
+    description:
+      "Spaced repetition helps you learn material 2-3x faster than traditional methods",
+  },
+  {
+    title: "Better Retention",
+    description:
+      "Remember information for months or years, not just until the exam",
+  },
+  {
+    title: "Study Less",
+    description:
+      "Spend less time reviewing and more time learning new material",
+  },
+  {
+    title: "Stay Motivated",
+    description:
+      "Track your progress, maintain streaks, and see tangible improvement",
+  },
+  {
+    title: "Flexible Learning",
+    description:
+      "Study on your schedule with sessions that adapt to your available time",
+  },
 ];
 
 export function LandingView() {
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 border border-foreground flex items-center justify-center">
-                <BookOpen className="h-4 w-4 text-foreground" />
-              </div>
-              <span className="font-mono text-lg tracking-tight">
-                Flashcards
-              </span>
-            </div>
-            <div className="space-x-2">
-              <Button
-                variant="ghost"
-                asChild
-                size="sm"
-              >
-                <Link href="/login">Sign In</Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-              >
-                <Link href="/signup">Get Started</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <MarketingHeader />
 
       {/* Hero Section */}
-      <section className="py-32 px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="font-mono text-6xl sm:text-7xl lg:text-8xl font-bold text-foreground mb-6 tracking-tighter leading-none">
-            Master anything with flashcards.
-          </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-            Create, study, and track your progress with our intelligent
-            flashcard system.
+      <section className="relative min-h-screen flex items-center justify-center px-6 lg:px-8 overflow-hidden">
+        <AnimatedGradientOrbs />
+
+        <div className="relative z-10 max-w-5xl mx-auto text-center py-20">
+          <AnimatedHeadline className="font-mono text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-foreground mb-8 tracking-tighter leading-[0.95]">
+            Study smarter not harder
+          </AnimatedHeadline>
+
+          <p
+            className="text-lg sm:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed opacity-0 animate-fade-in-up"
+            style={{ animationDelay: "1s", animationFillMode: "forwards" }}
+          >
+            Verto uses scientifically-proven spaced repetition to help you
+            remember more in less time. Build lasting knowledge that sticks.
           </p>
-          <div className="flex gap-3">
-            <Button
-              size="lg"
-              asChild
-            >
-              <Link href="/signup">
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              asChild
-            >
-              <Link href="/login">Sign In</Link>
-            </Button>
-          </div>
+
+          <AnimatedCTA />
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 px-6 lg:px-8 border-t border-border">
+      <section id="features">
+        <AnimatedFeaturesSection />
+      </section>
+
+      {/* Benefits Section / How It Works */}
+      <section
+        id="how-it-works"
+        className="py-24 px-6 lg:px-8 border-t border-border"
+      >
         <div className="max-w-6xl mx-auto">
-          <div className="mb-16">
+          <div className="mb-16 text-center">
             <h2 className="font-mono text-3xl sm:text-4xl font-bold text-foreground mb-4 tracking-tight">
-              Everything you need
+              Why use Verto?
             </h2>
-            <p className="text-base text-muted-foreground max-w-2xl">
-              Proven learning techniques combined with modern technology
+            <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+              Active recall through flashcards is one of the most effective
+              learning methods according to cognitive research
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {features.map((feature, index) => (
-              <Card key={index} className="p-6 hover:border-foreground/30 transition-colors">
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 border border-border flex items-center justify-center shrink-0">
-                    <feature.icon className="h-5 w-5 text-foreground" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {benefits.map((benefit, index) => (
+              <Card
+                key={index}
+                className="p-6 hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-6 h-6 border border-primary flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="h-4 w-4 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-mono text-base font-semibold text-foreground mb-2">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
+                  <h3 className="font-mono text-base font-semibold text-foreground">
+                    {benefit.title}
+                  </h3>
                 </div>
+                <p className="text-sm text-muted-foreground leading-relaxed pl-9">
+                  {benefit.description}
+                </p>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-24 px-6 lg:px-8 border-t border-border">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-            <div>
-              <h2 className="font-mono text-3xl sm:text-4xl font-bold text-foreground mb-8 tracking-tight">
-                Why flashcards?
-              </h2>
-              <div className="space-y-3">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-5 h-5 border border-foreground flex items-center justify-center">
-                      <Check className="h-3 w-3 text-foreground" />
-                    </div>
-                    <span className="text-sm text-foreground">{benefit}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <Card className="p-8">
-              <div className="space-y-4">
-                <div className="h-3 bg-muted w-3/4"></div>
-                <div className="h-3 bg-muted w-1/2"></div>
-                <div className="h-32 border border-border flex items-center justify-center">
-                  <BookOpen className="h-12 w-12 text-muted-foreground" />
-                </div>
-                <div className="h-3 bg-muted w-2/3"></div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-24 px-6 lg:px-8 border-t border-border">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="font-mono text-4xl sm:text-5xl font-bold text-foreground mb-4 tracking-tight">
-            Ready to start learning?
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="font-mono text-3xl sm:text-4xl font-bold text-foreground mb-4 tracking-tight">
+            Start learning more effectively today
           </h2>
-          <p className="text-base text-muted-foreground mb-6">
-            Join learners who are using flashcards to achieve their goals.
+          <p className="text-base text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Join students, professionals, and lifelong learners who are using
+            Verto to master new skills and retain knowledge long-term.
           </p>
-          <Button
-            size="lg"
-            asChild
-          >
+          <Button size="lg" asChild>
             <Link href="/signup">
-              Get Started
+              Create Free Account
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -208,7 +136,7 @@ export function LandingView() {
               <div className="w-6 h-6 border border-foreground flex items-center justify-center">
                 <BookOpen className="h-3 w-3 text-foreground" />
               </div>
-              <span className="font-mono text-sm">Flashcards</span>
+              <span className="font-mono text-sm">Verto</span>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2024 All rights reserved
