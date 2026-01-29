@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Star } from "lucide-react";
 import { cn } from "@/modules/lib/utils";
-import type { Flashcard } from "@/modules/types";
+import type { Flashcard } from "@/modules/types/types";
 
 interface MiniCardPreviewProps {
   flashcard: Flashcard;
@@ -31,15 +31,15 @@ export function MiniCardPreview({ flashcard, index }: MiniCardPreviewProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 p-3 bg-card border border-border rounded-lg",
-        isDragging && "opacity-50 z-50 shadow-lg"
+        "flex w-full max-w-full min-w-0 items-center gap-3 overflow-hidden p-3 bg-card border border-border rounded-lg",
+        isDragging && "opacity-50 z-50 shadow-lg",
       )}
     >
       <button
         className={cn(
           "cursor-grab active:cursor-grabbing",
           "text-muted-foreground hover:text-foreground transition-colors",
-          "touch-none"
+          "touch-none",
         )}
         {...attributes}
         {...listeners}
@@ -53,9 +53,7 @@ export function MiniCardPreview({ flashcard, index }: MiniCardPreviewProps) {
         </span>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">
-            {flashcard.front}
-          </p>
+          <p className="text-sm font-medium truncate">{flashcard.front}</p>
         </div>
 
         {flashcard.starred && (

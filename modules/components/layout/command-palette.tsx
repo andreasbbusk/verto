@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   CommandDialog,
   CommandEmpty,
@@ -11,14 +9,10 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/modules/components/ui/command";
-import { useSets } from "@/modules/hooks/use-sets";
-import {
-  Home,
-  Library,
-  Calendar,
-  BookOpen,
-  Layers,
-} from "lucide-react";
+import { useSets } from "@/modules/data/client/hooks/queries/useSets.client";
+import { Home, Layers, Library } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -27,13 +21,15 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const router = useRouter();
-  const { sets } = useSets();
+  const { sets, isLoading } = useSets();
   const [search, setSearch] = useState("");
 
   // Reset search when dialog closes
   useEffect(() => {
     if (!open) {
-      setSearch("");
+      setTimeout(() => {
+        setSearch("");
+      }, 0);
     }
   }, [open]);
 
@@ -49,16 +45,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       onSelect: () => router.push("/dashboard"),
     },
     {
-      label: "Flashcard Sæt",
+      label: "Flashcard Sets",
       icon: Library,
       onSelect: () => router.push("/sets"),
     },
-    // Calendar is currently disabled
-    // {
-    //   label: "Kalender",
-    //   icon: Calendar,
-    //   onSelect: () => router.push("/calendar"),
-    // },
   ];
 
   return (
@@ -66,15 +56,15 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       open={open}
       onOpenChange={onOpenChange}
       title="Command Palette"
-      description="Hurtig navigation"
+      description="Quick navigation"
     >
       <CommandInput
-        placeholder="Søg efter sæt eller navigation..."
+        placeholder="Search sets or navigation..."
         value={search}
         onValueChange={setSearch}
       />
       <CommandList>
-        <CommandEmpty>Ingen resultater fundet.</CommandEmpty>
+        <CommandEmpty>No results found.</CommandEmpty>
 
         <CommandGroup heading="Navigation">
           {navigationItems.map((item) => {
@@ -91,22 +81,31 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           })}
         </CommandGroup>
 
-        {sets.length > 0 && (
+        {(isLoading || sets.length > 0) && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Flashcard Sæt">
-              {sets.map((set) => (
-                <CommandItem
-                  key={set.id}
-                  onSelect={() => handleSelect(() => router.push(`/sets/${set.id}`))}
-                >
-                  <Layers className="mr-2 h-4 w-4" />
-                  <span className="flex-1">{set.name}</span>
-                  <span className="text-xs text-muted-foreground ml-2">
-                    {set.cardCount || 0} kort
-                  </span>
-                </CommandItem>
-              ))}
+            <CommandGroup heading="Flashcard Sets">
+              {isLoading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <CommandItem key={i} disabled>
+                      <div className="h-4 w-4 mr-2 bg-muted rounded animate-pulse" />
+                      <div className="h-4 flex-1 bg-muted rounded animate-pulse" />
+                    </CommandItem>
+                  ))
+                : sets.map((set) => (
+                    <CommandItem
+                      key={set.id}
+                      onSelect={() =>
+                        handleSelect(() => router.push(`/sets/${set.id}`))
+                      }
+                    >
+                      <Layers className="mr-2 h-4 w-4" />
+                      <span className="flex-1">{set.name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        {set.cardCount || 0} cards
+                      </span>
+                    </CommandItem>
+                  ))}
             </CommandGroup>
           </>
         )}

@@ -3,7 +3,7 @@
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import { ScrollArea } from "@/modules/components/ui/scroll-area";
-import type { ParsedFlashcard } from "@/modules/types";
+import type { ParsedFlashcard } from "@/modules/types/types";
 import { AlertCircle, X } from "lucide-react";
 
 interface CardPreviewListProps {
@@ -16,7 +16,7 @@ export function CardPreviewList({ cards, onRemove }: CardPreviewListProps) {
   if (cards.length === 0) {
     return (
       <p className="text-center p-8 text-sm text-muted-foreground">
-        Ingen kort at vise
+        No cards to show
       </p>
     );
   }

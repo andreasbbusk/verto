@@ -1,24 +1,12 @@
 "use client";
 
-import { SearchFilter } from "@/modules/components/layout/client-wrapper";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/modules/components/ui/alert-dialog";
+import { SearchFilter } from "@/modules/components/ui/search-filter";
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardContent } from "@/modules/components/ui/card";
-import { cn } from "@/modules/lib/utils";
-import { useViewStore } from "@/modules/stores/viewStore";
-import { useCardOrderStore } from "@/modules/stores/cardOrderStore";
-import type { Flashcard } from "@/modules/types";
-import { LayoutGrid, LayoutList, ArrowUpDown } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useCardOrderStore } from "@/modules/stores/card-order.store";
+import type { Flashcard } from "@/modules/types/types";
+import { ArrowUpDown, BookOpen, PlusCircle } from "lucide-react";
+import { useMemo, useState } from "react";
 import FlashcardComponent from "./flashcard";
 import { CardReorderDialog } from "./card-reorder-dialog";
 
@@ -27,83 +15,107 @@ interface FlashcardListProps {
   onEdit?: (flashcard: Flashcard) => void;
   onDelete?: (flashcard: Flashcard) => void;
   onToggleStar?: (flashcard: Flashcard) => void;
+  onCreate?: () => void;
   showActions?: boolean;
 }
+
+type FilterType = "all" | "starred";
 
 export function FlashcardList({
   flashcards,
   onEdit,
   onDelete,
   onToggleStar,
+  onCreate,
   showActions = true,
 }: FlashcardListProps) {
-  const { flashcardsView, setFlashcardsView } = useViewStore();
-  const { getCardOrder } = useCardOrderStore();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [cardToDelete, setCardToDelete] = useState<Flashcard | null>(null);
-  const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
-
   // Get setId from first flashcard (all cards should have same setId)
   const setId = flashcards[0]?.setId;
+  const savedOrder = useCardOrderStore((state) =>
+    setId ? state.cardOrders[setId] : undefined,
+  );
+  const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Apply saved order to flashcards
   const orderedFlashcards = useMemo(() => {
     if (!setId) return flashcards;
-
-    const savedOrder = getCardOrder(setId);
     if (!savedOrder || savedOrder.length === 0) return flashcards;
 
     // Create a map for quick lookup
-    const cardMap = new Map(flashcards.map(card => [card.id, card]));
+    const cardMap = new Map(flashcards.map((card) => [card.id, card]));
 
     // Filter saved order to only include cards that still exist
-    const validOrder = savedOrder.filter(id => cardMap.has(id));
+    const validOrder = savedOrder.filter((id) => cardMap.has(id));
 
     // Get cards that are in savedOrder, maintaining the order
-    const orderedCards = validOrder.map(id => cardMap.get(id)!);
+    const orderedCards = validOrder.map((id) => cardMap.get(id)!);
 
     // Add any new cards that aren't in savedOrder
-    const newCards = flashcards.filter(card => !validOrder.includes(card.id));
+    const newCards = flashcards.filter((card) => !validOrder.includes(card.id));
 
     return [...orderedCards, ...newCards];
-  }, [flashcards, setId, getCardOrder]);
+  }, [flashcards, setId, savedOrder]);
 
-  const [filteredCards, setFilteredCards] = useState<Flashcard[]>(orderedFlashcards);
+  const { filteredByType, starredCount } = useMemo(() => {
+    let starred = 0;
+    const filtered: Flashcard[] = [];
 
-  // Sync filteredCards with orderedFlashcards when it changes
-  useEffect(() => {
-    setFilteredCards(orderedFlashcards);
-  }, [orderedFlashcards]);
+    for (const card of orderedFlashcards) {
+      if (card.starred) {
+        starred += 1;
+      }
 
-  const groupedCards = { "Alle kort": filteredCards };
+      const matchesFilter =
+        activeFilter === "all" ||
+        (activeFilter === "starred" && card.starred);
 
-  const handleEdit = (flashcard: Flashcard) => {
-    onEdit?.(flashcard);
-  };
-
-  const handleDelete = (flashcard: Flashcard) => {
-    setCardToDelete(flashcard);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (cardToDelete) {
-      onDelete?.(cardToDelete);
-      setDeleteDialogOpen(false);
-      setCardToDelete(null);
+      if (matchesFilter) {
+        filtered.push(card);
+      }
     }
-  };
+
+    return { filteredByType: filtered, starredCount: starred };
+  }, [activeFilter, orderedFlashcards]);
+
+  const [filteredCards, setFilteredCards] =
+    useState<Flashcard[]>(filteredByType);
+
+  const hasNoFlashcards = flashcards.length === 0;
+  const hasNoFilterMatches = !hasNoFlashcards && filteredByType.length === 0;
+  const hasNoSearchMatches =
+    !hasNoFlashcards && !hasNoFilterMatches && filteredCards.length === 0;
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <Button
+          variant={activeFilter === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveFilter("all")}
+        >
+          All cards
+        </Button>
+        <Button
+          variant={activeFilter === "starred" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveFilter("starred")}
+        >
+          Starred cards
+        </Button>
+      </div>
+
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 max-w-md">
           <SearchFilter
-            items={orderedFlashcards}
+            items={filteredByType}
             onFiltered={setFilteredCards}
             searchKey="front"
-            placeholder="Søg i flashcards..."
+            placeholder="Search flashcards..."
+            value={searchTerm}
+            onChange={setSearchTerm}
           />
         </div>
 
@@ -116,165 +128,82 @@ export function FlashcardList({
               className="gap-2"
             >
               <ArrowUpDown className="h-4 w-4" />
-              Omarranger
+              Reorder
             </Button>
           )}
-
-          <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-card">
-            <Button
-              variant={flashcardsView === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setFlashcardsView("grid")}
-              className="px-3 transition-all"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={flashcardsView === "table" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setFlashcardsView("table")}
-              className="px-3 transition-all"
-            >
-              <LayoutList className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </div>
 
       {/* Content */}
-      {Object.entries(groupedCards).map(([setName, cards]) => (
-        <div key={setName} className="space-y-4">
-          {flashcardsView === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {cards.map((flashcard) => (
-                <div key={flashcard.id} className="relative">
-                  <FlashcardComponent
-                    flashcard={flashcard}
-                    editMode={showActions}
-                    onEdit={showActions ? onEdit : undefined}
-                    onDelete={showActions ? onDelete : undefined}
-                    onToggleStar={onToggleStar}
-                  />
-                </div>
-              ))}
+      {hasNoFlashcards ? (
+        <Card className="p-12">
+          <div className="text-center space-y-6">
+            <div className="w-16 h-16 border border-border flex items-center justify-center mx-auto">
+              <BookOpen className="h-8 w-8 text-muted-foreground" />
             </div>
-          ) : (
-            <div className="space-y-3">
-              {cards.map((flashcard) => (
-                <Card key={flashcard.id} className="border-2 border-border">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-3">
-                        {/* Badges and meta row */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {onToggleStar && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onToggleStar(flashcard)}
-                              className="h-6 px-2 -ml-2"
-                            >
-                              <span
-                                className={cn(
-                                  "text-sm",
-                                  flashcard.starred
-                                    ? "text-primary"
-                                    : "text-muted-foreground"
-                                )}
-                              >
-                                {flashcard.starred ? "★" : "☆"}
-                              </span>
-                            </Button>
-                          )}
-                          <span className="text-xs text-muted-foreground font-mono">
-                            {new Date(flashcard.createdAt).toLocaleDateString(
-                              "da-DK"
-                            )}
-                          </span>
-                        </div>
-
-                        {/* Content */}
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                              Forside
-                            </p>
-                            <h4 className="font-semibold text-base text-foreground leading-relaxed">
-                              {flashcard.front}
-                            </h4>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                              Bagside
-                            </p>
-                            <p className="text-sm text-foreground/75 leading-relaxed">
-                              {flashcard.back}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {showActions && (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(flashcard)}
-                            className="h-7 text-xs px-3"
-                          >
-                            Rediger
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(flashcard)}
-                            className="h-7 text-xs px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            Slet
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div>
+              <h3 className="font-sans font-bold text-lg text-foreground mb-2">
+                No flashcards
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                Add your first flashcard to this set
+              </p>
             </div>
-          )}
-        </div>
-      ))}
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Slet flashcard?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Er du sikker på du vil slette dette flashcard? Denne handling kan
-              ikke fortrydes.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuller</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            {onCreate && (
+              <Button onClick={onCreate} size="sm">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Flashcard
+              </Button>
+            )}
+          </div>
+        </Card>
+      ) : hasNoFilterMatches ? (
+        <Card className="p-12">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 border border-border flex items-center justify-center mx-auto">
+              <BookOpen className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="font-sans font-bold text-lg text-foreground mb-2">
+                No cards match the filter
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                Try another filter or add more flashcards
+              </p>
+            </div>
+            <Button
+              onClick={() => setActiveFilter("all")}
+              variant="outline"
+              size="sm"
             >
-              Slet
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {filteredCards.length === 0 && flashcards.length > 0 && (
+              Show all cards
+            </Button>
+          </div>
+        </Card>
+      ) : hasNoSearchMatches ? (
         <Card>
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center">
-              <p className="text-gray-500">
-                Ingen flashcards matcher din søgning
+              <p className="text-muted-foreground">
+                No flashcards match your search
               </p>
             </div>
           </CardContent>
         </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCards.map((flashcard) => (
+            <div key={flashcard.id} className="relative">
+              <FlashcardComponent
+                flashcard={flashcard}
+                editMode={showActions}
+                onEdit={showActions ? onEdit : undefined}
+                onDelete={showActions ? onDelete : undefined}
+                onToggleStar={onToggleStar}
+              />
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Card Reorder Dialog */}

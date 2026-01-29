@@ -14,7 +14,7 @@ import { Label } from "@/modules/components/ui/label";
 import { Textarea } from "@/modules/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/modules/components/ui/toggle-group";
 import { toast } from "sonner";
-import type { FlashcardSet, CreateSetData } from "@/modules/types";
+import type { FlashcardSet, CreateSetData } from "@/modules/types/types";
 
 interface SetDialogProps {
   open: boolean;
@@ -34,7 +34,7 @@ export function SetDialog({
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    difficulty: 3,
+    difficulty: 1,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -44,13 +44,13 @@ export function SetDialog({
       setFormData({
         name: set.name,
         description: set.description || "",
-        difficulty: set.difficulty || 3,
+        difficulty: set.difficulty || 1,
       });
     } else if (open && !set) {
       setFormData({
         name: "",
         description: "",
-        difficulty: 3,
+        difficulty: 1,
       });
     }
   }, [open, set]);
@@ -63,7 +63,7 @@ export function SetDialog({
         setFormData({
           name: "",
           description: "",
-          difficulty: 3,
+          difficulty: 1,
         });
         setErrors({});
       }, 200);
@@ -75,11 +75,11 @@ export function SetDialog({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Set navn er påkrævet";
+      newErrors.name = "Set name is required";
     } else if (formData.name.trim().length < 2) {
-      newErrors.name = "Set navn skal være mindst 2 tegn";
+      newErrors.name = "Set name must be at least 2 characters";
     } else if (formData.name.trim().length > 50) {
-      newErrors.name = "Set navn må ikke være længere end 50 tegn";
+      newErrors.name = "Set name must be at most 50 characters";
     }
 
     setErrors(newErrors);
@@ -90,7 +90,7 @@ export function SetDialog({
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Ret venligst fejlene og prøv igen");
+      toast.error("Please fix the errors and try again");
       return;
     }
 
@@ -103,7 +103,7 @@ export function SetDialog({
       handleOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Kunne ikke gemme set"
+        error instanceof Error ? error.message : "Could not save set"
       );
     }
   };
@@ -129,25 +129,25 @@ export function SetDialog({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-heading-3">
-            {set ? "Rediger Sæt" : "Opret Nyt Sæt"}
+            {set ? "Edit Set" : "Create New Set"}
           </DialogTitle>
           <DialogDescription>
             {set
-              ? "Opdater dit flashcard set"
-              : "Opret et nyt flashcard set til dine studier"}
+              ? "Update your flashcard set"
+              : "Create a new flashcard set for your studies"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-body-sm font-medium">
-              Sæt Navn *
+              Set Name *
             </Label>
             <Input
               id="name"
               type="text"
               value={formData.name}
               onChange={handleInputChange("name")}
-              placeholder="Indtast et beskrivende navn for dit set"
+              placeholder="Enter a descriptive name for your set"
               className={errors.name ? "border-destructive" : ""}
               maxLength={50}
             />
@@ -155,59 +155,59 @@ export function SetDialog({
               <p className="text-xs text-destructive">{errors.name}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              {formData.name.length}/50 tegn
+              {formData.name.length}/50 characters
             </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description" className="text-body-sm font-medium">
-              Beskrivelse (valgfri)
+              Description (optional)
             </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={handleInputChange("description")}
-              placeholder="Tilføj en beskrivelse af hvad dette set indeholder"
+              placeholder="Add a description of what this set contains"
               rows={4}
               className={errors.description ? "border-destructive" : ""}
-              maxLength={200}
+              maxLength={1000}
             />
             {errors.description && (
               <p className="text-xs text-destructive">{errors.description}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              {formData.description.length}/200 tegn
+              {formData.description.length}/1000 characters
             </p>
           </div>
 
           <div className="space-y-3">
             <div>
               <Label className="text-body-sm font-medium">
-                Sværhedsgrad
+                Difficulty
               </Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Vælg en sværhedsgrad fra 1 til 5
+                Choose a difficulty from 1 to 5
               </p>
             </div>
             <ToggleGroup
               type="single"
               value={formData.difficulty.toString()}
               onValueChange={handleDifficultyChange}
-              className="justify-start gap-1"
+              className="justify-start gap-2"
             >
-              <ToggleGroupItem value="1" className="font-mono w-16">
+              <ToggleGroupItem value="1" className="font-mono w-16 border">
                 1
               </ToggleGroupItem>
-              <ToggleGroupItem value="2" className="font-mono w-16">
+              <ToggleGroupItem value="2" className="font-mono w-16 border">
                 2
               </ToggleGroupItem>
-              <ToggleGroupItem value="3" className="font-mono w-16">
+              <ToggleGroupItem value="3" className="font-mono w-16 border">
                 3
               </ToggleGroupItem>
-              <ToggleGroupItem value="4" className="font-mono w-16">
+              <ToggleGroupItem value="4" className="font-mono w-16 border">
                 4
               </ToggleGroupItem>
-              <ToggleGroupItem value="5" className="font-mono w-16">
+              <ToggleGroupItem value="5" className="font-mono w-16 border">
                 5
               </ToggleGroupItem>
             </ToggleGroup>
@@ -221,10 +221,10 @@ export function SetDialog({
               disabled={isLoading}
               className="flex-1"
             >
-              Annuller
+              Cancel
             </Button>
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Gemmer..." : set ? "Opdater Set" : "Opret Set"}
+              {isLoading ? "Saving..." : set ? "Update Set" : "Create Set"}
             </Button>
           </div>
         </form>

@@ -5,21 +5,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/modules/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   {
     variants: {
       variant: {
         default:
-          "bg-foreground text-background border border-foreground hover:bg-foreground/85",
+          "bg-primary text-primary-foreground border-2 border-foreground shadow-none hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#111111]",
         destructive:
-          "bg-destructive text-destructive-foreground border border-destructive hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground border-2 border-foreground shadow-[2px_2px_0px_0px_rgba(17,17,17,0.7)] hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(17,17,17,0.7)]",
         outline:
-          "border border-border bg-transparent hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          "border-2 border-foreground bg-transparent text-foreground hover:bg-primary/20 hover:text-foreground hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#111111]",
         secondary:
-          "bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80",
-        ghost:
-          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-foreground text-background border-2 border-foreground shadow-[2px_2px_0px_0px_#111111] hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#111111]",
+        ghost: "text-foreground hover:bg-primary/20",
+        link: "text-foreground underline-offset-4 hover:text-primary hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

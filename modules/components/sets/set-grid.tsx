@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { SetCard } from "./set-card";
-import { SearchFilter } from "@/modules/components/layout/client-wrapper";
+import { SearchFilter } from "@/modules/components/ui/search-filter";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import { Button } from "@/modules/components/ui/button";
 import { Badge } from "@/modules/components/ui/badge";
-import type { FlashcardSet } from "@/modules/types";
+import type { FlashcardSet } from "@/modules/types/types";
 import { Grid, List, SortAsc, SortDesc, Calendar, Hash } from "lucide-react";
 
 interface SetGridProps {
@@ -36,7 +36,7 @@ export function SetGrid({
 
     switch (sortBy) {
       case "name":
-        comparison = a.name.localeCompare(b.name, "da-DK");
+        comparison = a.name.localeCompare(b.name, "en-US");
         break;
       case "created":
         comparison =
@@ -73,11 +73,10 @@ export function SetGrid({
       <Card>
         <CardContent className="flex items-center justify-center p-8">
           <div className="text-center space-y-4">
-            <div className="text-gray-400 text-4xl">📚</div>
             <div>
-              <h3 className="font-semibold text-lg">Ingen sets fundet</h3>
-              <p className="text-gray-500">
-                Start med at oprette dit første flashcard set
+              <h3 className="font-semibold text-lg">No sets found</h3>
+              <p className="text-muted-foreground">
+                Start by creating your first flashcard set
               </p>
             </div>
           </div>
@@ -95,7 +94,7 @@ export function SetGrid({
             items={sets}
             onFiltered={setFilteredSets}
             searchKey="name"
-            placeholder="Søg i sets..."
+            placeholder="Search sets..."
           />
         </div>
 
@@ -108,7 +107,7 @@ export function SetGrid({
               onClick={() => handleSort("name")}
               className="text-xs"
             >
-              Navn {getSortIcon("name")}
+              Name {getSortIcon("name")}
             </Button>
             <Button
               variant={sortBy === "created" ? "default" : "outline"}
@@ -117,7 +116,7 @@ export function SetGrid({
               className="text-xs"
             >
               <Calendar className="h-3 w-3 mr-1" />
-              Dato {getSortIcon("created")}
+              Date {getSortIcon("created")}
             </Button>
             <Button
               variant={sortBy === "cardCount" ? "default" : "outline"}
@@ -126,7 +125,7 @@ export function SetGrid({
               className="text-xs"
             >
               <Hash className="h-3 w-3 mr-1" />
-              Kort {getSortIcon("cardCount")}
+              Cards {getSortIcon("cardCount")}
             </Button>
           </div>
 
@@ -151,12 +150,12 @@ export function SetGrid({
       </div>
 
       {/* Stats */}
-      <div className="flex items-center gap-4 text-sm text-gray-600">
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span>
-          Viser {sortedSets.length} af {sets.length} sets
+          Showing {sortedSets.length} of {sets.length} sets
         </span>
         <Badge variant="outline">
-          {sets.reduce((total, set) => total + (set.cardCount || 0), 0)} kort i alt
+          {sets.reduce((total, set) => total + (set.cardCount || 0), 0)} cards total
         </Badge>
       </div>
 
@@ -176,17 +175,17 @@ export function SetGrid({
       ) : (
         <div className="space-y-4">
           {sortedSets.map((set) => (
-            <Card key={set.id} className="hover:shadow-md transition-shadow">
+            <Card key={set.id}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold truncate">{set.name}</h3>
-                      <Badge variant="secondary">{set.cardCount} kort</Badge>
+                      <Badge variant="secondary">{set.cardCount} cards</Badge>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      Oprettet{" "}
-                      {new Date(set.createdAt).toLocaleDateString("da-DK")}
+                    <p className="text-xs text-muted-foreground">
+                      Created{" "}
+                      {new Date(set.createdAt).toLocaleDateString("en-US")}
                     </p>
                   </div>
 
@@ -209,7 +208,7 @@ export function SetGrid({
         <Card>
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center">
-              <p className="text-gray-500">Ingen sets matcher din søgning</p>
+              <p className="text-muted-foreground">No sets match your search</p>
             </div>
           </CardContent>
         </Card>

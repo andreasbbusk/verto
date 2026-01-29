@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@/modules/components/ui/button";
 import { Label } from "@/modules/components/ui/label";
 import { Textarea } from "@/modules/components/ui/textarea";
-import { CardPreviewList } from "./card-preview-list";
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
-import type { ParsedFlashcard } from "@/modules/types";
+import type { ParsedFlashcard } from "@/modules/types/types";
 import { AlertCircle } from "lucide-react";
 
 interface JsonImportInputProps {
@@ -12,7 +12,6 @@ interface JsonImportInputProps {
   onChange: (value: string) => void;
   parsedCards: ParsedFlashcard[];
   parseError: string | null;
-  onRemoveCard: (index: number) => void;
 }
 
 function parseJsonFlashcards(text: string): {
@@ -55,10 +54,10 @@ function parseJsonFlashcards(text: string): {
         error = "Front side cannot be empty";
       } else if (!back.trim()) {
         error = "Back side cannot be empty";
-      } else if (front.length > 1000) {
-        error = "Front side exceeds 1000 characters";
-      } else if (back.length > 1000) {
-        error = "Back side exceeds 1000 characters";
+      } else if (front.length > 300) {
+        error = "Front side exceeds 300 characters";
+      } else if (back.length > 300) {
+        error = "Back side exceeds 300 characters";
       } else if (starred !== undefined && typeof starred !== "boolean") {
         error = "Invalid 'starred' field (must be boolean)";
       }
@@ -85,10 +84,56 @@ export function JsonImportInput({
   onChange,
   parsedCards,
   parseError,
-  onRemoveCard,
 }: JsonImportInputProps) {
+  const jsonSample = `[
+  {
+    "front": "What is TypeScript?",
+    "back": "A typed superset of JavaScript",
+    "starred": false
+  },
+  {
+    "front": "What is React?",
+    "back": "A JavaScript library for building UIs"
+  }
+]`;
+  const validCount = parsedCards.filter((card) => !card.error).length;
+
+  const handleCopySample = async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(jsonSample);
+    } catch (error) {
+      // Ignore clipboard errors
+    }
+  };
+
   return (
     <div className="space-y-4">
+      <div className="rounded-xl border border-border/60 bg-muted/30 p-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
+              JSON example
+            </p>
+            <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap">
+              {jsonSample}
+            </pre>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCopySample}
+            className="self-start"
+          >
+            Copy sample
+          </Button>
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="json-input" className="text-body-sm font-medium">
           JSON Data
@@ -117,6 +162,12 @@ export function JsonImportInput({
           and <code className="px-1 py-0.5 bg-muted rounded">back</code> fields.{" "}
           <code className="px-1 py-0.5 bg-muted rounded">starred</code> is optional.
         </p>
+        {parsedCards.length > 0 && !parseError && (
+          <p className="text-xs text-muted-foreground">
+            Valid cards: <span className="text-foreground font-mono">{validCount}</span>/{" "}
+            {parsedCards.length}
+          </p>
+        )}
       </div>
 
       {parseError && (
@@ -126,12 +177,6 @@ export function JsonImportInput({
         </Alert>
       )}
 
-      {parsedCards.length > 0 && !parseError && (
-        <div className="space-y-2">
-          <Label className="text-body-sm font-medium">Preview</Label>
-          <CardPreviewList cards={parsedCards} onRemove={onRemoveCard} />
-        </div>
-      )}
     </div>
   );
 }

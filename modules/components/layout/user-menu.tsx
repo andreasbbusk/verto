@@ -1,21 +1,35 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/modules/stores/authStore";
-import { Button } from "@/modules/components/ui/button";
+import { getUser, signOut } from "@/modules/server/actions/auth";
 import { Avatar } from "@/modules/components/ui/avatar";
+import { Button } from "@/modules/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/modules/components/ui/popover";
-import { Settings, LogOut, EllipsisVertical } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
+import { EllipsisVertical, LogOut, Settings } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function UserMenu() {
-  const { user, logout } = useAuthStore();
-  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getUser().then((user) => {
+      if (isMounted) {
+        setUser(user);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (!user) {
     return null;
@@ -23,11 +37,11 @@ export function UserMenu() {
 
   const handleLogout = async () => {
     try {
-      await logout();
-      toast.success("Du er nu logget ud");
-      router.push("/");
+      await signOut();
     } catch (error) {
-      toast.error("Fejl ved logout");
+      if (error instanceof Error && !error.message.includes("NEXT_REDIRECT")) {
+        toast.error("Error during logout");
+      }
     }
   };
 
@@ -36,20 +50,22 @@ export function UserMenu() {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-full justify-between flex gap-3 px-3 py-5 rounded-lg transition-colors"
+          className="w-full justify-between flex gap-3 px-3 py-5 rounded-xl transition-colors text-sidebar-foreground border-sidebar-border bg-sidebar hover:bg-sidebar-accent hover:translate-y-0"
         >
           <div className="flex items-center gap-3">
             <Avatar className="h-6 w-6">
               <div className="flex items-center justify-center w-full h-full bg-primary text-primary-foreground text-sm font-semibold rounded-full">
-                {user.name.charAt(0).toUpperCase()}
+                {user.user_metadata?.name?.charAt(0).toUpperCase() ||
+                  user.email?.charAt(0).toUpperCase() ||
+                  "U"}
               </div>
             </Avatar>
-            <span className="text-sm font-medium text-foreground truncate">
-              {user.name}
+            <span className="text-sm font-medium text-sidebar-foreground truncate">
+              {user.user_metadata?.name || user.email}
             </span>
           </div>
           <div>
-            <EllipsisVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <EllipsisVertical className="h-4 w-4 text-sidebar-foreground/70 flex-shrink-0" />
           </div>
         </Button>
       </PopoverTrigger>
@@ -62,7 +78,7 @@ export function UserMenu() {
           >
             <Link href="/settings" className="flex items-center gap-3">
               <Settings className="h-4 w-4" />
-              <span>Indstillinger</span>
+              <span>Settings</span>
             </Link>
           </Button>
           <Button
@@ -71,7 +87,7 @@ export function UserMenu() {
             onClick={handleLogout}
           >
             <LogOut className="mr-3 h-4 w-4" />
-            <span>Log ud</span>
+            <span>Log out</span>
           </Button>
         </div>
       </PopoverContent>

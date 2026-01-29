@@ -16,7 +16,7 @@ import type {
   Flashcard,
   CreateFlashcardData,
   UpdateFlashcardData,
-} from "@/modules/types";
+} from "@/modules/types/types";
 
 interface FlashcardFormProps {
   flashcard?: Flashcard;
@@ -42,11 +42,11 @@ export function FlashcardForm({
     const newErrors: Record<string, string> = {};
 
     if (!formData.front.trim()) {
-      newErrors.front = "Forsiden er påkrævet";
+      newErrors.front = "Front is required";
     }
 
     if (!formData.back.trim()) {
-      newErrors.back = "Bagsiden er påkrævet";
+      newErrors.back = "Back is required";
     }
 
     setErrors(newErrors);
@@ -57,7 +57,7 @@ export function FlashcardForm({
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Ret venligst fejlene og prøv igen");
+      toast.error("Please fix the errors and try again");
       return;
     }
 
@@ -69,7 +69,7 @@ export function FlashcardForm({
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Kunne ikke gemme flashcard"
+        error instanceof Error ? error.message : "Could not save flashcard"
       );
     }
   };
@@ -88,18 +88,19 @@ export function FlashcardForm({
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle>
-          {flashcard ? "Rediger Flashcard" : "Opret Nyt Flashcard"}
+          {flashcard ? "Edit Flashcard" : "Create New Flashcard"}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="front">Forside</Label>
+            <Label htmlFor="front">Front</Label>
             <Textarea
               id="front"
               value={formData.front}
               onChange={handleInputChange("front")}
-              placeholder="Indtast spørgsmål eller udtryk for forsiden"
+               placeholder="Enter a question or prompt for the front"
+
               rows={3}
               className={errors.front ? "border-red-500" : ""}
             />
@@ -109,12 +110,13 @@ export function FlashcardForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="back">Bagside</Label>
+            <Label htmlFor="back">Back</Label>
             <Textarea
               id="back"
               value={formData.back}
               onChange={handleInputChange("back")}
-              placeholder="Indtast svar eller forklaring for bagsiden"
+               placeholder="Enter the answer or explanation for the back"
+
               rows={3}
               className={errors.back ? "border-red-500" : ""}
             />
@@ -126,10 +128,10 @@ export function FlashcardForm({
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button type="submit" disabled={isLoading} className="flex-1">
               {isLoading
-                ? "Gemmer..."
+                ? "Saving..."
                 : flashcard
-                ? "Opdater Flashcard"
-                : "Opret Flashcard"}
+                ? "Update Flashcard"
+                : "Create Flashcard"}
             </Button>
             <Button
               type="button"
@@ -138,7 +140,7 @@ export function FlashcardForm({
               disabled={isLoading}
               className="flex-1"
             >
-              Annuller
+              Cancel
             </Button>
           </div>
         </form>
