@@ -22,7 +22,6 @@ import type {
 } from "@/modules/types/types";
 import { BookOpen, Play, PlusCircle, X } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SetCard } from "./set-card";
@@ -62,8 +61,11 @@ function SetsGrid({ sets, onEdit, onDelete }: SetsGridProps) {
   );
 }
 
-export function SetsView() {
-  const searchParams = useSearchParams();
+type SetsViewProps = {
+  shouldOpenCreate?: boolean;
+};
+
+export function SetsView({ shouldOpenCreate }: SetsViewProps) {
   const { sets, error } = useSets();
   const studyProgress = useStudyProgressStore((state) => state.progress);
   const { create, update, remove } = useSetsMutations();
@@ -78,10 +80,10 @@ export function SetsView() {
 
   // Check for create URL param and auto-open dialog
   useEffect(() => {
-    if (searchParams.get("create") === "true") {
+    if (shouldOpenCreate) {
       setDialogOpen(true);
     }
-  }, [searchParams]);
+  }, [shouldOpenCreate]);
 
   const handleCreate = async (data: CreateSetData) => {
     try {
