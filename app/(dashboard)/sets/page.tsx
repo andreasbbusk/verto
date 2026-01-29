@@ -3,9 +3,9 @@ import { SetsView } from "@/modules/components/sets/sets-page";
 import { setsQuery } from "@/modules/data/shared/setsQueryOptions";
 
 type SetsPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     create?: string;
-  };
+  }>;
 };
 
 export default async function SetsPage({ searchParams }: SetsPageProps) {
@@ -13,7 +13,8 @@ export default async function SetsPage({ searchParams }: SetsPageProps) {
 
   await queryClient.prefetchQuery(setsQuery());
 
-  const shouldOpenCreate = searchParams?.create === "true";
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const shouldOpenCreate = resolvedSearchParams?.create === "true";
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -12,6 +12,7 @@ import {
 } from "@/modules/components/ui/alert-dialog";
 import { Button } from "@/modules/components/ui/button";
 import { Card, CardFooter } from "@/modules/components/ui/card";
+import { usePrefetchSetById } from "@/modules/data/client/hooks/queries/useSets.client";
 import type { FlashcardSet } from "@/modules/types/types";
 import { Edit, Play, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -32,6 +33,7 @@ export function SetCard({
   showActions = true,
 }: SetCardProps) {
   const router = useRouter();
+  const prefetchSetById = usePrefetchSetById();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -53,11 +55,18 @@ export function SetCard({
     router.push(`/sets/${set.id}`);
   };
 
+  const handlePrefetch = () => {
+    prefetchSetById(set.id);
+    router.prefetch(`/sets/${set.id}`);
+    router.prefetch(`/study/${set.id}`);
+  };
+
   return (
     <>
       <Card
         className="group h-full cursor-pointer overflow-hidden p-0 gap-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#111111]"
         onClick={handleCardClick}
+        onMouseEnter={handlePrefetch}
       >
         <div className="flex min-h-[160px]">
           <div className="w-1.5 bg-primary" />

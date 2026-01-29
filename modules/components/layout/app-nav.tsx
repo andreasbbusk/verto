@@ -26,7 +26,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/modules/components/ui/tooltip";
-import { useSets } from "@/modules/data/client/hooks/queries/useSets.client";
+import {
+  usePrefetchSetById,
+  useSets,
+} from "@/modules/data/client/hooks/queries/useSets.client";
 import { cn } from "@/modules/lib/utils";
 import { useStudyProgressStore } from "@/modules/stores/study-progress.store";
 import { motion } from "framer-motion";
@@ -68,11 +71,14 @@ interface AppNavigationProps {
 }
 
 function SetMenuItem({ set, isActive }: { set: any; isActive: boolean }) {
+  const prefetchSetById = usePrefetchSetById();
   const MAX_LENGTH = 20;
   const isTruncated = set.name.length > MAX_LENGTH;
   const displayName = isTruncated
     ? `${set.name.slice(0, MAX_LENGTH)}...`
     : set.name;
+
+  const handlePrefetch = () => prefetchSetById(set.id);
 
   return (
     <SidebarMenuSubItem className="relative">
@@ -94,6 +100,7 @@ function SetMenuItem({ set, isActive }: { set: any; isActive: boolean }) {
               <Link
                 href={`/sets/${set.id}`}
                 className="flex items-center gap-2 w-full min-w-0"
+                onMouseEnter={handlePrefetch}
               >
                 <span className="text-xs text-sidebar-foreground/70 w-6 flex-shrink-0 ml-1">
                   {set.cardCount || 0}
@@ -116,6 +123,7 @@ function SetMenuItem({ set, isActive }: { set: any; isActive: boolean }) {
 export function AppNavigation({ children }: AppNavigationProps) {
   const pathname = usePathname();
   const { sets, isLoading } = useSets();
+  const prefetchSetById = usePrefetchSetById();
   const studyProgress = useStudyProgressStore((state) => state.progress);
   const [setsExpanded, setSetsExpanded] = useState(true);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -384,6 +392,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                         <Link
                           href={`/sets/${set.id}`}
                           className="flex items-center"
+                          onMouseEnter={() => prefetchSetById(set.id)}
                         >
                           <span className="text-sm font-medium truncate">
                             {set.name}
