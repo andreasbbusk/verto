@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { mapProfile } from "@/modules/server/mappers/profile";
 import { authenticateRequest } from "@/modules/server/auth-helpers";
+import { createAdminClient } from "@/modules/server/supabase/admin";
 import { createClient } from "@/modules/server/supabase/server";
 import type { Profile, UpdateProfileData } from "@/modules/types/types";
 
@@ -53,4 +55,61 @@ export async function updateProfile(data: UpdateProfileData): Promise<Profile> {
   }
 
   return mapProfile(updatedProfile);
+}
+
+export async function deleteProfile(): Promise<{ deletedAuthUser: boolean }> {
+  const authResult = await authenticateRequest();
+
+  if (!authResult.success) {
+    throw new Error(authResult.error);
+  }
+
+  const supabase = await createClient();
+  const userId = authResult.user.id;
+
+  const { error: flashcardsError } = await supabase
+    .from("flashcards")
+    .delete()
+    .eq("user_id", userId);
+
+  if (flashcardsError) {
+    throw new Error("Failed to delete flashcards");
+  }
+
+  const { error: setsError } = await supabase
+    .from("sets")
+    .delete()
+    .eq("user_id", userId);
+
+  if (setsError) {
+    throw new Error("Failed to delete sets");
+  }
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", userId);
+
+  if (profileError) {
+    throw new Error("Failed to delete profile");
+  }
+
+  let deletedAuthUser = false;
+  const adminClient = createAdminClient();
+
+  if (adminClient) {
+    const { error: authDeleteError } =
+      await adminClient.auth.admin.deleteUser(userId);
+
+    if (authDeleteError) {
+      throw new Error("Failed to delete authentication account");
+    }
+
+    deletedAuthUser = true;
+  }
+
+  await supabase.auth.signOut({ scope: "local" });
+  revalidatePath("/", "layout");
+
+  return { deletedAuthUser };
 }

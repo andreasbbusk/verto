@@ -1,16 +1,27 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Kalam, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/modules/components/ui/sonner";
 import { AppLayout } from "@/modules/components/layout/app-layout";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600"],
+});
+
+const kalam = Kalam({
+  variable: "--font-kalam",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["300", "400", "700"],
 });
 
 export const metadata = {
@@ -26,7 +37,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${plusJakarta.variable} ${inter.variable} ${kalam.variable} antialiased`}
       >
         <AppLayout>{children}</AppLayout>
         <Toaster />

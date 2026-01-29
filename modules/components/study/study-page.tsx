@@ -25,7 +25,7 @@ export function StudyView({ setId }: StudyViewProps) {
                 href="/sets"
                 className="text-blue-600 hover:text-blue-800 underline"
               >
-                Tilbage til sets
+                Back to sets
               </Link>
             </div>
           </CardContent>
@@ -41,13 +41,13 @@ export function StudyView({ setId }: StudyViewProps) {
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center space-y-4">
               <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg">
-                Ingen flashcards fundet i dette set
+                No flashcards found in this set
               </div>
               <Link
                 href="/sets"
                 className="text-blue-600 hover:text-blue-800 underline"
               >
-                Tilbage til sets
+                Back to sets
               </Link>
             </div>
           </CardContent>

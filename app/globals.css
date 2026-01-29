@@ -6,64 +6,64 @@ html {
 }
 
 @theme inline {
-  /* Base Colors - Pure neutral blacks and whites */
-  --color-background: oklch(0.1822 0 0);
-  --color-foreground: oklch(0.97 0 0);
-  --color-card: oklch(0.22 0 0);
-  --color-card-foreground: oklch(0.97 0 0);
-  --color-popover: oklch(0.1822 0 0);
-  --color-popover-foreground: oklch(0.97 0 0);
+  /* Base Colors - 2586 Labs */
+  --color-background: #fffcf2;
+  --color-foreground: #111111;
+  --color-card: #fffcf2;
+  --color-card-foreground: #111111;
+  --color-popover: #fffcf2;
+  --color-popover-foreground: #111111;
 
-  /* Accent & Primary - Osmo Supply Orange */
-  --color-primary: oklch(0.668 0.2212 33.71);
-  --color-primary-foreground: oklch(0.08 0 0);
+  /* Accent & Primary - Mustard */
+  --color-primary: #eccb45;
+  --color-primary-foreground: #111111;
 
-  /* Secondary - Subtle grays */
-  --color-secondary: oklch(0.22 0 0);
-  --color-secondary-foreground: oklch(0.97 0 0);
+  /* Secondary - Dark panel */
+  --color-secondary: #111111;
+  --color-secondary-foreground: #fffcf2;
 
-  /* Muted - Neutral grays */
-  --color-muted: oklch(0.22 0 0);
-  --color-muted-foreground: oklch(0.55 0 0);
+  /* Muted - Warm neutrals */
+  --color-muted: #f7f1e4;
+  --color-muted-foreground: #888888;
 
-  /* Accent Hover States - Lighter blacks */
-  --color-accent: oklch(0.22 0 0);
-  --color-accent-foreground: oklch(0.97 0 0);
+  /* Accent Hover States */
+  --color-accent: #eccb45;
+  --color-accent-foreground: #111111;
 
-  /* Destructive - Keep red for errors */
-  --color-destructive: oklch(0.55 0.22 25);
-  --color-destructive-foreground: oklch(0.97 0 0);
+  /* Destructive */
+  --color-destructive: #b42318;
+  --color-destructive-foreground: #fffcf2;
 
-  /* Borders & Input - Pure neutral */
-  --color-border: oklch(0.35 0 0);
-  --color-input: oklch(0.14 0 0);
-  --color-ring: oklch(0.668 0.2212 33.71);
+  /* Borders & Input */
+  --color-border: rgba(17, 17, 17, 0.18);
+  --color-input: rgba(17, 17, 17, 0.12);
+  --color-ring: #eccb45;
 
-  /* Brand Colors - All unified to Osmo orange */
-  --color-brand: oklch(0.668 0.2212 33.71);
+  /* Brand */
+  --color-brand: #eccb45;
 
-  --color-chart-1: oklch(0.646 0.222 41.116);
-  --color-chart-2: oklch(0.6 0.118 184.704);
-  --color-chart-3: oklch(0.398 0.07 227.392);
-  --color-chart-4: oklch(0.828 0.189 84.429);
-  --color-chart-5: oklch(0.769 0.188 70.08);
+  --color-chart-1: #eccb45;
+  --color-chart-2: #111111;
+  --color-chart-3: #888888;
+  --color-chart-4: #f7e29b;
+  --color-chart-5: #f0d067;
 
-  /* Sidebar Colors - Pure neutral blacks */
-  --color-sidebar: oklch(0.22 0 0);
-  --color-sidebar-foreground: oklch(0.85 0 0);
-  --color-sidebar-primary: oklch(0.97 0 0);
-  --color-sidebar-primary-foreground: oklch(0.10 0 0);
-  --color-sidebar-accent: oklch(0.28 0 0);
-  /* Hover state - lighter than bg */
-  --color-sidebar-accent-foreground: oklch(0.97 0 0);
-  --color-sidebar-accent-active: oklch(0.34 0 0);
-  /* Active state - even lighter */
-  --color-sidebar-border: oklch(0.22 0 0);
-  --color-sidebar-ring: oklch(0.62 0.22 35);
+  /* Sidebar Colors */
+  --color-sidebar: #17130f;
+  --color-sidebar-foreground: #fffcf2;
+  --color-sidebar-primary: #eccb45;
+  --color-sidebar-primary-foreground: #111111;
+  --color-sidebar-accent: #221b14;
+  --color-sidebar-accent-foreground: #fffcf2;
+  --color-sidebar-accent-active: #2b2219;
+  --color-sidebar-border: rgba(255, 252, 242, 0.14);
+  --color-sidebar-ring: #eccb45;
 
   /* Typography */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-plus-jakarta);
+  --font-body: var(--font-inter);
+  --font-hand: var(--font-kalam);
+  --font-mono: var(--font-plus-jakarta);
 }
 
 @layer base {
@@ -72,7 +72,8 @@ html {
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
     font-feature-settings: "rlig"1, "calt"1;
   }
 
@@ -82,12 +83,26 @@ html {
   h4,
   h5,
   h6 {
-    @apply font-mono tracking-tight;
+    @apply font-sans tracking-tight;
   }
+
+  ::selection {
+    background: #eccb45;
+    color: #111111;
+  }
+
 
 }
 
 @layer utilities {
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  .font-hand {
+    font-family: var(--font-hand);
+  }
+
 
   /* Enhanced 3D Transform Utilities for Flashcard Flip */
   .perspective-1500 {

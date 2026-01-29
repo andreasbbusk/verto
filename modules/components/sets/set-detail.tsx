@@ -16,10 +16,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/modules/components/ui/tooltip";
-import { useSetDetailActions } from "@/modules/data/client/hooks/useSetDetailActions.client";
 import { useSetById } from "@/modules/data/client/hooks/queries/useSets.client";
+import { useSetDetailActions } from "@/modules/data/client/hooks/useSetDetailActions.client";
 import type { Flashcard } from "@/modules/types/types";
-import { ChevronDown, Play, PlusCircle } from "lucide-react";
+import { Calendar, ChevronDown, Layers, Play, PlusCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { SetDialog } from "./set-dialog";
@@ -53,8 +53,11 @@ export function SetDetailView({ setId }: SetDetailViewProps) {
   });
 
   const totalReviews = useMemo(() => {
+    if (typeof set?.totalReviews === "number") {
+      return set.totalReviews;
+    }
     return flashcards.reduce((sum, card) => sum + card.reviewCount, 0);
-  }, [flashcards]);
+  }, [flashcards, set?.totalReviews]);
 
   const handleEditCard = useCallback((flashcard: Flashcard) => {
     setEditingCard(flashcard);
@@ -100,87 +103,129 @@ export function SetDetailView({ setId }: SetDetailViewProps) {
     <div className="space-y-8">
       {/* Header */}
       <AnimatedSection>
-        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="font-mono text-4xl font-bold text-foreground tracking-tight">
-                {set.name}
-              </h1>
-              {set.difficulty && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm font-mono text-primary/60 bg-primary/10 px-2 py-1 rounded cursor-pointer">
-                      {set.difficulty}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      Difficulty: {set.difficulty}/5 - Indicates the difficulty
-                      of flashcards in this set
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+        <div className="space-y-4">
+          <div className="flex flex-col gap-4 lg:gap-16 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="font-mono text-4xl font-bold text-foreground tracking-tight">
+                  {set.name}
+                </h1>
+                {set.difficulty && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-sm font-mono text-amber-900 bg-amber-300/90 px-2 py-1 rounded cursor-pointer">
+                        {set.difficulty}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Difficulty: {set.difficulty}/5 - Indicates the
+                        difficulty of flashcards in this set
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              <p className="max-w-2xl text-muted-foreground text-base lg:text-lg">
+                {set.description || "Manage flashcards in this set"}
+              </p>
             </div>
-            <p className="text-muted-foreground mt-2 text-lg">
-              {set.description || "Manage flashcards in this set"}
-            </p>
           </div>
-          <div className="flex gap-2">
-            <Link href={`/study/${set.id}`}>
-              <Button size="sm">
-                <Play className="h-4 w-4 mr-2" />
-                Start Study
-              </Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={handleOpenCardDialog}>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Card
+          <div className="h-px w-full bg-border" />
+        </div>
+      </AnimatedSection>
+
+      <AnimatedSection delay={0.05}>
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start sm:gap-3">
+          <Link href={`/study/${set.id}`} className="w-full sm:w-auto">
+            <Button size="sm" className="w-full sm:w-auto">
+              <Play className="h-4 w-4 mr-2" />
+              Start Study
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Settings
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setSetDialogOpen(true)}>
-                  Edit Set
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleDeleteSet}
-                  className="text-destructive"
-                >
-                  Delete Set
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenCardDialog}
+            className="w-full sm:w-auto"
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Add Card
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+              >
+                Settings
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSetDialogOpen(true)}>
+                Edit Set
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDeleteSet}
+                className="text-destructive"
+              >
+                Delete Set
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </AnimatedSection>
 
       {/* Statistics */}
       <AnimatedSection delay={0.1}>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-          <span>
-            <span className="text-foreground font-mono">
-              {flashcards.length}
-            </span>
-            <span className="ml-1">cards</span>
-          </span>
-          <span className="text-muted-foreground/60">·</span>
-          <span>
-            Created{" "}
-            <span className="text-foreground font-mono">
-              {new Date(set.createdAt).toLocaleDateString("en-US")}
-            </span>
-          </span>
-          <span className="text-muted-foreground/60">·</span>
-          <span>
-            <span className="text-foreground font-mono">{totalReviews}</span>
-            <span className="ml-1">reviews</span>
-          </span>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Card className="gap-4 border-foreground/20 px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground/20 bg-background">
+                <Layers className="h-4 w-4 text-foreground" />
+              </div>
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
+                  Cards
+                </div>
+                <div className="text-2xl font-mono font-semibold text-foreground">
+                  {flashcards.length}
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card className="gap-4 border-foreground/20 px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground/20 bg-background">
+                <Calendar className="h-4 w-4 text-foreground" />
+              </div>
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
+                  Created
+                </div>
+                <div className="text-lg font-mono font-semibold text-foreground">
+                  {new Date(set.createdAt).toLocaleDateString("en-US")}
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card className="gap-4 border-foreground/20 px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground/20 bg-background">
+                <Sparkles className="h-4 w-4 text-foreground" />
+              </div>
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
+                  Reviews
+                </div>
+                <div className="text-2xl font-mono font-semibold text-foreground">
+                  {totalReviews}
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
       </AnimatedSection>
 

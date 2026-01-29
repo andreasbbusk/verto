@@ -82,10 +82,10 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-light tracking-tight mb-2 text-zinc-950">
+        <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground font-sans">
           Sign In
         </h1>
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-muted-foreground">
           Enter your email and password to access your flashcards
         </p>
       </div>
@@ -119,7 +119,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
             <div className="space-y-2">
               <Label
                 htmlFor={field.name}
-                className="text-xs uppercase tracking-wide text-zinc-500"
+                className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
               >
                 Email
               </Label>
@@ -146,16 +146,12 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
                       aria-describedby={
                         inlineError ? `${field.name}-error` : undefined
                       }
-                      className={
-                        inlineError
-                          ? "border-red-500 bg-white text-zinc-950"
-                          : "bg-white text-zinc-950 border-zinc-300"
-                      }
+                      className={inlineError ? "border-destructive" : ""}
                     />
                     {inlineError && (
                       <p
                         id={`${field.name}-error`}
-                        className="text-sm text-red-500"
+                        className="text-sm text-destructive"
                       >
                         {inlineError}
                       </p>
@@ -182,7 +178,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
             <div className="space-y-2">
               <Label
                 htmlFor={field.name}
-                className="text-xs uppercase tracking-wide text-zinc-500"
+                className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
               >
                 Password
               </Label>
@@ -210,17 +206,13 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
                         aria-describedby={
                           inlineError ? `${field.name}-error` : undefined
                         }
-                        className={
-                          inlineError
-                            ? "border-red-500 bg-white text-zinc-950"
-                            : "bg-white text-zinc-950 border-zinc-300"
-                        }
+                        className={inlineError ? "border-destructive" : ""}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         disabled={emailLoading || googleLoading}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-950 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground transition-colors"
                       >
                         {showPassword ? "Hide password" : "Show password"}
                       </button>
@@ -228,7 +220,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
                     {inlineError && (
                       <p
                         id={`${field.name}-error`}
-                        className="text-sm text-red-500"
+                        className="text-sm text-destructive"
                       >
                         {inlineError}
                       </p>
@@ -246,7 +238,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
           {([canSubmit, isSubmitting]) => (
             <Button
               type="submit"
-              className="w-full bg-zinc-950 text-white hover:bg-zinc-800"
+              className="w-full"
               disabled={
                 !canSubmit || emailLoading || googleLoading || isSubmitting
               }
@@ -258,8 +250,8 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
       </form>
 
       <div className="my-6">
-        <Separator className="relative bg-zinc-300">
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-stone-100 px-2 text-xs text-zinc-500">
+        <Separator className="relative bg-foreground/10">
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
             or continue with
           </span>
         </Separator>
@@ -268,7 +260,7 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
       <Button
         type="button"
         variant="outline"
-        className="w-full border-zinc-300 bg-white text-zinc-950 hover:bg-zinc-50 hover:text-zinc-950"
+        className="w-full"
         onClick={handleGoogleSignIn}
         disabled={emailLoading || googleLoading}
       >
@@ -294,20 +286,20 @@ export function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
       </Button>
 
       <div className="mt-6 text-center">
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
           {onSwitchToSignUp ? (
             <button
               onClick={onSwitchToSignUp}
               disabled={emailLoading || googleLoading}
-              className="text-zinc-950 hover:underline underline-offset-4 font-medium"
+              className="text-foreground hover:underline underline-offset-4 font-medium"
             >
               Sign up here
             </button>
           ) : (
             <Link
               href="/signup"
-              className="text-zinc-950 hover:underline underline-offset-4 font-medium"
+              className="text-foreground hover:underline underline-offset-4 font-medium"
             >
               Sign up here
             </Link>

@@ -40,6 +40,23 @@ export const updateFlashcardSchema = z.object({
   starred: z
     .boolean()
     .optional(),
+  reviewCount: z
+    .number()
+    .int()
+    .min(0, 'Review count must be 0 or greater')
+    .optional(),
+  performance: z
+    .object({
+      easeFactor: z.number().optional(),
+      interval: z.number().optional(),
+      repetitions: z.number().int().optional(),
+      nextReview: z.string().optional(),
+      lastReviewed: z.string().optional(),
+      difficulty: z.number().optional(),
+      correctStreak: z.number().int().optional(),
+      totalReviews: z.number().int().optional(),
+    })
+    .optional(),
 });
 
 export type CreateFlashcardInput = z.infer<typeof createFlashcardSchema>;

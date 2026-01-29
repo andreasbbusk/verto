@@ -95,7 +95,7 @@ function SetMenuItem({ set, isActive }: { set: any; isActive: boolean }) {
                 href={`/sets/${set.id}`}
                 className="flex items-center gap-2 w-full min-w-0"
               >
-                <span className="text-xs text-muted-foreground w-6 flex-shrink-0 ml-1">
+                <span className="text-xs text-sidebar-foreground/70 w-6 flex-shrink-0 ml-1">
                   {set.cardCount || 0}
                 </span>
                 <span className="text-sm flex-1">{displayName}</span>
@@ -184,7 +184,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
             </Link>
           </div>
         </SidebarHeader>
-        <SidebarSeparator className="mx-0 bg-border/80" />
+        <SidebarSeparator className="mx-0 bg-sidebar-border" />
 
         {/* Sidebar Content */}
         <SidebarContent className="py-4 overflow-x-hidden">
@@ -194,7 +194,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => setCommandPaletteOpen(true)}
-                className="h-10 w-full justify-start gap-2 text-muted-foreground bg-background hover:bg-accent/50 border-border/60"
+                className="h-10 w-full justify-start gap-2 text-sidebar-foreground/70 bg-sidebar hover:bg-sidebar-accent hover:text-sidebar-foreground border-sidebar-border"
               >
                 <Search className="h-4 w-4 shrink-0" />
                 <span className="flex-1 text-left">Search...</span>
@@ -209,7 +209,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="mx-3 bg-border/80" />
+          <SidebarSeparator className="mx-3 bg-sidebar-border" />
 
           {/* Main Navigation */}
           <SidebarGroup>
@@ -287,7 +287,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                                     ))}
                                   </div>
                                 ) : sets.length === 0 ? (
-                                  <p className="px-3 py-2 text-xs text-muted-foreground">
+                                  <p className="px-3 py-2 text-xs text-sidebar-foreground/70">
                                     No sets yet
                                   </p>
                                 ) : (
@@ -357,7 +357,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="mx-3 bg-border/80" />
+          <SidebarSeparator className="mx-3 bg-sidebar-border" />
 
           <SidebarGroup>
             <SidebarGroupLabel className="px-4 py-2 mb-2 font-mono text-md">
@@ -365,7 +365,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               {recentSets.length === 0 ? (
-                <p className="px-4 py-2 text-xs text-muted-foreground">
+                <p className="px-4 py-2 text-xs text-sidebar-foreground/70">
                   No recent sets yet
                 </p>
               ) : (

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import FlashcardComponent from "@/modules/components/flashcards/flashcard";
 import { ProgressBar } from "./progress-bar";
 import { StudyControls } from "./study-controls";
-import { QuickEditDialog } from "./quick-edit-dialog";
 import { Card, CardContent } from "@/modules/components/ui/card";
 import { Button } from "@/modules/components/ui/button";
 import {
@@ -18,8 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/modules/components/ui/alert-dialog";
-import { toast } from "sonner";
 import type { Flashcard } from "@/modules/types/types";
+import { useQuery } from "@tanstack/react-query";
+import { profileQuery } from "@/modules/data/shared/profileQueryOptions";
+import { useProfileMutations } from "@/modules/data/client/hooks/mutations/useProfile.client";
 import { useFlashcardMutations } from "@/modules/data/client/hooks/mutations/useFlashcards.client";
 import { useStudyProgressStore } from "@/modules/stores/study-progress.store";
 import { useCardOrderStore } from "@/modules/stores/card-order.store";
@@ -41,8 +42,12 @@ export function StudyInterface({
 }: StudyInterfaceProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+  const flipLabelTimeoutRef = useRef<number | null>(null);
   const { getProgress, saveProgress, clearProgress } = useStudyProgressStore();
   const { getCardOrder } = useCardOrderStore();
+  const { data: profile } = useQuery(profileQuery());
+  const profileMutations = useProfileMutations();
+  const flashcardMutations = useFlashcardMutations(setId);
 
   const orderedFlashcards = useMemo(() => {
     if (!setId) return flashcards;
@@ -67,19 +72,26 @@ export function StudyInterface({
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [earmarkLabel, setEarmarkLabel] = useState("Front");
   const [studyCards, setStudyCards] = useState(orderedFlashcards);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [filterStarredOnly, setFilterStarredOnly] = useState(false);
   const [exitAlertOpen, setExitAlertOpen] = useState(false);
 
-  const flashcardMutations = useFlashcardMutations(setId);
-
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStudyCards(orderedFlashcards);
     setCurrentIndex((prev) =>
       Math.min(prev, Math.max(orderedFlashcards.length - 1, 0)),
     );
   }, [orderedFlashcards]);
+
+  useEffect(() => {
+    return () => {
+      if (flipLabelTimeoutRef.current) {
+        window.clearTimeout(flipLabelTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Apply starred filter
   const displayCards = filterStarredOnly
@@ -99,10 +111,10 @@ export function StudyInterface({
 
   // Restore focus after dialogs close
   useEffect(() => {
-    if (!editDialogOpen && !exitAlertOpen && containerRef.current) {
+    if (!exitAlertOpen && containerRef.current) {
       containerRef.current.focus();
     }
-  }, [editDialogOpen, exitAlertOpen]);
+  }, [exitAlertOpen]);
 
   // Save progress whenever currentIndex changes
   useEffect(() => {
@@ -111,6 +123,24 @@ export function StudyInterface({
     }
   }, [currentIndex, displayCards.length, setId, saveProgress]);
 
+  const buildReviewedCard = useCallback(
+    (card: Flashcard) => ({
+      ...card,
+      reviewCount: card.reviewCount + 1,
+      performance: {
+        ...card.performance,
+        lastReviewed: new Date().toISOString(),
+        nextReview: new Date(
+          Date.now() + setDifficulty * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+        repetitions: (card.performance?.repetitions || 0) + 1,
+        easeFactor: card.performance?.easeFactor || 2.5,
+        interval: setDifficulty,
+      },
+    }),
+    [setDifficulty],
+  );
+
   const goToNext = useCallback(() => {
     if (studyCards.length > 0) {
       // Record that the current card was viewed if it was flipped
@@ -118,25 +148,24 @@ export function StudyInterface({
         const currentCard = studyCards[currentIndex];
 
         // Simple spaced repetition - just increment review count and use set difficulty
-        const updatedCard = {
-          ...currentCard,
-          reviewCount: currentCard.reviewCount + 1,
-          performance: {
-            ...currentCard.performance,
-            lastReviewed: new Date().toISOString(),
-            nextReview: new Date(
-              Date.now() + setDifficulty * 24 * 60 * 60 * 1000,
-            ).toISOString(),
-            repetitions: (currentCard.performance?.repetitions || 0) + 1,
-            easeFactor: currentCard.performance?.easeFactor || 2.5,
-            interval: setDifficulty,
-          },
-        } as Flashcard;
+        const updatedCard = buildReviewedCard(currentCard);
 
         // Update the cards array with the new data
         setStudyCards((prev) =>
           prev.map((card, idx) => (idx === currentIndex ? updatedCard : card)),
         );
+
+        flashcardMutations
+          .update({
+            cardId: currentCard.id,
+            data: {
+              reviewCount: updatedCard.reviewCount,
+              performance: updatedCard.performance,
+            },
+          })
+          .catch(() => {
+            // Error toast handled in mutation
+          });
 
         // Call the optional update handler
         if (onFlashcardUpdate) {
@@ -150,7 +179,7 @@ export function StudyInterface({
         setIsFlipped(false);
       }
     }
-  }, [studyCards, currentIndex, isFlipped, setDifficulty, onFlashcardUpdate]);
+  }, [studyCards, currentIndex, isFlipped, buildReviewedCard, onFlashcardUpdate, flashcardMutations]);
 
   const goToPrevious = useCallback(() => {
     if (studyCards.length > 0) {
@@ -197,58 +226,50 @@ export function StudyInterface({
     }
   }, [router, setId, currentIndex, displayCards.length, saveProgress]);
 
+  const finishStudy = useCallback(async () => {
+    const cardsStudied = displayCards.length;
+
+    if (isFlipped && displayCards.length > 0) {
+      const currentCard = displayCards[currentIndex];
+      const updatedCard = buildReviewedCard(currentCard);
+
+      flashcardMutations
+        .update({
+          cardId: currentCard.id,
+          data: {
+            reviewCount: updatedCard.reviewCount,
+            performance: updatedCard.performance,
+          },
+        })
+        .catch(() => {
+          // Error toast handled in mutation
+        });
+    }
+
+    if (cardsStudied > 0 && profile) {
+      try {
+        await profileMutations.update({
+          totalStudySessions: profile.totalStudySessions + 1,
+          totalCardsStudied: profile.totalCardsStudied + cardsStudied,
+        });
+      } catch (error) {
+        // Errors are handled in the mutation hook
+      }
+    }
+
+    exitStudy();
+  }, [displayCards, currentIndex, isFlipped, buildReviewedCard, flashcardMutations, profile, profileMutations, exitStudy]);
+
   const handleFlipCard = useCallback(() => {
     setIsFlipped((prev) => !prev);
+    if (flipLabelTimeoutRef.current) {
+      window.clearTimeout(flipLabelTimeoutRef.current);
+    }
+    flipLabelTimeoutRef.current = window.setTimeout(() => {
+      setEarmarkLabel((prev) => (prev === "Front" ? "Back" : "Front"));
+      flipLabelTimeoutRef.current = null;
+    }, 400);
   }, []);
-
-  const handleToggleStar = useCallback(
-    async (flashcard: Flashcard) => {
-      try {
-        const updatedCard = await flashcardMutations.update({
-          cardId: flashcard.id,
-          data: { starred: !flashcard.starred },
-        });
-
-        setStudyCards((prev) =>
-          prev.map((card) => (card.id === flashcard.id ? updatedCard : card)),
-        );
-
-        toast.success(
-          updatedCard.starred ? "Added to favorites" : "Removed from favorites",
-        );
-      } catch (error) {
-        toast.error("Could not update flashcard");
-        console.error(error);
-      }
-    },
-    [flashcardMutations],
-  );
-
-  const handleEdit = useCallback(() => {
-    setEditDialogOpen(true);
-  }, []);
-
-  const handleSaveEdit = useCallback(
-    async (flashcard: Flashcard, updates: { front: string; back: string }) => {
-      try {
-        const updatedCard = await flashcardMutations.update({
-          cardId: flashcard.id,
-          data: updates,
-        });
-
-        setStudyCards((prev) =>
-          prev.map((card) => (card.id === flashcard.id ? updatedCard : card)),
-        );
-
-        toast.success("Flashcard updated");
-      } catch (error) {
-        toast.error("Could not update flashcard");
-        console.error(error);
-        throw error;
-      }
-    },
-    [flashcardMutations],
-  );
 
   // Keyboard navigation
   useEffect(() => {
@@ -259,7 +280,7 @@ export function StudyInterface({
         return;
       }
 
-      if (editDialogOpen || exitAlertOpen) return;
+      if (exitAlertOpen) return;
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
@@ -283,7 +304,6 @@ export function StudyInterface({
     goToNext,
     goToPrevious,
     handleFlipCard,
-    editDialogOpen,
     exitAlertOpen,
   ]);
 
@@ -345,44 +365,37 @@ export function StudyInterface({
 
         {/* Flashcard - centered with more top spacing */}
         <div className="flex-1 flex items-center justify-center">
-          <FlashcardComponent
-            flashcard={currentCard}
-            isFlipped={isFlipped}
-            onFlip={handleFlipCard}
-            onEdit={handleEdit}
-            onToggleStar={() => handleToggleStar(currentCard)}
-            showEditButton={true}
-            className="w-full max-w-2xl"
-          />
+            <FlashcardComponent
+              flashcard={currentCard}
+              isFlipped={isFlipped}
+              onFlip={handleFlipCard}
+              earmarkNumber={currentIndex + 1}
+              earmarkLabel={earmarkLabel}
+              className="w-full max-w-2xl"
+            />
         </div>
       </div>
 
       {/* Controls - Sticky at bottom */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg z-10">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-[0_-8px_20px_-16px_rgba(255,252,242,0.9)] z-10">
         <div className="max-w-5xl mx-auto px-6 py-3">
-          <StudyControls
-            currentIndex={currentIndex}
-            totalCards={displayCards.length}
-            isFlipped={isFlipped}
-            onPrevious={goToPrevious}
-            onNext={goToNext}
-            onFlip={handleFlipCard}
-            onExit={() => setExitAlertOpen(true)}
-            onShuffle={shuffleCards}
-            filterStarredOnly={filterStarredOnly}
-            onToggleStarredFilter={toggleStarredFilter}
-            onResetProgress={handleResetProgress}
-          />
+            <StudyControls
+              currentIndex={currentIndex}
+              totalCards={displayCards.length}
+              isFlipped={isFlipped}
+              onPrevious={goToPrevious}
+              onNext={goToNext}
+              onFlip={handleFlipCard}
+              onExit={() => setExitAlertOpen(true)}
+              onFinish={finishStudy}
+              isFinishing={profileMutations.isUpdating}
+              onShuffle={shuffleCards}
+              filterStarredOnly={filterStarredOnly}
+              onToggleStarredFilter={toggleStarredFilter}
+              onResetProgress={handleResetProgress}
+            />
         </div>
       </div>
-
-      {/* Quick Edit Dialog */}
-      <QuickEditDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        flashcard={currentCard}
-        onSave={handleSaveEdit}
-      />
 
       {/* Exit Confirmation Dialog */}
       <AlertDialog open={exitAlertOpen} onOpenChange={setExitAlertOpen}>

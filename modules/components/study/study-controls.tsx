@@ -20,12 +20,14 @@ interface StudyControlsProps {
   onNext: () => void;
   onFlip: () => void;
   onExit: () => void;
+  onFinish?: () => void;
   onShuffle?: () => void;
   onSettings?: () => void;
   onModeChange?: () => void;
   filterStarredOnly?: boolean;
   onToggleStarredFilter?: () => void;
   onResetProgress?: () => void;
+  isFinishing?: boolean;
   className?: string;
 }
 
@@ -37,12 +39,14 @@ export function StudyControls({
   onNext,
   onFlip,
   onExit,
+  onFinish,
   onShuffle,
   onSettings,
   onModeChange,
   filterStarredOnly = false,
   onToggleStarredFilter,
   onResetProgress,
+  isFinishing = false,
   className,
 }: StudyControlsProps) {
   const isFirstCard = currentIndex === 0;
@@ -80,15 +84,31 @@ export function StudyControls({
             </Badge>
           </div>
 
-          <Button
+          {isLastCard ? (
+            <Button
+              variant="default"
+              size="lg"
+              onClick={onFinish ?? onExit}
+              disabled={isFinishing}
+              className="flex-1 max-w-32"
+            >
+              {isFinishing ? "Finishing..." : "Finish"}
+            </Button>
+          ) : (
+            <Button
               variant="outline"
               size="lg"
               onClick={onNext}
-              disabled={totalCards <= 1 || isLastCard}
+              disabled={totalCards <= 1}
               className="flex-1 max-w-32"
             >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+
+        <div className="text-center text-xs text-muted-foreground">
+          Click the card or use ↑ ↓ to flip
         </div>
 
         {/* Secondary Controls */}
@@ -109,11 +129,11 @@ export function StudyControls({
                 variant="outline"
                 size="sm"
                 onClick={onResetProgress}
-                title="Start fra begyndelsen (R)"
+                title="Start from beginning (R)"
                 className="gap-1.5"
               >
                 <RotateCcw className="h-4 w-4" />
-                <span className="text-xs hidden sm:inline">Nulstil</span>
+                <span className="text-xs hidden sm:inline">Reset</span>
               </Button>
             )}
           </div>
@@ -136,7 +156,7 @@ export function StudyControls({
                 size="sm"
                 onClick={onToggleStarredFilter}
                 title={
-                  filterStarredOnly ? "Vis alle kort" : "Vis kun favoritter"
+                  filterStarredOnly ? "Show all cards" : "Show favorites only"
                 }
                 className="gap-1.5"
               >

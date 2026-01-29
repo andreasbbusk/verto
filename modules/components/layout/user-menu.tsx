@@ -40,7 +40,7 @@ export function UserMenu() {
       await signOut();
     } catch (error) {
       if (error instanceof Error && !error.message.includes("NEXT_REDIRECT")) {
-        toast.error("Fejl ved logout");
+        toast.error("Error during logout");
       }
     }
   };
@@ -50,7 +50,7 @@ export function UserMenu() {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-full justify-between flex gap-3 px-3 py-5 rounded-lg transition-colors"
+          className="w-full justify-between flex gap-3 px-3 py-5 rounded-xl transition-colors text-sidebar-foreground border-sidebar-border bg-sidebar hover:bg-sidebar-accent hover:translate-y-0"
         >
           <div className="flex items-center gap-3">
             <Avatar className="h-6 w-6">
@@ -60,12 +60,12 @@ export function UserMenu() {
                   "U"}
               </div>
             </Avatar>
-            <span className="text-sm font-medium text-foreground truncate">
+            <span className="text-sm font-medium text-sidebar-foreground truncate">
               {user.user_metadata?.name || user.email}
             </span>
           </div>
           <div>
-            <EllipsisVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <EllipsisVertical className="h-4 w-4 text-sidebar-foreground/70 flex-shrink-0" />
           </div>
         </Button>
       </PopoverTrigger>
@@ -78,7 +78,7 @@ export function UserMenu() {
           >
             <Link href="/settings" className="flex items-center gap-3">
               <Settings className="h-4 w-4" />
-              <span>Indstillinger</span>
+              <span>Settings</span>
             </Link>
           </Button>
           <Button
@@ -87,7 +87,7 @@ export function UserMenu() {
             onClick={handleLogout}
           >
             <LogOut className="mr-3 h-4 w-4" />
-            <span>Log ud</span>
+            <span>Log out</span>
           </Button>
         </div>
       </PopoverContent>

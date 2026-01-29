@@ -95,15 +95,14 @@ export function SetForm({
               type="text"
               value={formData.name}
               onChange={handleInputChange("name")}
-               placeholder="Enter a descriptive name for your set"
-
-              className={errors.name ? "border-red-500" : ""}
+              placeholder="Enter a descriptive name for your set"
+              className={errors.name ? "border-destructive" : ""}
               maxLength={50}
             />
             {errors.name && (
-              <p className="text-sm text-red-600">{errors.name}</p>
+              <p className="text-sm text-destructive">{errors.name}</p>
             )}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {formData.name.length}/50 characters
             </p>
           </div>
@@ -114,17 +113,16 @@ export function SetForm({
               id="description"
               value={formData.description}
               onChange={handleInputChange("description")}
-               placeholder="Add a description of what this set contains"
-
+              placeholder="Add a description of what this set contains"
               rows={3}
-              className={errors.description ? "border-red-500" : ""}
-              maxLength={200}
+              className={errors.description ? "border-destructive" : ""}
+              maxLength={1000}
             />
             {errors.description && (
-              <p className="text-sm text-red-600">{errors.description}</p>
+              <p className="text-sm text-destructive">{errors.description}</p>
             )}
-            <p className="text-xs text-gray-500">
-              {formData.description.length}/200 characters
+            <p className="text-xs text-muted-foreground">
+              {formData.description.length}/1000 characters
             </p>
           </div>
 

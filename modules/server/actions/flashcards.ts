@@ -140,6 +140,12 @@ export async function updateFlashcard(
   if (validation.data.starred !== undefined) {
     updateData.starred = validation.data.starred;
   }
+  if (validation.data.reviewCount !== undefined) {
+    updateData.review_count = validation.data.reviewCount;
+  }
+  if (validation.data.performance !== undefined) {
+    updateData.performance = validation.data.performance;
+  }
 
   const { data: updatedCard, error } = await supabase
     .from("flashcards")

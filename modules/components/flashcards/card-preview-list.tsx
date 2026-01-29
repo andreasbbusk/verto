@@ -16,7 +16,7 @@ export function CardPreviewList({ cards, onRemove }: CardPreviewListProps) {
   if (cards.length === 0) {
     return (
       <p className="text-center p-8 text-sm text-muted-foreground">
-        Ingen kort at vise
+        No cards to show
       </p>
     );
   }

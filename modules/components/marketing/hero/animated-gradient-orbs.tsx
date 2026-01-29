@@ -62,33 +62,32 @@ export function AnimatedGradientOrbs() {
       className="absolute inset-0 overflow-hidden pointer-events-none"
       aria-hidden="true"
     >
-      {/* Orb 1 - Orange */}
+      {/* Orb 1 - Mustard */}
       <div
         ref={orb1Ref}
         className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full blur-3xl opacity-20"
         style={{
           background:
-            "radial-gradient(circle, oklch(0.668 0.2212 33.71) 0%, transparent 70%)",
+            "radial-gradient(circle, #ECCB45 0%, transparent 70%)",
         }}
       />
 
-      {/* Orb 2 - White */}
+      {/* Orb 2 - Cream */}
       <div
         ref={orb2Ref}
         className="absolute top-1/2 right-1/4 w-[400px] h-[400px] rounded-full blur-3xl opacity-10"
         style={{
-          background:
-            "radial-gradient(circle, oklch(0.97 0 0) 0%, transparent 70%)",
+          background: "radial-gradient(circle, #FFFCF2 0%, transparent 70%)",
         }}
       />
 
-      {/* Orb 3 - Orange accent */}
+      {/* Orb 3 - Mustard accent */}
       <div
         ref={orb3Ref}
         className="absolute bottom-1/4 left-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-15"
         style={{
           background:
-            "radial-gradient(circle, oklch(0.668 0.2212 33.71) 0%, transparent 70%)",
+            "radial-gradient(circle, #ECCB45 0%, transparent 70%)",
         }}
       />
     </div>

@@ -170,13 +170,13 @@ export function SetDialog({
               placeholder="Add a description of what this set contains"
               rows={4}
               className={errors.description ? "border-destructive" : ""}
-              maxLength={200}
+              maxLength={1000}
             />
             {errors.description && (
               <p className="text-xs text-destructive">{errors.description}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              {formData.description.length}/200 characters
+              {formData.description.length}/1000 characters
             </p>
           </div>
 

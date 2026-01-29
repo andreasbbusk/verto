@@ -14,14 +14,16 @@ import { Button } from "@/modules/components/ui/button";
 import { Card } from "@/modules/components/ui/card";
 import { useSetsMutations } from "@/modules/data/client/hooks/mutations/useSets.client";
 import { useSets } from "@/modules/data/client/hooks/queries/useSets.client";
+import { useStudyProgressStore } from "@/modules/stores/study-progress.store";
 import type {
   CreateSetData,
   FlashcardSet,
   UpdateSetData,
 } from "@/modules/types/types";
-import { BookOpen, PlusCircle } from "lucide-react";
+import { BookOpen, Play, PlusCircle, X } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SetCard } from "./set-card";
 import { SetDialog } from "./set-dialog";
@@ -31,6 +33,15 @@ interface SetsGridProps {
   onEdit: (set: FlashcardSet) => void;
   onDelete: (set: FlashcardSet) => void;
 }
+
+type ContinueStudyEntry = {
+  set: FlashcardSet;
+  progress: {
+    currentIndex: number;
+    lastStudied: string;
+    totalCards: number;
+  };
+};
 
 function SetsGrid({ sets, onEdit, onDelete }: SetsGridProps) {
   return (
@@ -53,13 +64,17 @@ function SetsGrid({ sets, onEdit, onDelete }: SetsGridProps) {
 
 export function SetsView() {
   const searchParams = useSearchParams();
-  const { sets, isLoading, error } = useSets();
+  const { sets, error } = useSets();
+  const studyProgress = useStudyProgressStore((state) => state.progress);
   const { create, update, remove } = useSetsMutations();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [setToDelete, setSetToDelete] = useState<FlashcardSet | null>(null);
+  const [dismissedContinueSetIds, setDismissedContinueSetIds] = useState<string[]>(
+    [],
+  );
 
   // Check for create URL param and auto-open dialog
   useEffect(() => {
@@ -117,12 +132,9 @@ export function SetsView() {
 
     try {
       await remove(setToDelete.id);
-      toast.success("Set deleted!");
       setDeleteDialogOpen(false);
       setSetToDelete(null);
-    } catch (error) {
-      toast.error("Could not delete set");
-    }
+    } catch {}
   };
 
   const handleDialogChange = (open: boolean) => {
@@ -135,30 +147,83 @@ export function SetsView() {
     }
   };
 
+  useEffect(() => {
+    const stored = localStorage.getItem("dismissed-continue-sets");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as string[];
+        if (Array.isArray(parsed)) {
+          setDismissedContinueSetIds(parsed);
+        }
+      } catch {}
+    }
+  }, []);
+
+  const totalCards = useMemo(() => {
+    return sets.reduce((sum, set) => sum + (set.cardCount ?? 0), 0);
+  }, [sets]);
+
+  const continueStudy = useMemo<ContinueStudyEntry | null>(() => {
+    if (sets.length === 0) return null;
+
+    const setMap = new Map(sets.map((set) => [set.id, set]));
+    const candidates = Object.entries(studyProgress)
+      .map(([setId, progress]) => ({ set: setMap.get(setId), progress }))
+      .filter((entry): entry is ContinueStudyEntry => Boolean(entry.set));
+
+    const sorted = candidates.sort(
+      (a, b) =>
+        new Date(b.progress.lastStudied).getTime() -
+        new Date(a.progress.lastStudied).getTime(),
+    );
+
+    const now = Date.now();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+    for (const entry of sorted) {
+      if (dismissedContinueSetIds.includes(entry.set.id)) continue;
+      const lastStudiedTime = new Date(entry.progress.lastStudied).getTime();
+      if (Number.isNaN(lastStudiedTime)) continue;
+      if (now - lastStudiedTime > sevenDaysMs) continue;
+      if (entry.progress.totalCards <= 0) continue;
+      if (entry.progress.currentIndex >= entry.progress.totalCards - 1) continue;
+      return entry;
+    }
+
+    return null;
+  }, [dismissedContinueSetIds, sets, studyProgress]);
+
+  const handleDismissContinue = (setId: string) => {
+    setDismissedContinueSetIds((prev) => {
+      const next = prev.includes(setId) ? prev : [...prev, setId];
+      localStorage.setItem("dismissed-continue-sets", JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
-          <div>
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-2">
             <h1 className="font-mono text-4xl font-bold text-foreground tracking-tight">
               Flashcard sets
             </h1>
-            <p className="text-muted-foreground mt-2 text-sm">
+            <p className="text-muted-foreground text-sm">
               Manage your sets here.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setDialogOpen(true)}
-              size="sm"
-              className="transition-all hover:shadow-md hover:shadow-primary/20"
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              New set
-            </Button>
-          </div>
+          <Button
+            onClick={() => setDialogOpen(true)}
+            size="sm"
+            className="w-full transition-all hover:shadow-md hover:shadow-primary/20 lg:w-auto"
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            New set
+          </Button>
         </div>
+        <div className="h-px w-full bg-border" />
       </div>
 
       {/* Dialogs */}
@@ -217,21 +282,54 @@ export function SetsView() {
               </div>
               <div>
                 <h3 className="font-mono font-bold text-lg text-foreground mb-2">
-                  No sets found
+                  Create your first set
                 </h3>
                 <p className="text-muted-foreground text-sm">
-                  Create your first flashcard set to get started
+                  Build a focused deck and start studying in minutes.
                 </p>
               </div>
               <Button onClick={() => setDialogOpen(true)} size="sm">
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Create first set
+                New set
               </Button>
             </div>
           </Card>
         ) : (
           <div className="animate-in fade-in duration-300">
-            <SetsGrid sets={sets} onEdit={handleEdit} onDelete={handleDelete} />
+            <div className="space-y-6">
+              {continueStudy?.set && (
+                <Card className="p-3 w-full sm:max-w-md">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Continue studying</p>
+                        <p className="font-mono text-sm text-foreground">
+                          {continueStudy.set.name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/study/${continueStudy.set.id}`}>
+                        <Button size="sm" variant="outline">
+                          <Play className="h-4 w-4 mr-2" />
+                          Continue
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDismissContinue(continueStudy.set.id)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              <SetsGrid sets={sets} onEdit={handleEdit} onDelete={handleDelete} />
+            </div>
           </div>
         )}
       </div>

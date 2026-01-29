@@ -29,19 +29,18 @@ export function FlashcardList({
   onCreate,
   showActions = true,
 }: FlashcardListProps) {
-  const { getCardOrder } = useCardOrderStore();
+  // Get setId from first flashcard (all cards should have same setId)
+  const setId = flashcards[0]?.setId;
+  const savedOrder = useCardOrderStore((state) =>
+    setId ? state.cardOrders[setId] : undefined,
+  );
   const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Get setId from first flashcard (all cards should have same setId)
-  const setId = flashcards[0]?.setId;
-
   // Apply saved order to flashcards
   const orderedFlashcards = useMemo(() => {
     if (!setId) return flashcards;
-
-    const savedOrder = getCardOrder(setId);
     if (!savedOrder || savedOrder.length === 0) return flashcards;
 
     // Create a map for quick lookup
@@ -57,7 +56,7 @@ export function FlashcardList({
     const newCards = flashcards.filter((card) => !validOrder.includes(card.id));
 
     return [...orderedCards, ...newCards];
-  }, [flashcards, setId, getCardOrder]);
+  }, [flashcards, setId, savedOrder]);
 
   const { filteredByType, starredCount } = useMemo(() => {
     let starred = 0;
@@ -143,7 +142,7 @@ export function FlashcardList({
               <BookOpen className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="font-mono font-bold text-lg text-foreground mb-2">
+              <h3 className="font-sans font-bold text-lg text-foreground mb-2">
                 No flashcards
               </h3>
               <p className="text-muted-foreground text-sm">
@@ -165,7 +164,7 @@ export function FlashcardList({
               <BookOpen className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="font-mono font-bold text-lg text-foreground mb-2">
+              <h3 className="font-sans font-bold text-lg text-foreground mb-2">
                 No cards match the filter
               </h3>
               <p className="text-muted-foreground text-sm">
@@ -185,7 +184,9 @@ export function FlashcardList({
         <Card>
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center">
-              <p className="text-gray-500">No flashcards match your search</p>
+              <p className="text-muted-foreground">
+                No flashcards match your search
+              </p>
             </div>
           </CardContent>
         </Card>
