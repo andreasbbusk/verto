@@ -13,7 +13,10 @@ import {
 import { Button } from "@/modules/components/ui/button";
 import { Card } from "@/modules/components/ui/card";
 import { useSetsMutations } from "@/modules/data/client/hooks/mutations/useSets.client";
-import { useSets } from "@/modules/data/client/hooks/queries/useSets.client";
+import {
+  usePrefetchSetById,
+  useSets,
+} from "@/modules/data/client/hooks/queries/useSets.client";
 import { useStudyProgressStore } from "@/modules/stores/study-progress.store";
 import type {
   CreateSetData,
@@ -67,6 +70,7 @@ type SetsViewProps = {
 
 export function SetsView({ shouldOpenCreate }: SetsViewProps) {
   const { sets, error } = useSets();
+  const prefetchSetById = usePrefetchSetById();
   const studyProgress = useStudyProgressStore((state) => state.progress);
   const { create, update, remove } = useSetsMutations();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -311,7 +315,10 @@ export function SetsView({ shouldOpenCreate }: SetsViewProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Link href={`/study/${continueStudy.set.id}`}>
+                      <Link
+                        href={`/study/${continueStudy.set.id}`}
+                        onMouseEnter={() => prefetchSetById(continueStudy.set.id)}
+                      >
                         <Button size="sm" variant="outline">
                           <Play className="h-4 w-4 mr-2" />
                           Continue

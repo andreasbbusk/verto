@@ -31,3 +31,12 @@ export function useSetById(id: string) {
       queryClient.invalidateQueries({ queryKey: queryKeys.setById(id) }),
   };
 }
+
+export function usePrefetchSetById() {
+  const queryClient = useQueryClient();
+
+  return (id: string) => {
+    if (!id) return;
+    return queryClient.prefetchQuery(setByIdQuery(id));
+  };
+}
