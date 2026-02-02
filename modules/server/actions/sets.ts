@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { mapSet } from "@/modules/server/mappers/sets";
 import { createClient } from "@/modules/server/supabase/server";
 import { createSetSchema, updateSetSchema } from "@/modules/schemas/set.schema";
-import type { CreateSetData, UpdateSetData, FlashcardSet } from "@/modules/types/types";
+import type {
+  CreateSetData,
+  UpdateSetData,
+  FlashcardSet,
+  SetStats,
+} from "@/modules/types/types";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -24,8 +29,8 @@ export async function getSets(): Promise<FlashcardSet[]> {
   const { supabase } = await requireUser();
 
   const { data, error } = await supabase
-    .from("sets_with_counts")
-    .select("*")
+    .from("sets")
+    .select("*, set_stats(*), flashcards(count)")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -44,7 +49,7 @@ export async function getSetById(id: string): Promise<FlashcardSet> {
 
   const { data, error } = await supabase
     .from("sets")
-    .select("*, flashcards(*)")
+    .select("*, set_stats(*), flashcards(*)")
     .eq("id", id)
     .order("created_at", { referencedTable: "flashcards", ascending: true })
     .single();
@@ -98,15 +103,25 @@ export async function createSet(data: CreateSetData): Promise<FlashcardSet> {
     throw new Error("Failed to create set");
   }
 
-  const { data: withCount } = await supabase
-    .from("sets_with_counts")
-    .select("*")
+  const { error: statsError } = await supabase
+    .from("set_stats")
+    .insert({ set_id: newSet.id })
+    .select("set_id")
+    .single();
+
+  if (statsError) {
+    throw new Error("Failed to create set stats");
+  }
+
+  const { data: withStats } = await supabase
+    .from("sets")
+    .select("*, set_stats(*), flashcards(count)")
     .eq("id", newSet.id)
     .single();
 
   revalidatePath("/sets");
 
-  return mapSet(withCount ?? newSet);
+  return mapSet(withStats ?? newSet);
 }
 
 export async function updateSet(
@@ -143,22 +158,16 @@ export async function updateSet(
     .from("sets")
     .update(updateData)
     .eq("id", id)
-    .select("*")
+    .select("*, set_stats(*), flashcards(count)")
     .single();
 
   if (error || !updatedSet) {
     throw new Error("Set not found");
   }
 
-  const { data: withCount } = await supabase
-    .from("sets_with_counts")
-    .select("*")
-    .eq("id", id)
-    .single();
-
   revalidatePath(`/sets/${id}`);
 
-  return mapSet(withCount ?? updatedSet);
+  return mapSet(updatedSet);
 }
 
 export async function deleteSet(id: string): Promise<FlashcardSet> {
@@ -169,8 +178,8 @@ export async function deleteSet(id: string): Promise<FlashcardSet> {
   const { supabase } = await requireUser();
 
   const { data: existingSet, error: existingError } = await supabase
-    .from("sets_with_counts")
-    .select("*")
+    .from("sets")
+    .select("*, set_stats(*), flashcards(count)")
     .eq("id", id)
     .single();
 
@@ -187,4 +196,66 @@ export async function deleteSet(id: string): Promise<FlashcardSet> {
   revalidatePath("/sets");
 
   return mapSet(existingSet);
+}
+
+export async function recordSetStudySession(setId: string): Promise<SetStats> {
+  if (!setId) {
+    throw new Error("Invalid set ID");
+  }
+
+  const { supabase } = await requireUser();
+
+  const { data: existingStats, error: statsError } = await supabase
+    .from("set_stats")
+    .select("total_reviews, cards_studied, study_sessions")
+    .eq("set_id", setId)
+    .maybeSingle();
+
+  if (statsError) {
+    throw new Error("Failed to fetch set stats");
+  }
+
+  const { data: reviews, error: reviewsError } = await supabase
+    .from("flashcards")
+    .select("review_count")
+    .eq("set_id", setId);
+
+  if (reviewsError) {
+    throw new Error("Failed to fetch flashcard reviews");
+  }
+
+  const totalReviews = (reviews ?? []).reduce(
+    (sum, card) => sum + (card.review_count ?? 0),
+    0,
+  );
+
+  const lastStudiedAt = new Date().toISOString();
+  const { data: updatedStats, error: updateError } = await supabase
+    .from("set_stats")
+    .upsert(
+      {
+        set_id: setId,
+        total_reviews: totalReviews,
+        cards_studied: totalReviews,
+        study_sessions: (existingStats?.study_sessions ?? 0) + 1,
+        last_studied_at: lastStudiedAt,
+      },
+      { onConflict: "set_id" },
+    )
+    .select("total_reviews, cards_studied, study_sessions, last_studied_at")
+    .single();
+
+  if (updateError || !updatedStats) {
+    throw new Error("Failed to update set stats");
+  }
+
+  revalidatePath(`/sets/${setId}`);
+  revalidatePath("/sets");
+
+  return {
+    totalReviews: updatedStats.total_reviews ?? 0,
+    cardsStudied: updatedStats.cards_studied ?? 0,
+    studySessions: updatedStats.study_sessions ?? 0,
+    lastStudiedAt: updatedStats.last_studied_at ?? null,
+  };
 }

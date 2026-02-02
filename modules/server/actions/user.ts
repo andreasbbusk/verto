@@ -5,7 +5,11 @@ import { mapProfile } from "@/modules/server/mappers/profile";
 import { authenticateRequest } from "@/modules/server/auth-helpers";
 import { createAdminClient } from "@/modules/server/supabase/admin";
 import { createClient } from "@/modules/server/supabase/server";
-import type { Profile, UpdateProfileData } from "@/modules/types/types";
+import type {
+  Profile,
+  UpdateProfileData,
+  UpdateProfileStatsData,
+} from "@/modules/types/types";
 
 export async function getMe(): Promise<Profile> {
   const authResult = await authenticateRequest();
@@ -33,6 +37,34 @@ export async function updateProfile(data: UpdateProfileData): Promise<Profile> {
   if (data.theme !== undefined) updateData.theme = data.theme;
   if (data.notifications !== undefined)
     updateData.notifications = data.notifications;
+  if (data.lastLogin !== undefined) updateData.last_login = data.lastLogin;
+
+  const { data: updatedProfile, error } = await supabase
+    .from("profiles")
+    .update(updateData)
+    .eq("id", authResult.user.id)
+    .select("*, profile_stats(*)")
+    .single();
+
+  if (error || !updatedProfile) {
+    throw new Error("Failed to update profile");
+  }
+
+  return mapProfile(updatedProfile);
+}
+
+export async function updateProfileStats(
+  data: UpdateProfileStatsData,
+): Promise<Profile> {
+  const authResult = await authenticateRequest();
+
+  if (!authResult.success) {
+    throw new Error(authResult.error);
+  }
+
+  const supabase = await createClient();
+  const updateData: Record<string, unknown> = {};
+
   if (data.totalStudySessions !== undefined)
     updateData.total_study_sessions = data.totalStudySessions;
   if (data.currentStreak !== undefined)
@@ -41,20 +73,32 @@ export async function updateProfile(data: UpdateProfileData): Promise<Profile> {
     updateData.longest_streak = data.longestStreak;
   if (data.totalCardsStudied !== undefined)
     updateData.total_cards_studied = data.totalCardsStudied;
-  if (data.lastLogin !== undefined) updateData.last_login = data.lastLogin;
+  if (data.lastStudiedAt !== undefined)
+    updateData.last_studied_at = data.lastStudiedAt;
 
-  const { data: updatedProfile, error } = await supabase
-    .from("profiles")
-    .update(updateData)
-    .eq("id", authResult.user.id)
-    .select("*")
-    .single();
+  if (Object.keys(updateData).length > 0) {
+    const { error } = await supabase
+      .from("profile_stats")
+      .upsert({ profile_id: authResult.user.id, ...updateData }, {
+        onConflict: "profile_id",
+      });
 
-  if (error || !updatedProfile) {
-    throw new Error("Failed to update profile");
+    if (error) {
+      throw new Error("Failed to update profile stats");
+    }
   }
 
-  return mapProfile(updatedProfile);
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*, profile_stats(*)")
+    .eq("id", authResult.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    throw new Error("Failed to fetch profile");
+  }
+
+  return mapProfile(profile);
 }
 
 export async function deleteProfile(): Promise<{ deletedAuthUser: boolean }> {

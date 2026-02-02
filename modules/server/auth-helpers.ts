@@ -1,4 +1,5 @@
 import { createClient } from "@/modules/server/supabase/server";
+import { mapProfile } from "@/modules/server/mappers/profile";
 import type { Profile } from "@/modules/types/types";
 
 export async function authenticateRequest(): Promise<
@@ -17,7 +18,7 @@ export async function authenticateRequest(): Promise<
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("*")
+    .select("*, profile_stats(*)")
     .eq("id", user.id)
     .single();
 
@@ -25,21 +26,5 @@ export async function authenticateRequest(): Promise<
     return { success: false, error: "User profile not found" };
   }
 
-  const mappedProfile: Profile = {
-    id: profile.id,
-    email: profile.email,
-    name: profile.name,
-    createdAt: profile.created_at,
-    updatedAt: profile.updated_at,
-    lastLogin: profile.last_login,
-    studyGoal: profile.study_goal,
-    theme: profile.theme,
-    notifications: profile.notifications,
-    totalStudySessions: profile.total_study_sessions,
-    currentStreak: profile.current_streak,
-    longestStreak: profile.longest_streak,
-    totalCardsStudied: profile.total_cards_studied,
-  };
-
-  return { success: true, user: mappedProfile };
+  return { success: true, user: mapProfile(profile) };
 }

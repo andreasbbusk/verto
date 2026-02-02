@@ -27,6 +27,10 @@ export async function GET(request: Request) {
               data.user.email!.split("@")[0],
           });
         }
+
+        await supabase
+          .from("profile_stats")
+          .upsert({ profile_id: data.user.id }, { onConflict: "profile_id" });
       } catch (error) {
         console.error("Error ensuring profile exists:", error);
       }

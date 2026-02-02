@@ -91,6 +91,10 @@ export async function signUp(
           name: trimmedName,
         });
       }
+
+      await supabase
+        .from("profile_stats")
+        .upsert({ profile_id: data.user.id }, { onConflict: "profile_id" });
     } catch (profileError) {
       console.error("Error with profile:", profileError);
     }

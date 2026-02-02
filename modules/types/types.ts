@@ -33,8 +33,15 @@ export interface FlashcardSet {
   createdAt: string;
   updatedAt?: string;
   cardCount?: number; // Optional, computed on-the-fly
-  totalReviews?: number; // Optional, computed on-the-fly
+  stats?: SetStats;
   flashcards?: Flashcard[]; // Optional, populated when fetching details
+}
+
+export interface SetStats {
+  totalReviews: number;
+  cardsStudied: number;
+  studySessions: number;
+  lastStudiedAt?: string | null;
 }
 
 // Profile represents the extended user data in profiles table
@@ -48,10 +55,15 @@ export interface Profile {
   studyGoal: number;
   theme: "system" | "light" | "dark";
   notifications: boolean;
+  stats?: ProfileStats;
+}
+
+export interface ProfileStats {
   totalStudySessions: number;
   currentStreak: number;
   longestStreak: number;
   totalCardsStudied: number;
+  lastStudiedAt?: string | null;
 }
 
 // Legacy User type - deprecated, use Profile instead
@@ -156,11 +168,15 @@ export interface UpdateProfileData {
   studyGoal?: number;
   theme?: "system" | "light" | "dark";
   notifications?: boolean;
+  lastLogin?: string;
+}
+
+export interface UpdateProfileStatsData {
   totalStudySessions?: number;
   currentStreak?: number;
   longestStreak?: number;
   totalCardsStudied?: number;
-  lastLogin?: string;
+  lastStudiedAt?: string;
 }
 
 // Legacy types for backwards compatibility
