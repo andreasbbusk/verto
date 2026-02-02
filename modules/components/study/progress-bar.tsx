@@ -40,7 +40,7 @@ export function ProgressBar({
       <div className="relative">
         <div className="w-full bg-muted border rounded-full h-2">
           <div
-            className="bg-primary h-2 -translate-[1px] rounded-full transition-all duration-300 ease-out"
+            className="bg-primary h-2 -translate-px rounded-full transition-all duration-300 ease-out"
             style={{ width: `${percentage}%` }}
           />
         </div>

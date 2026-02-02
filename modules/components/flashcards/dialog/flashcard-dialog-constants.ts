@@ -1,0 +1,1 @@
+export const FLASHCARD_TEXT_LIMIT = 300;

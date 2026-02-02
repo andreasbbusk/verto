@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
-  Settings,
   Shuffle,
   Star,
 } from "lucide-react";
@@ -20,10 +19,8 @@ interface StudyControlsProps {
   onNext: () => void;
   onFlip: () => void;
   onExit: () => void;
-  onFinish?: () => void;
+  onFinish?: () => void | Promise<void>;
   onShuffle?: () => void;
-  onSettings?: () => void;
-  onModeChange?: () => void;
   filterStarredOnly?: boolean;
   onToggleStarredFilter?: () => void;
   onResetProgress?: () => void;
@@ -41,8 +38,6 @@ export function StudyControls({
   onExit,
   onFinish,
   onShuffle,
-  onSettings,
-  onModeChange,
   filterStarredOnly = false,
   onToggleStarredFilter,
   onResetProgress,
@@ -168,16 +163,6 @@ export function StudyControls({
               </Button>
             )}
 
-            {onSettings && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onSettings}
-                title="Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            )}
           </div>
         </div>
       </div>

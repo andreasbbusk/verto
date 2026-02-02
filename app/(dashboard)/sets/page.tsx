@@ -1,5 +1,5 @@
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
-import { SetsView } from "@/modules/components/sets/sets-page";
+import { SetsView } from "@/modules/components/sets/collection/sets-view";
 import { setsQuery } from "@/modules/data/shared/setsQueryOptions";
 
 type SetsPageProps = {

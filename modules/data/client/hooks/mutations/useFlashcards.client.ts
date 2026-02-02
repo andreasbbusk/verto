@@ -9,10 +9,7 @@ import {
   createFlashcardsBulk,
 } from "@/modules/server/actions/flashcards";
 import { queryKeys } from "@/modules/data/shared/queryKeys";
-import type {
-  CreateFlashcardData,
-  UpdateFlashcardData,
-} from "@/modules/types/types";
+import type { CreateFlashcardData, UpdateFlashcardData } from "@/modules/types/types";
 
 export function useFlashcardMutations(setId: string) {
   const queryClient = useQueryClient();
