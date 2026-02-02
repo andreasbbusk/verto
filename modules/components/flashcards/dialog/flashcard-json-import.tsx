@@ -6,8 +6,9 @@ import { Textarea } from "@/modules/components/ui/textarea";
 import { Alert, AlertDescription } from "@/modules/components/ui/alert";
 import type { ParsedFlashcard } from "@/modules/types/types";
 import { AlertCircle } from "lucide-react";
+import { FLASHCARD_TEXT_LIMIT } from "./flashcard-dialog-constants";
 
-interface JsonImportInputProps {
+interface FlashcardJsonImportInputProps {
   value: string;
   onChange: (value: string) => void;
   parsedCards: ParsedFlashcard[];
@@ -25,7 +26,6 @@ function parseJsonFlashcards(text: string): {
   try {
     const parsed = JSON.parse(text);
 
-    // Check if it's an array
     if (!Array.isArray(parsed)) {
       return {
         cards: [],
@@ -33,7 +33,6 @@ function parseJsonFlashcards(text: string): {
       };
     }
 
-    // Validate each card
     const cards: ParsedFlashcard[] = parsed.map((item, index) => {
       if (typeof item !== "object" || item === null) {
         return {
@@ -54,10 +53,10 @@ function parseJsonFlashcards(text: string): {
         error = "Front side cannot be empty";
       } else if (!back.trim()) {
         error = "Back side cannot be empty";
-      } else if (front.length > 300) {
-        error = "Front side exceeds 300 characters";
-      } else if (back.length > 300) {
-        error = "Back side exceeds 300 characters";
+      } else if (front.length > FLASHCARD_TEXT_LIMIT) {
+        error = `Front side exceeds ${FLASHCARD_TEXT_LIMIT} characters`;
+      } else if (back.length > FLASHCARD_TEXT_LIMIT) {
+        error = `Back side exceeds ${FLASHCARD_TEXT_LIMIT} characters`;
       } else if (starred !== undefined && typeof starred !== "boolean") {
         error = "Invalid 'starred' field (must be boolean)";
       }
@@ -71,20 +70,20 @@ function parseJsonFlashcards(text: string): {
     });
 
     return { cards, error: null };
-  } catch (e) {
+  } catch (error) {
     return {
       cards: [],
-      error: `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`,
+      error: `Invalid JSON: ${error instanceof Error ? error.message : "Parse error"}`,
     };
   }
 }
 
-export function JsonImportInput({
+export function FlashcardJsonImportInput({
   value,
   onChange,
   parsedCards,
   parseError,
-}: JsonImportInputProps) {
+}: FlashcardJsonImportInputProps) {
   const jsonSample = `[
   {
     "front": "What is TypeScript?",
@@ -158,13 +157,16 @@ export function JsonImportInput({
           className="font-mono text-xs h-[300px] resize-none overflow-auto whitespace-pre-wrap break-words"
         />
         <p className="text-xs text-muted-foreground">
-          Format: Array of objects with <code className="px-1 py-0.5 bg-muted rounded">front</code>{" "}
-          and <code className="px-1 py-0.5 bg-muted rounded">back</code> fields.{" "}
-          <code className="px-1 py-0.5 bg-muted rounded">starred</code> is optional.
+          Format: Array of objects with{" "}
+          <code className="px-1 py-0.5 bg-muted rounded">front</code> and{" "}
+          <code className="px-1 py-0.5 bg-muted rounded">back</code> fields.{" "}
+          <code className="px-1 py-0.5 bg-muted rounded">starred</code> is
+          optional.
         </p>
         {parsedCards.length > 0 && !parseError && (
           <p className="text-xs text-muted-foreground">
-            Valid cards: <span className="text-foreground font-mono">{validCount}</span>/{" "}
+            Valid cards:{" "}
+            <span className="text-foreground font-mono">{validCount}</span>/{" "}
             {parsedCards.length}
           </p>
         )}
@@ -176,9 +178,9 @@ export function JsonImportInput({
           <AlertDescription className="text-sm">{parseError}</AlertDescription>
         </Alert>
       )}
-
     </div>
   );
 }
 
+export type { FlashcardJsonImportInputProps };
 export { parseJsonFlashcards };

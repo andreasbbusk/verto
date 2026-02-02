@@ -4,14 +4,17 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Star } from "lucide-react";
 import { cn } from "@/modules/lib/utils";
-import type { Flashcard } from "@/modules/types/types";
+import type { Flashcard as FlashcardData } from "@/modules/types/types";
 
-interface MiniCardPreviewProps {
-  flashcard: Flashcard;
+interface FlashcardMiniPreviewProps {
+  flashcard: FlashcardData;
   index: number;
 }
 
-export function MiniCardPreview({ flashcard, index }: MiniCardPreviewProps) {
+export function FlashcardMiniPreview({
+  flashcard,
+  index,
+}: FlashcardMiniPreviewProps) {
   const {
     attributes,
     listeners,
