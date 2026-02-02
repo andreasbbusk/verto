@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 
 interface PageTransitionProps {
   children: ReactNode;

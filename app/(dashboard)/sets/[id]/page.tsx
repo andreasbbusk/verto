@@ -1,6 +1,6 @@
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { SetDetailView } from "@/modules/components/sets/set-detail";
+import { SetDetailView } from "@/modules/components/sets/detail/set-detail-view";
 import { setByIdQuery } from "@/modules/data/shared/setsQueryOptions";
 
 interface SetDetailPageProps {

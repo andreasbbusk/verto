@@ -6,13 +6,15 @@ import { ScrollArea } from "@/modules/components/ui/scroll-area";
 import type { ParsedFlashcard } from "@/modules/types/types";
 import { AlertCircle, X } from "lucide-react";
 
-interface CardPreviewListProps {
+interface FlashcardBatchPreviewProps {
   cards: ParsedFlashcard[];
   onRemove?: (index: number) => void;
 }
 
-export function CardPreviewList({ cards, onRemove }: CardPreviewListProps) {
-
+export function FlashcardBatchPreview({
+  cards,
+  onRemove,
+}: FlashcardBatchPreviewProps) {
   if (cards.length === 0) {
     return (
       <p className="text-center p-8 text-sm text-muted-foreground">
@@ -72,3 +74,5 @@ export function CardPreviewList({ cards, onRemove }: CardPreviewListProps) {
     </div>
   );
 }
+
+export type { FlashcardBatchPreviewProps };

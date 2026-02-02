@@ -65,7 +65,7 @@ export function UserMenu() {
             </span>
           </div>
           <div>
-            <EllipsisVertical className="h-4 w-4 text-sidebar-foreground/70 flex-shrink-0" />
+            <EllipsisVertical className="h-4 w-4 text-sidebar-foreground/70 shrink-0" />
           </div>
         </Button>
       </PopoverTrigger>

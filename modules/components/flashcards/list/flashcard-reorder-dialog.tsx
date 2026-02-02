@@ -10,7 +10,7 @@ import {
 } from "@/modules/components/ui/dialog";
 import { Button } from "@/modules/components/ui/button";
 import { ScrollArea } from "@/modules/components/ui/scroll-area";
-import type { Flashcard } from "@/modules/types/types";
+import type { Flashcard as FlashcardData } from "@/modules/types/types";
 import { useCallback, useState } from "react";
 import {
   DndContext,
@@ -27,22 +27,22 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { MiniCardPreview } from "./mini-card-preview";
+import { FlashcardMiniPreview } from "./flashcard-mini-preview";
 import { useCardOrderStore } from "@/modules/stores/card-order.store";
 
-interface CardReorderDialogProps {
+interface FlashcardReorderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  flashcards: Flashcard[];
+  flashcards: FlashcardData[];
   setId: string;
 }
 
-export function CardReorderDialog({
+export function FlashcardReorderDialog({
   open,
   onOpenChange,
   flashcards,
   setId,
-}: CardReorderDialogProps) {
+}: FlashcardReorderDialogProps) {
   const { getCardOrder, setCardOrder } = useCardOrderStore();
   const getInitialOrder = useCallback(() => {
     const savedOrder = getCardOrder(setId);
@@ -57,11 +57,10 @@ export function CardReorderDialog({
     return flashcards;
   }, [flashcards, setId, getCardOrder]);
 
-  const [orderedCards, setOrderedCards] = useState<Flashcard[]>(() =>
+  const [orderedCards, setOrderedCards] = useState<FlashcardData[]>(() =>
     getInitialOrder(),
   );
 
-  // Setup dnd-kit sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -123,7 +122,7 @@ export function CardReorderDialog({
             >
               <div className="space-y-2 max-w-md overflow-hidden">
                 {orderedCards.map((flashcard, index) => (
-                  <MiniCardPreview
+                  <FlashcardMiniPreview
                     key={flashcard.id}
                     flashcard={flashcard}
                     index={index}
@@ -153,3 +152,5 @@ export function CardReorderDialog({
     </Dialog>
   );
 }
+
+export type { FlashcardReorderDialogProps };

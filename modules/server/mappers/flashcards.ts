@@ -8,7 +8,7 @@ export function mapFlashcard(row: any): Flashcard {
     front: row.front,
     back: row.back,
     starred: row.starred,
-    reviewCount: row.review_count,
+    reviewCount: row.review_count ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     performance: row.performance,
