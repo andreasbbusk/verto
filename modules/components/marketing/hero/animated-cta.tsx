@@ -1,34 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import {
-  gsap,
-  useIsomorphicLayoutEffect,
-} from "@/modules/components/marketing/gsap/gsap-config";
 import { Button } from "@/modules/components/ui/button";
 
 export function AnimatedCTA() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-  useIsomorphicLayoutEffect(() => {
-    if (!containerRef.current) return;
-
-    const ctx = gsap.context(() => {
-      gsap.from(".cta-button", {
-        opacity: 0,
-        y: 30,
-        stagger: 0.15,
-        duration: 1,
-        ease: "power3.out",
-        delay: 1,
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -43,7 +21,6 @@ export function AnimatedCTA() {
 
   return (
     <div
-      ref={containerRef}
       className="flex flex-col sm:flex-row gap-4"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}

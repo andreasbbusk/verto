@@ -13,8 +13,8 @@ export function MarketingHeader() {
         isVisible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-        <div className="bg-card backdrop-blur-sm rounded-2xl border border-border/50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5">
+        <div className="bg-background rounded-2xl border border-foreground/10 shadow-[0_12px_30px_rgba(8,8,8,0.12)]">
           <div className="flex items-center justify-between px-4 sm:px-6 py-3">
             {/* Left: Logo */}
             <Link

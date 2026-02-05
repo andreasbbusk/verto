@@ -285,7 +285,7 @@ export function FlashcardCardEditable({
         </ScrollArea>
       </div>
 
-      <div className="px-4 py-3 bg-muted/20 border-t border-border/40 flex items-center justify-between flex-shrink-0">
+      <div className="px-4 py-3 bg-muted/20 border-t border-border/40 flex items-center justify-between shrink-0">
         {onToggleStar && (
           <Button
             variant="ghost"

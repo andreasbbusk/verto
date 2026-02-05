@@ -1,77 +1,72 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { BookOpen, Brain, Code, Globe } from "lucide-react";
-import { gsap } from "@/modules/components/marketing/gsap/gsap-config";
-import { Card } from "@/modules/components/ui/card";
+import { Edit, Play } from "lucide-react";
+import { Button } from "@/modules/components/ui/button";
+import { Card, CardFooter } from "@/modules/components/ui/card";
 
 const sets = [
-  { icon: Brain, title: "Psychology", count: 47, color: "primary" },
-  { icon: Code, title: "JavaScript", count: 89, color: "primary" },
-  { icon: Globe, title: "Geography", count: 64, color: "primary" },
-  { icon: BookOpen, title: "Literature", count: 32, color: "primary" },
+  {
+    title: "Cognitive Psychology Essentials",
+    description: "Retrieval practice, spacing effect, encoding specificity.",
+    cards: 28,
+    reviews: 6,
+    created: "Jan 12",
+  },
+  {
+    title: "Neuroscience Foundations",
+    description: "Neurons, synapses, and brain systems for learning.",
+    cards: 34,
+    reviews: 4,
+    created: "Jan 28",
+  },
 ];
 
 export function OrganizationGridDemo() {
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const ctx = gsap.context(() => {
-      // Initial animation
-      gsap.from(cardsRef.current, {
-        scale: 0.8,
-        opacity: 0,
-        stagger: 0.1,
-        duration: 0.6,
-        ease: "back.out(1.4)",
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
-
   return (
-    <div ref={containerRef} className="w-full aspect-[3/2]">
-      {/* Search bar */}
-      <div className="mb-4 p-3 border border-border rounded bg-input">
-        <div className="text-sm text-muted-foreground font-mono">
-          Search sets...
-        </div>
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {sets.map((set, index) => (
+    <div className="w-full max-w-[560px] mx-auto">
+      <div className="grid grid-cols-1 gap-4">
+        {sets.map((set) => (
           <Card
             key={set.title}
-            ref={(el) => {
-              cardsRef.current[index] = el;
-            }}
-            className="p-4 hover:border-primary/50 transition-colors cursor-pointer"
+            className="group max-w-lg overflow-hidden p-0 gap-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#111111]"
           >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded border border-border flex items-center justify-center shrink-0 bg-primary/10">
-                <set.icon className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-mono text-sm font-semibold text-foreground truncate">
+            <div className="flex min-h-[140px]">
+              <div className="w-1.5 bg-primary" />
+              <div className="flex-1 px-5 py-5">
+                <h3 className="font-mono text-base font-bold text-foreground line-clamp-2">
                   {set.title}
+                </h3>
+                <div className="mt-2 min-h-[36px]">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {set.description}
+                  </p>
                 </div>
-                <div className="text-xs text-muted-foreground font-mono mt-1">
-                  {set.count} cards
+                <div className="mt-3 space-y-1 text-xs font-mono text-muted-foreground">
+                  <div>
+                    <span className="text-foreground">{set.cards}</span>
+                    <span className="ml-1">cards</span>
+                  </div>
+                  <div>
+                    <span className="text-foreground">{set.reviews}</span>
+                    <span className="ml-1">reviews</span>
+                  </div>
+                  <div>Created {set.created}</div>
                 </div>
               </div>
             </div>
+            <CardFooter className="border-t border-foreground/10 pt-4 pb-4">
+              <div className="flex w-full flex-col sm:flex-row gap-3 sm:items-center">
+                <Button className="w-full sm:w-36" size="sm">
+                  <Play className="h-3 w-3 mr-2" />
+                  Study
+                </Button>
+                <Button variant="outline" size="sm" className="w-full sm:w-12">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardFooter>
           </Card>
         ))}
-      </div>
-
-      {/* Footer indicator */}
-      <div className="mt-4 text-xs text-muted-foreground font-mono text-center">
-        4 sets • Drag to reorder
       </div>
     </div>
   );
