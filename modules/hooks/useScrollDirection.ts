@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const useScrollDirection = () => {
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     let ticking = false;
@@ -15,15 +15,15 @@ export const useScrollDirection = () => {
       // Only hide if scrolled down more than 80px
       if (scrollY < 80) {
         setIsVisible(true);
-      } else if (scrollY > lastScrollY) {
+      } else if (scrollY > lastScrollY.current) {
         // Scrolling down
         setIsVisible(false);
-      } else if (scrollY < lastScrollY) {
+      } else if (scrollY < lastScrollY.current) {
         // Scrolling up
         setIsVisible(true);
       }
 
-      setLastScrollY(scrollY);
+      lastScrollY.current = scrollY;
       ticking = false;
     };
 
@@ -39,7 +39,7 @@ export const useScrollDirection = () => {
     return () => {
       window.removeEventListener("scroll", onScroll);
     };
-  }, [lastScrollY]);
+  }, []);
 
   return isVisible;
 };

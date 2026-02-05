@@ -207,16 +207,19 @@ export function FlashcardCard({
     <div className={cn("perspective-1500 w-full max-w-md mx-auto", className)}>
       <motion.div
         onClick={toggle}
+        initial={false}
         animate={{
           rotateY: flipped ? 180 : 0,
-          scale: flipped ? [1, 1.02, 1] : [1, 1.02, 1],
         }}
         transition={{
-          duration: 0.8,
-          ease: [0.4, 0.0, 0.2, 1],
-          scale: { duration: 0.8, ease: [0.4, 0.0, 0.2, 1] },
+          duration: 0.65,
+          ease: "easeInOut",
         }}
-        style={{ transformStyle: "preserve-3d" }}
+        style={{
+          transformStyle: "preserve-3d",
+          transformOrigin: "center",
+          willChange: "transform",
+        }}
         className={cn(
           "relative w-full h-80 rounded-xl transition-shadow duration-300 cursor-pointer",
           flipped ? "shadow-3d-lg" : "shadow-3d-md",
@@ -285,7 +288,7 @@ export function FlashcardCardEditable({
         </ScrollArea>
       </div>
 
-      <div className="px-4 py-3 bg-muted/20 border-t border-border/40 flex items-center justify-between flex-shrink-0">
+      <div className="px-4 py-3 bg-muted/20 border-t border-border/40 flex items-center justify-between shrink-0">
         {onToggleStar && (
           <Button
             variant="ghost"
@@ -368,4 +371,3 @@ export function FlashcardCardEditable({
 }
 
 export type { FlashcardCardEditableProps, FlashcardCardProps };
-

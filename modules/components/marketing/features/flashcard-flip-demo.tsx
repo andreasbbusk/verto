@@ -1,72 +1,114 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { gsap } from "@/modules/components/marketing/gsap/gsap-config";
-import { Card } from "@/modules/components/ui/card";
+import { FlashcardCard } from "@/modules/components/flashcards/card/flashcard-card";
+import { Button } from "@/modules/components/ui/button";
+import { marketingCopy } from "@/modules/components/marketing/content";
+import type { Flashcard } from "@/modules/types/types";
+import { AnimatePresence, motion } from "framer-motion";
+import { useMemo, useState } from "react";
 
 export function FlashcardFlipDemo() {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const { flashcard } = marketingCopy.demos;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [starredIds, setStarredIds] = useState<Set<string>>(() => new Set());
 
-  const handleFlip = () => {
-    if (!cardRef.current) return;
+  const activeCard = useMemo(() => {
+    const card = flashcard.cards[activeIndex];
+    return {
+      ...card,
+      setId: flashcard.setId,
+      userId: flashcard.userId,
+      starred: starredIds.has(card.id),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      reviewCount: activeIndex + 1,
+    } satisfies Flashcard;
+  }, [activeIndex, flashcard.cards, flashcard.setId, flashcard.userId, starredIds]);
 
-    gsap.to(cardRef.current, {
-      rotateY: isFlipped ? 0 : 180,
-      duration: 0.6,
-      ease: "power2.inOut",
+  const totalCards = flashcard.cards.length;
+  const progress = ((activeIndex + 1) / totalCards) * 100;
+
+  const handleAdvance = () => {
+    setFlipped(false);
+    setActiveIndex((index) => (index + 1) % totalCards);
+  };
+
+  const handlePrevious = () => {
+    setFlipped(false);
+    setActiveIndex((index) => (index - 1 + totalCards) % totalCards);
+  };
+
+  const handleToggleStar = (flashcard: Flashcard) => {
+    setStarredIds((current) => {
+      const next = new Set(current);
+      if (next.has(flashcard.id)) {
+        next.delete(flashcard.id);
+      } else {
+        next.add(flashcard.id);
+      }
+      return next;
     });
-
-    setIsFlipped(!isFlipped);
   };
 
   return (
-    <div className="relative w-full aspect-[3/2] perspective-1500">
-      <div
-        ref={cardRef}
-        className="relative w-full h-full transform-style-preserve-3d cursor-pointer"
-        onClick={handleFlip}
-        style={{ transformStyle: "preserve-3d" }}
-      >
-        {/* Front */}
-        <Card
-          className="absolute inset-0 backface-hidden flex items-center justify-center p-8 bg-card hover:border-primary/50 transition-colors"
-          style={{ backfaceVisibility: "hidden" }}
-        >
-          <div className="text-center">
-            <div className="text-sm font-mono text-muted-foreground mb-3">
-              QUESTION
-            </div>
-            <div className="text-2xl font-mono text-foreground">
-              What is spaced repetition?
-            </div>
-          </div>
-        </Card>
-
-        {/* Back */}
-        <Card
-          className="absolute inset-0 backface-hidden flex items-center justify-center p-8 bg-primary/10 border-primary/50"
-          style={{
-            backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-          }}
-        >
-          <div className="text-center">
-            <div className="text-sm font-mono text-primary mb-3">ANSWER</div>
-            <div className="text-lg text-foreground leading-relaxed">
-              A learning technique that increases intervals of time between
-              reviews of previously learned material
-            </div>
-          </div>
-        </Card>
+    <div className="marketing-flashcard-soft">
+      <div className="relative mx-auto w-full max-w-2xl">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCard.id}
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.98 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <FlashcardCard
+              flashcard={activeCard}
+              isFlipped={flipped}
+              onFlip={setFlipped}
+              onToggleStar={handleToggleStar}
+              earmarkNumber={activeIndex + 1}
+              earmarkLabel={activeCard.tag}
+              className="w-full max-w-2xl"
+            />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* Hint text */}
-      <div className="absolute -bottom-8 left-0 right-0 text-center">
-        <span className="text-xs text-muted-foreground font-mono">
-          Click to flip
-        </span>
+      <div className="mt-6 rounded-2xl border border-foreground/10 bg-card/70 p-5 lg:p-6">
+        <div className="flex items-center justify-between text-xs font-mono font-semibold uppercase tracking-[0.2em] text-primary">
+          <span>{flashcard.sessionLabel}</span>
+          <span>
+            {activeIndex + 1}/{totalCards}
+          </span>
+        </div>
+        <div className="mt-4 h-1.5 w-full rounded-full bg-foreground/10">
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          />
+        </div>
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Button variant="outline" size="sm" onClick={handlePrevious}>
+            {flashcard.controls.previous}
+          </Button>
+          <Button
+            variant={flipped ? "secondary" : "default"}
+            size="sm"
+            onClick={() => setFlipped((value) => !value)}
+          >
+            {flipped ? flashcard.controls.front : flashcard.controls.flip}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleAdvance}>
+            {flashcard.controls.next}
+          </Button>
+        </div>
       </div>
+
+      <p className="mt-4 text-center text-xs font-mono text-muted-foreground">
+        {flashcard.hint}
+      </p>
     </div>
   );
 }
