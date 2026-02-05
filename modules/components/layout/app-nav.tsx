@@ -2,6 +2,7 @@
 
 import { Button } from "@/modules/components/ui/button";
 import { Kbd } from "@/modules/components/ui/kbd";
+import { VertoLogo } from "@/modules/components/ui/logo";
 import { ScrollArea } from "@/modules/components/ui/scroll-area";
 import {
   Sidebar,
@@ -185,10 +186,13 @@ export function AppNavigation({ children }: AppNavigationProps) {
         {/* Sidebar Header */}
         <SidebarHeader className="px-6 py-4">
           <div className="flex items-center justify-between gap-3">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <span className="text-xl font-semibold text-sidebar-foreground font-mono">
-                Verto
-              </span>
+            <Link href="/dashboard" className="flex items-center gap-3 text-sidebar-foreground">
+              <VertoLogo
+                size="lg"
+                className="text-sidebar-foreground"
+                textClassName="text-xl font-semibold font-mono"
+                iconClassName="text-foreground"
+              />
             </Link>
           </div>
         </SidebarHeader>

@@ -1,11 +1,14 @@
 "use client";
 
 import { Button } from "@/modules/components/ui/button";
+import { VertoLogo } from "@/modules/components/ui/logo";
+import { marketingCopy } from "@/modules/components/marketing/content";
 import { useScrollDirection } from "@/modules/hooks/useScrollDirection";
 import Link from "next/link";
 
 export function MarketingHeader() {
   const isVisible = useScrollDirection();
+  const { header } = marketingCopy;
 
   return (
     <header
@@ -15,41 +18,36 @@ export function MarketingHeader() {
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5">
         <div className="bg-background rounded-2xl border border-foreground/10 shadow-[0_12px_30px_rgba(8,8,8,0.12)]">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 py-3">
             {/* Left: Logo */}
             <Link
               href="/"
-              className="flex items-center text-foreground hover:text-primary transition-colors"
-              aria-label="Verto home"
+              className="text-foreground hover:text-primary transition-colors"
+              aria-label={header.ariaLabel}
             >
-              <span className="font-mono text-base sm:text-lg tracking-tight">
-                Verto
-              </span>
+              <VertoLogo size="md" textClassName="text-base sm:text-lg" />
             </Link>
 
             {/* Center: Desktop Navigation */}
-            <nav className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 gap-8">
-              <a
-                href="#features"
-                className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Features
-              </a>
-              <a
-                href="#how-it-works"
-                className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                How It Works
-              </a>
+            <nav className="hidden lg:flex items-center justify-center gap-8">
+              {header.nav.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {item.label}
+                </a>
+              ))}
             </nav>
 
             {/* Right: Auth Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2">
               <Button variant="ghost" asChild size="sm">
-                <Link href="/login">Sign In</Link>
+                <Link href="/login">{header.auth.signIn}</Link>
               </Button>
               <Button asChild size="sm">
-                <Link href="/signup">Get Started</Link>
+                <Link href="/signup">{header.auth.getStarted}</Link>
               </Button>
             </div>
           </div>

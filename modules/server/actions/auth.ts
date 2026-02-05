@@ -31,10 +31,24 @@ async function resolveOrigin() {
   if (origin) return origin;
 
   const forwardedHost = headerList.get("x-forwarded-host");
-  const forwardedProto = headerList.get("x-forwarded-proto") ?? "https";
+  const forwardedProto = headerList.get("x-forwarded-proto");
+  const host = headerList.get("host");
+  const inferredProto =
+    forwardedProto ??
+    (host?.includes("localhost") || host?.includes("127.0.0.1")
+      ? "http"
+      : "https");
 
   if (forwardedHost) {
-    return `${forwardedProto}://${forwardedHost}`;
+    return `${inferredProto}://${forwardedHost}`;
+  }
+
+  if (host) {
+    return `${inferredProto}://${host}`;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return "http://localhost:3000";
   }
 
   return process.env.NEXT_PUBLIC_SITE_URL ?? "";
