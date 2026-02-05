@@ -1,6 +1,6 @@
-import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { AuthVisual } from "@/modules/components/auth/auth-visual";
+import { VertoLogo } from "@/modules/components/ui/logo";
 
 export default function AuthLayout({
   children,
@@ -14,12 +14,11 @@ export default function AuthLayout({
         {/* Header with Logo */}
         <header className="p-6 lg:p-8">
           <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="w-8 h-8 border-2 border-foreground flex items-center justify-center group-hover:bg-primary transition-colors">
-              <BookOpen className="h-4 w-4 text-foreground group-hover:text-primary-foreground transition-colors" />
-            </div>
-            <span className="font-sans text-lg tracking-tight text-foreground">
-              Verto
-            </span>
+            <VertoLogo
+              size="lg"
+              className="text-foreground"
+              textClassName="font-sans text-lg"
+            />
           </Link>
         </header>
 

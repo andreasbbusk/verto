@@ -144,6 +144,20 @@ html {
       0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 
+  .marketing-flashcard-soft .shadow-3d-md {
+    box-shadow:
+      0 8px 14px -6px rgba(0, 0, 0, 0.22),
+      0 3px 6px -3px rgba(0, 0, 0, 0.16),
+      0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+
+  .marketing-flashcard-soft .shadow-3d-lg {
+    box-shadow:
+      0 14px 22px -10px rgba(0, 0, 0, 0.28),
+      0 6px 10px -6px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+
   /* Animations */
   @keyframes fadeInUp {
     from {

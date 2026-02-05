@@ -2,6 +2,7 @@
 
 import { Button } from "@/modules/components/ui/button";
 import { Kbd } from "@/modules/components/ui/kbd";
+import { VertoLogo } from "@/modules/components/ui/logo";
 import { ScrollArea } from "@/modules/components/ui/scroll-area";
 import {
   Sidebar,
@@ -94,12 +95,12 @@ function SetMenuItem({ set, isActive }: { set: any; isActive: boolean }) {
               className={cn(
                 "hover:bg-sidebar-accent w-full",
                 isActive &&
-                  "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]",
+                  "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
               )}
             >
               <Link
                 href={`/sets/${set.id}`}
-                className="flex items-center gap-2 w-full min-w-0"
+                className="flex items-ce1nter gap-2 w-full min-w-0"
                 onMouseEnter={handlePrefetch}
               >
                 <span className="text-xs text-sidebar-foreground/70 w-6 flex-shrink-0 ml-1">
@@ -151,7 +152,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
       .filter((entry) => setMap.has(entry.setId))
       .sort(
         (a, b) =>
-          new Date(b.lastStudied).getTime() - new Date(a.lastStudied).getTime(),
+          new Date(b.lastStudied).getTime() - new Date(a.lastStudied).getTime()
       )
       .slice(0, 6)
       .map((entry) => ({
@@ -185,10 +186,13 @@ export function AppNavigation({ children }: AppNavigationProps) {
         {/* Sidebar Header */}
         <SidebarHeader className="px-6 py-4">
           <div className="flex items-center justify-between gap-3">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <span className="text-xl font-semibold text-sidebar-foreground font-mono">
-                Verto
-              </span>
+            <Link href="/dashboard" className="flex items-center gap-3 text-sidebar-foreground">
+              <VertoLogo
+                size="lg"
+                className="text-sidebar-foreground"
+                textClassName="text-xl font-semibold font-mono"
+                iconClassName="text-foreground"
+              />
             </Link>
           </div>
         </SidebarHeader>
@@ -243,7 +247,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                               "w-full h-auto py-2 px-3 rounded-md hover:bg-sidebar-accent flex items-center gap-3 transition-colors",
                               active &&
                                 !pathname.includes("/sets/") &&
-                                "bg-[var(--color-sidebar-accent-active)]",
+                                "bg-[var(--color-sidebar-accent-active)]"
                             )}
                           >
                             <Link
@@ -263,7 +267,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                               <ChevronRight
                                 className={cn(
                                   "w-4 h-4 transition-transform",
-                                  setsExpanded && "rotate-90",
+                                  setsExpanded && "rotate-90"
                                 )}
                               />
                             </button>
@@ -328,7 +332,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                         {item.disabled ? (
                           <div
                             className={cn(
-                              "w-full h-auto py-2 px-3 rounded-md flex items-center gap-3 opacity-50 cursor-not-allowed",
+                              "w-full h-auto py-2 px-3 rounded-md flex items-center gap-3 opacity-50 cursor-not-allowed"
                             )}
                           >
                             <Icon className="w-4 h-4 flex-shrink-0" />
@@ -343,7 +347,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                             className={cn(
                               "w-full h-auto py-2 px-3 hover:bg-sidebar-accent",
                               active &&
-                                "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]",
+                                "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
                             )}
                           >
                             <Link
@@ -386,7 +390,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
                         className={cn(
                           "w-full h-auto py-2 px-3 hover:bg-sidebar-accent",
                           isActive(`/sets/${set.id}`) &&
-                            "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]",
+                            "bg-[var(--color-sidebar-accent-active)] hover:bg-[var(--color-sidebar-accent-active)]"
                         )}
                       >
                         <Link
