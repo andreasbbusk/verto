@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { EmbedAppDemo } from "@/modules/components/demo/embed-app-demo";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Verto Demo",
-  description: "Interactive Verto app demo for embedded portfolio previews.",
+  description: "Embedded Verto app demo.",
 };
 
 export default function DemoEmbedPage() {
-  return <EmbedAppDemo />;
+  redirect("/dashboard");
 }

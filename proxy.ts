@@ -1,12 +1,47 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { DEMO_SESSION_COOKIE } from "@/modules/server/demo/constants";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hasDemoSession = request.cookies.get(DEMO_SESSION_COOKIE)?.value === "1";
 
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  const protectedRoutes = [
+    "/dashboard",
+    "/sets",
+    "/cards",
+    "/study",
+    "/calendar",
+    "/settings",
+  ];
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  const authRoutes = ["/login", "/signup"];
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+
+  if (pathname === "/demo/embed") {
+    const demoRedirect = NextResponse.redirect(new URL("/dashboard", request.url));
+    demoRedirect.cookies.set(DEMO_SESSION_COOKIE, "1", {
+      path: "/",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 30,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+    return demoRedirect;
+  }
+
+  if ((pathname === "/" || isAuthRoute) && hasDemoSession) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (isProtectedRoute && hasDemoSession) {
+    return NextResponse.next({ request });
+  }
+
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,23 +72,6 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuthenticated = !!user;
-
-  // Define protected routes
-  const protectedRoutes = [
-    "/dashboard",
-    "/sets",
-    "/cards",
-    "/study",
-    "/calendar",
-    "/settings",
-  ];
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  // Define auth routes
-  const authRoutes = ["/login", "/signup"];
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
   // Redirect unauthenticated users trying to access protected routes
   if (isProtectedRoute && !isAuthenticated) {

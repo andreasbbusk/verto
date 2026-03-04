@@ -24,6 +24,42 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/dashboard/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `frame-ancestors ${embedFrameAncestors}`,
+          },
+        ],
+      },
+      {
+        source: "/sets/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `frame-ancestors ${embedFrameAncestors}`,
+          },
+        ],
+      },
+      {
+        source: "/study/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `frame-ancestors ${embedFrameAncestors}`,
+          },
+        ],
+      },
+      {
+        source: "/settings/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `frame-ancestors ${embedFrameAncestors}`,
+          },
+        ],
+      },
     ];
   },
 };

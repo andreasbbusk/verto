@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { mapSet } from "@/modules/server/mappers/sets";
 import { createClient } from "@/modules/server/supabase/server";
+import {
+  getDemoSetById,
+  getDemoSets,
+  getDemoSetStatsAfterStudy,
+} from "@/modules/server/demo/data";
+import { isDemoSession } from "@/modules/server/demo/session";
 import { createSetSchema, updateSetSchema } from "@/modules/schemas/set.schema";
 import type {
   CreateSetData,
@@ -26,6 +32,10 @@ async function requireUser() {
 }
 
 export async function getSets(): Promise<FlashcardSet[]> {
+  if (await isDemoSession()) {
+    return getDemoSets();
+  }
+
   const { supabase } = await requireUser();
 
   const { data, error } = await supabase
@@ -45,6 +55,14 @@ export async function getSetById(id: string): Promise<FlashcardSet> {
     throw new Error("Invalid set ID");
   }
 
+  if (await isDemoSession()) {
+    const demoSet = getDemoSetById(id);
+    if (!demoSet) {
+      throw new Error("Set not found");
+    }
+    return demoSet;
+  }
+
   const { supabase } = await requireUser();
 
   const { data, error } = await supabase
@@ -62,6 +80,10 @@ export async function getSetById(id: string): Promise<FlashcardSet> {
 }
 
 export async function createSet(data: CreateSetData): Promise<FlashcardSet> {
+  if (await isDemoSession()) {
+    throw new Error("Set creation is disabled in demo mode");
+  }
+
   const { supabase, userId } = await requireUser();
 
   const validation = createSetSchema.safeParse(data);
@@ -132,6 +154,21 @@ export async function updateSet(
     throw new Error("Invalid set ID");
   }
 
+  if (await isDemoSession()) {
+    const existing = getDemoSetById(id);
+    if (!existing) {
+      throw new Error("Set not found");
+    }
+    return {
+      ...existing,
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.description !== undefined ? { description: data.description } : {}),
+      ...(data.difficulty !== undefined ? { difficulty: data.difficulty } : {}),
+      ...(data.starred !== undefined ? { starred: data.starred } : {}),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   const { supabase } = await requireUser();
 
   const validation = updateSetSchema.safeParse(data);
@@ -175,6 +212,14 @@ export async function deleteSet(id: string): Promise<FlashcardSet> {
     throw new Error("Invalid set ID");
   }
 
+  if (await isDemoSession()) {
+    const existing = getDemoSetById(id);
+    if (!existing) {
+      throw new Error("Set not found");
+    }
+    return existing;
+  }
+
   const { supabase } = await requireUser();
 
   const { data: existingSet, error: existingError } = await supabase
@@ -201,6 +246,10 @@ export async function deleteSet(id: string): Promise<FlashcardSet> {
 export async function recordSetStudySession(setId: string): Promise<SetStats> {
   if (!setId) {
     throw new Error("Invalid set ID");
+  }
+
+  if (await isDemoSession()) {
+    return getDemoSetStatsAfterStudy(setId);
   }
 
   const { supabase } = await requireUser();

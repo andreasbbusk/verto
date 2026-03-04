@@ -5,6 +5,8 @@ import { mapProfile } from "@/modules/server/mappers/profile";
 import { authenticateRequest } from "@/modules/server/auth-helpers";
 import { createAdminClient } from "@/modules/server/supabase/admin";
 import { createClient } from "@/modules/server/supabase/server";
+import { getDemoProfile } from "@/modules/server/demo/data";
+import { isDemoSession } from "@/modules/server/demo/session";
 import type {
   Profile,
   UpdateProfileData,
@@ -12,6 +14,10 @@ import type {
 } from "@/modules/types/types";
 
 export async function getMe(): Promise<Profile> {
+  if (await isDemoSession()) {
+    return getDemoProfile();
+  }
+
   const authResult = await authenticateRequest();
 
   if (!authResult.success) {
@@ -22,6 +28,18 @@ export async function getMe(): Promise<Profile> {
 }
 
 export async function updateProfile(data: UpdateProfileData): Promise<Profile> {
+  if (await isDemoSession()) {
+    return getDemoProfile({
+      ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+      ...(data.studyGoal !== undefined ? { studyGoal: data.studyGoal } : {}),
+      ...(data.theme !== undefined ? { theme: data.theme } : {}),
+      ...(data.notifications !== undefined
+        ? { notifications: data.notifications }
+        : {}),
+      ...(data.lastLogin !== undefined ? { lastLogin: data.lastLogin } : {}),
+    });
+  }
+
   const authResult = await authenticateRequest();
 
   if (!authResult.success) {
@@ -56,6 +74,25 @@ export async function updateProfile(data: UpdateProfileData): Promise<Profile> {
 export async function updateProfileStats(
   data: UpdateProfileStatsData,
 ): Promise<Profile> {
+  if (await isDemoSession()) {
+    const baseProfile = getDemoProfile();
+
+    return getDemoProfile({
+      stats: {
+        totalStudySessions:
+          data.totalStudySessions ?? baseProfile.stats?.totalStudySessions ?? 0,
+        currentStreak:
+          data.currentStreak ?? baseProfile.stats?.currentStreak ?? 0,
+        longestStreak:
+          data.longestStreak ?? baseProfile.stats?.longestStreak ?? 0,
+        totalCardsStudied:
+          data.totalCardsStudied ?? baseProfile.stats?.totalCardsStudied ?? 0,
+        lastStudiedAt:
+          data.lastStudiedAt ?? baseProfile.stats?.lastStudiedAt ?? null,
+      },
+    });
+  }
+
   const authResult = await authenticateRequest();
 
   if (!authResult.success) {
@@ -102,6 +139,10 @@ export async function updateProfileStats(
 }
 
 export async function deleteProfile(): Promise<{ deletedAuthUser: boolean }> {
+  if (await isDemoSession()) {
+    throw new Error("Profile deletion is disabled in demo mode");
+  }
+
   const authResult = await authenticateRequest();
 
   if (!authResult.success) {

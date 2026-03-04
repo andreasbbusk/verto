@@ -5,6 +5,11 @@ import { z } from "zod";
 import { createClient } from "@/modules/server/supabase/server";
 import { mapFlashcard } from "@/modules/server/mappers/flashcards";
 import {
+  getDemoFlashcardById,
+  getDemoFlashcardsBySet,
+} from "@/modules/server/demo/data";
+import { isDemoSession } from "@/modules/server/demo/session";
+import {
   createFlashcardSchema,
   updateFlashcardSchema,
 } from "@/modules/schemas/flashcard.schema";
@@ -46,6 +51,10 @@ export async function getFlashcardsBySet(setId: string): Promise<Flashcard[]> {
     throw new Error("Invalid set ID");
   }
 
+  if (await isDemoSession()) {
+    return getDemoFlashcardsBySet(setId);
+  }
+
   const { supabase } = await requireUser();
 
   const { data, error } = await supabase
@@ -65,6 +74,10 @@ export async function createFlashcard(
   setId: string,
   data: Omit<CreateFlashcardData, "setId">,
 ): Promise<Flashcard> {
+  if (await isDemoSession()) {
+    throw new Error("Flashcard creation is disabled in demo mode");
+  }
+
   const { supabase, userId } = await requireUser();
 
   if (!setId) {
@@ -118,6 +131,23 @@ export async function updateFlashcard(
   cardId: string,
   data: UpdateFlashcardData,
 ): Promise<Flashcard> {
+  if (await isDemoSession()) {
+    const existing = getDemoFlashcardById(setId, cardId);
+    if (!existing) {
+      throw new Error("Flashcard not found");
+    }
+
+    return {
+      ...existing,
+      ...(data.front !== undefined ? { front: data.front } : {}),
+      ...(data.back !== undefined ? { back: data.back } : {}),
+      ...(data.starred !== undefined ? { starred: data.starred } : {}),
+      ...(data.reviewCount !== undefined ? { reviewCount: data.reviewCount } : {}),
+      ...(data.performance !== undefined ? { performance: data.performance } : {}),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   const { supabase } = await requireUser();
 
   if (!setId || !cardId) {
@@ -169,6 +199,14 @@ export async function deleteFlashcard(
   setId: string,
   cardId: string,
 ): Promise<Flashcard> {
+  if (await isDemoSession()) {
+    const existing = getDemoFlashcardById(setId, cardId);
+    if (!existing) {
+      throw new Error("Flashcard not found");
+    }
+    return existing;
+  }
+
   const { supabase } = await requireUser();
 
   if (!setId || !cardId) {
@@ -206,6 +244,19 @@ export async function createFlashcardsBulk(
   setId: string,
   flashcards: Omit<CreateFlashcardData, "setId">[],
 ): Promise<BulkCreateResult> {
+  if (await isDemoSession()) {
+    return {
+      created: [],
+      failed: flashcards.map((card, index) => ({
+        index,
+        card,
+        error: "Bulk creation is disabled in demo mode",
+      })),
+      successCount: 0,
+      failureCount: flashcards.length,
+    };
+  }
+
   const { supabase, userId } = await requireUser();
 
   if (!setId) {
