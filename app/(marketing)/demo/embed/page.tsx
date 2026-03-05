@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { DEMO_EMBED_START_PATH } from "@/modules/server/demo/constants";
 
 export const metadata: Metadata = {
   title: "Verto Demo",
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function DemoEmbedPage() {
-  redirect("/dashboard");
+  redirect(DEMO_EMBED_START_PATH);
 }

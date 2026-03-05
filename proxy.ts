@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { DEMO_SESSION_COOKIE } from "@/modules/server/demo/constants";
+import {
+  DEMO_EMBED_START_PATH,
+  DEMO_SESSION_COOKIE,
+} from "@/modules/server/demo/constants";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -46,7 +49,9 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
   if (pathname === "/demo/embed") {
-    const demoRedirect = NextResponse.redirect(new URL("/dashboard", request.url));
+    const demoRedirect = NextResponse.redirect(
+      new URL(DEMO_EMBED_START_PATH, request.url)
+    );
     demoRedirect.cookies.set(DEMO_SESSION_COOKIE, "1", {
       path: "/",
       httpOnly: true,
