@@ -5,6 +5,30 @@ import { DEMO_SESSION_COOKIE } from "@/modules/server/demo/constants";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasDemoSession = request.cookies.get(DEMO_SESSION_COOKIE)?.value === "1";
+  const fetchDest = request.headers.get("sec-fetch-dest");
+  const isTopLevelDocumentNav = fetchDest === "document";
+  const shouldClearDemoSession =
+    hasDemoSession && isTopLevelDocumentNav && pathname !== "/demo/embed";
+  const isDemoSessionActive = hasDemoSession && !shouldClearDemoSession;
+
+  if (shouldClearDemoSession) {
+    // Keep direct visits on real auth flow, even if a demo cookie exists.
+    request.cookies.delete(DEMO_SESSION_COOKIE);
+  }
+
+  const applyDemoCookieCleanup = (response: NextResponse) => {
+    if (shouldClearDemoSession) {
+      response.cookies.set(DEMO_SESSION_COOKIE, "", {
+        path: "/",
+        httpOnly: true,
+        maxAge: 0,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      });
+    }
+
+    return response;
+  };
 
   const protectedRoutes = [
     "/dashboard",
@@ -33,12 +57,14 @@ export async function proxy(request: NextRequest) {
     return demoRedirect;
   }
 
-  if ((pathname === "/" || isAuthRoute) && hasDemoSession) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  if ((pathname === "/" || isAuthRoute) && isDemoSessionActive) {
+    return applyDemoCookieCleanup(
+      NextResponse.redirect(new URL("/dashboard", request.url))
+    );
   }
 
-  if (isProtectedRoute && hasDemoSession) {
-    return NextResponse.next({ request });
+  if (isProtectedRoute && isDemoSessionActive) {
+    return applyDemoCookieCleanup(NextResponse.next({ request }));
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -75,15 +101,19 @@ export async function proxy(request: NextRequest) {
 
   // Redirect unauthenticated users trying to access protected routes
   if (isProtectedRoute && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return applyDemoCookieCleanup(
+      NextResponse.redirect(new URL("/login", request.url))
+    );
   }
 
   // Redirect authenticated users away from auth pages and landing
   if ((pathname === "/" || isAuthRoute) && isAuthenticated) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return applyDemoCookieCleanup(
+      NextResponse.redirect(new URL("/dashboard", request.url))
+    );
   }
 
-  return supabaseResponse;
+  return applyDemoCookieCleanup(supabaseResponse);
 }
 
 export const config = {
